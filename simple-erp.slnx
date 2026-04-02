@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="simple-erp.Core/simple-erp.Core.csproj" />
+  <Project Path="simple-erp.Testes/simple-erp.Testes.csproj" Id="23e0c199-b187-4b14-bf36-600e5cb14fa1" />
+</Solution>
