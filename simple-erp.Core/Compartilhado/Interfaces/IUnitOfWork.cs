@@ -1,8 +1,5 @@
 ﻿using simple_erp.Core.Compartilhado.Base;
 using simple_erp.Core.Modulos.ParceirosComerciais.Interfaces.Repositorios;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace simple_erp.Core.Compartilhado.Interfaces
 {
