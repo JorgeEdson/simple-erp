@@ -14,6 +14,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IClienteRepository _clientesRepository;
+        private readonly ILogService _logService;
         private readonly CadastrarClienteUseCase _useCase;
 
         public CadastrarClienteUseCaseTests()
@@ -21,7 +22,8 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais
             _unitOfWork = Substitute.For<IUnitOfWork>();
             _clientesRepository = Substitute.For<IClienteRepository>();
             _unitOfWork.ClientesRepository.Returns(_clientesRepository);
-            _useCase = new CadastrarClienteUseCase(_unitOfWork);
+            _logService = Substitute.For<ILogService>();
+            _useCase = new CadastrarClienteUseCase(_unitOfWork, _logService);
         }
 
         [Fact]

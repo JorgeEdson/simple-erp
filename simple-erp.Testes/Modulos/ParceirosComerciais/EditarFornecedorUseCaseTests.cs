@@ -15,16 +15,16 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IFornecedorRepository _fornecedoresRepository;
+        private readonly ILogService _logService;
         private readonly EditarFornecedorUseCase _useCase;
 
         public EditarFornecedorUseCaseTests()
         {
             _unitOfWork = Substitute.For<IUnitOfWork>();
             _fornecedoresRepository = Substitute.For<IFornecedorRepository>();
-
+            _logService = Substitute.For<ILogService>();
             _unitOfWork.FornecedoresRepository.Returns(_fornecedoresRepository);
-
-            _useCase = new EditarFornecedorUseCase(_unitOfWork);
+            _useCase = new EditarFornecedorUseCase(_unitOfWork, _logService);
         }
 
         [Fact]
