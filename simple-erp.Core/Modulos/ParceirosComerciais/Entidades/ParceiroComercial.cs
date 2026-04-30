@@ -20,10 +20,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.Entidades
             DateTime? dataAtualizacaoUtc = null)
             : base(id, dataCriacaoUtc, dataAtualizacaoUtc)
         {
-            Nome = nome ?? throw new ArgumentNullException(nameof(nome));
-            Documento = documento ?? throw new ArgumentNullException(nameof(documento));
-            Email = email ?? throw new ArgumentNullException(nameof(email));
-            Endereco = endereco ?? throw new ArgumentNullException(nameof(endereco));
+            Nome = nome;
+            Documento = documento;
+            Email = email;
+            Endereco = endereco;
             Ativo = ativo;
         }
 
