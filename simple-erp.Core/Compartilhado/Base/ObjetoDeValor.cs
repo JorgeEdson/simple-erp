@@ -8,8 +8,7 @@ namespace simple_erp.Core.Compartilhado.Base
     {
     }
 
-    public abstract class ObjetoDeValor<TValor, TConfiguracao>
-    where TConfiguracao : IConfiguracaoObjetoDeValor
+    public abstract class ObjetoDeValor<TValor, TConfiguracao> where TConfiguracao : IConfiguracaoObjetoDeValor
     {
         protected ObjetoDeValor(TValor valor, TConfiguracao? configuracao = default)
         {

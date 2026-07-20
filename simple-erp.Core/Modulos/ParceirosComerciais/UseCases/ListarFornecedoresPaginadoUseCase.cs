@@ -1,9 +1,6 @@
-﻿using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Base;
 using simple_erp.Core.Compartilhado.Interfaces;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 
 namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 {
@@ -37,6 +34,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
         bool Ativo,
         string Cidade,
         string Estado);
+
     public sealed record ListarFornecedoresFiltros(
         string? Nome = null,
         string? Documento = null,
@@ -58,10 +56,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
             _logService = logService;
         }
 
-        public async Task<Resultado<ListarFornecedoresPaginadoSaida>> ExecutarAsync(
-            ListarFornecedoresPaginadoEntrada dados,
-            CancellationToken cancellationToken = default)
+        public async Task<Resultado<ListarFornecedoresPaginadoSaida>> ExecutarAsync(ListarFornecedoresPaginadoEntrada dados, CancellationToken cancellationToken = default)
         {
+            #region Inicialização
+
             var stopwatchUseCase = Stopwatch.StartNew();
 
             using var escopo = _logService.IniciarEscopo(new Dictionary<string, object?>
@@ -79,6 +77,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
                 Mensagem: "Iniciando listagem paginada de fornecedores."));
+
+            #endregion
+
+            #region Validação dos parâmetros
 
             var erros = new List<string>();
 
@@ -105,6 +107,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
                 return Resultado<ListarFornecedoresPaginadoSaida>.Falha(erros);
             }
+
+            #endregion
+
+            #region Consulta paginada
 
             var filtros = new ListarFornecedoresFiltros(
                 Nome: dados.Nome,
@@ -147,6 +153,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 return Resultado<ListarFornecedoresPaginadoSaida>.Falha(resultadoPaginado.Erros!);
             }
 
+            #endregion
+
+            #region Mapeamento da saída
+
             var pagina = resultadoPaginado.Instancia;
 
             var stopwatchMapeamento = Stopwatch.StartNew();
@@ -172,6 +182,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     ["DuracaoMs"] = stopwatchMapeamento.ElapsedMilliseconds
                 }));
 
+            #endregion
+
+            #region Finalização
+
             stopwatchUseCase.Stop();
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
@@ -193,6 +207,8 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     TotalRegistros: pagina.TotalRegistros,
                     TotalPaginas: pagina.TotalPaginas,
                     Itens: itens));
+
+            #endregion
         }
     }
 }

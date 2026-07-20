@@ -30,10 +30,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
             _logService = logService;
         }
 
-        public async Task<Resultado<ClassificarProdutoComoFabricadoSaida>> ExecutarAsync(
-            ClassificarProdutoComoFabricadoEntrada dados,
-            CancellationToken cancellationToken = default)
+        public async Task<Resultado<ClassificarProdutoComoFabricadoSaida>> ExecutarAsync(ClassificarProdutoComoFabricadoEntrada dados, CancellationToken cancellationToken = default)
         {
+            #region Inicialização
+
             var stopwatchUseCase = Stopwatch.StartNew();
 
             using var escopo = _logService.IniciarEscopo(new Dictionary<string, object?>
@@ -44,6 +44,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
                 Mensagem: "Iniciando classificação de produto como Fabricado."));
+
+            #endregion
+
+            #region Validação da entrada
 
             var resultadoId = Id.TentarCriar(dados.Id);
 
@@ -62,6 +66,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 
                 return Resultado<ClassificarProdutoComoFabricadoSaida>.Falha(resultadoId.Erros!);
             }
+
+            #endregion
+
+            #region Recuperação do agregado
 
             var stopwatchObterProduto = Stopwatch.StartNew();
 
@@ -104,35 +112,47 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                 return Resultado<ClassificarProdutoComoFabricadoSaida>.Falha("PRODUTO_NAO_ENCONTRADO");
             }
 
-            var stopwatchClassificacao = Stopwatch.StartNew();
+            #endregion
 
-            var resultadoClassificacao = produto.ClassificarComoFabricado();
+            #region Execução das regras de negócio
 
-            stopwatchClassificacao.Stop();
+                #region Classificação do produto como Fabricado
 
-            _logService.RegistrarLogDebug(new RegistroDeLog(
-                Mensagem: "Classificação do agregado Produto como Fabricado concluída.",
-                Propriedades: new Dictionary<string, object?>
-                {
-                    ["OperacaoDominio"] = "Produto.ClassificarComoFabricado",
-                    ["DuracaoMs"] = stopwatchClassificacao.ElapsedMilliseconds
-                }));
+                var stopwatchClassificacao = Stopwatch.StartNew();
 
-            if (resultadoClassificacao.EhFalha)
-            {
-                stopwatchUseCase.Stop();
+                var resultadoClassificacao = produto.ClassificarComoFabricado();
 
-                _logService.RegistrarLogError(new RegistroDeLog(
-                    Mensagem: "Falha ao classificar agregado Produto como Fabricado.",
+                stopwatchClassificacao.Stop();
+
+                _logService.RegistrarLogDebug(new RegistroDeLog(
+                    Mensagem: "Classificação do agregado Produto como Fabricado concluída.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ProdutoId"] = produto.Id.Valor,
-                        ["Erros"] = resultadoClassificacao.Erros?.ToArray(),
-                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                        ["OperacaoDominio"] = "Produto.ClassificarComoFabricado",
+                        ["DuracaoMs"] = stopwatchClassificacao.ElapsedMilliseconds
                     }));
 
-                return Resultado<ClassificarProdutoComoFabricadoSaida>.Falha(resultadoClassificacao.Erros!);
-            }
+                if (resultadoClassificacao.EhFalha)
+                {
+                    stopwatchUseCase.Stop();
+
+                    _logService.RegistrarLogError(new RegistroDeLog(
+                        Mensagem: "Falha ao classificar agregado Produto como Fabricado.",
+                        Propriedades: new Dictionary<string, object?>
+                        {
+                            ["ProdutoId"] = produto.Id.Valor,
+                            ["Erros"] = resultadoClassificacao.Erros?.ToArray(),
+                            ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                        }));
+
+                    return Resultado<ClassificarProdutoComoFabricadoSaida>.Falha(resultadoClassificacao.Erros!);
+                }
+
+                #endregion
+
+            #endregion
+
+            #region Persistência
 
             var stopwatchAtualizar = Stopwatch.StartNew();
 
@@ -196,6 +216,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                 return Resultado<ClassificarProdutoComoFabricadoSaida>.Falha(resultadoSave.Erros!);
             }
 
+            #endregion
+
+            #region Finalização
+
             stopwatchUseCase.Stop();
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
@@ -212,6 +236,8 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                     Id: produto.Id.Valor,
                     Classificacao: produto.Classificacao.ToString(),
                     Ativo: produto.Ativo));
+
+            #endregion
         }
     }
 }

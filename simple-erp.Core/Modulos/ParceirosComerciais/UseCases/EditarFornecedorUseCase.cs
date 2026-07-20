@@ -1,4 +1,4 @@
-﻿using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Base;
 using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
@@ -47,10 +47,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
             _logService = logService;
         }
 
-        public async Task<Resultado<EditarFornecedorSaida>> ExecutarAsync(
-            EditarFornecedorEntrada dados,
-            CancellationToken cancellationToken = default)
+        public async Task<Resultado<EditarFornecedorSaida>> ExecutarAsync(EditarFornecedorEntrada dados, CancellationToken cancellationToken = default)
         {
+            #region Inicialização
+
             var stopwatchUseCase = Stopwatch.StartNew();
 
             using var escopo = _logService.IniciarEscopo(new Dictionary<string, object?>
@@ -63,6 +63,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
                 Mensagem: "Iniciando edição de fornecedor."));
+
+            #endregion
+
+            #region Validação da entrada
 
             var resultadoId = Id.TentarCriar(dados.Id);
             var resultadoDocumento = Documento.TentarCriar(dados.Documento);
@@ -100,6 +104,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
                 return Resultado<EditarFornecedorSaida>.Falha(validacaoCampos.Erros!);
             }
+
+            #endregion
+
+            #region Recuperação do agregado
 
             var stopwatchObterFornecedor = Stopwatch.StartNew();
 
@@ -149,6 +157,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
                 return Resultado<EditarFornecedorSaida>.Falha("FORNECEDOR_NAO_ENCONTRADO");
             }
+
+            #endregion
+
+            #region Validação de pré-condições
 
             var documentoFoiAlterado = !fornecedor.Documento.IgualA(resultadoDocumento.Instancia);
 
@@ -205,32 +217,44 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 }
             }
 
-            var resultadoAlterarDocumento = fornecedor.AlterarDocumento(resultadoDocumento.Instancia);
-            var resultadoAlterarNome = fornecedor.AlterarNome(resultadoNome.Instancia);
-            var resultadoAlterarEmail = fornecedor.AlterarEmail(resultadoEmail.Instancia);
-            var resultadoAlterarEndereco = fornecedor.AlterarEndereco(resultadoEndereco.Instancia);
+            #endregion
 
-            var resultadoAlteracoes = Resultado.Combinar(
-                resultadoAlterarDocumento,
-                resultadoAlterarNome,
-                resultadoAlterarEmail,
-                resultadoAlterarEndereco);
+            #region Execução das regras de negócio
 
-            if (resultadoAlteracoes.EhFalha)
-            {
-                stopwatchUseCase.Stop();
+                #region Alteração dos dados do fornecedor
 
-                _logService.RegistrarLogError(new RegistroDeLog(
-                    Mensagem: "Falha ao aplicar alterações no agregado Fornecedor.",
-                    Propriedades: new Dictionary<string, object?>
-                    {
-                        ["FornecedorId"] = fornecedor.Id.Valor,
-                        ["Erros"] = resultadoAlteracoes.Erros?.ToArray(),
-                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
-                    }));
+                var resultadoAlterarDocumento = fornecedor.AlterarDocumento(resultadoDocumento.Instancia);
+                var resultadoAlterarNome = fornecedor.AlterarNome(resultadoNome.Instancia);
+                var resultadoAlterarEmail = fornecedor.AlterarEmail(resultadoEmail.Instancia);
+                var resultadoAlterarEndereco = fornecedor.AlterarEndereco(resultadoEndereco.Instancia);
 
-                return Resultado<EditarFornecedorSaida>.Falha(resultadoAlteracoes.Erros!);
-            }
+                var resultadoAlteracoes = Resultado.Combinar(
+                    resultadoAlterarDocumento,
+                    resultadoAlterarNome,
+                    resultadoAlterarEmail,
+                    resultadoAlterarEndereco);
+
+                if (resultadoAlteracoes.EhFalha)
+                {
+                    stopwatchUseCase.Stop();
+
+                    _logService.RegistrarLogError(new RegistroDeLog(
+                        Mensagem: "Falha ao aplicar alterações no agregado Fornecedor.",
+                        Propriedades: new Dictionary<string, object?>
+                        {
+                            ["FornecedorId"] = fornecedor.Id.Valor,
+                            ["Erros"] = resultadoAlteracoes.Erros?.ToArray(),
+                            ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                        }));
+
+                    return Resultado<EditarFornecedorSaida>.Falha(resultadoAlteracoes.Erros!);
+                }
+
+                #endregion
+
+            #endregion
+
+            #region Persistência
 
             var stopwatchAtualizar = Stopwatch.StartNew();
 
@@ -294,6 +318,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 return Resultado<EditarFornecedorSaida>.Falha(resultadoSave.Erros!);
             }
 
+            #endregion
+
+            #region Finalização
+
             stopwatchUseCase.Stop();
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
@@ -312,6 +340,8 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Nome: fornecedor.Nome.Valor,
                     Email: fornecedor.Email.Valor,
                     Ativo: fornecedor.Ativo));
+
+            #endregion
         }
     }
 }

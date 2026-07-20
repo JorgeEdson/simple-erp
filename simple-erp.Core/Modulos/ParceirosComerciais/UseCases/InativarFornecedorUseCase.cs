@@ -1,4 +1,4 @@
-﻿using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Base;
 using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using System.Diagnostics;
@@ -30,10 +30,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
             _logService = logService;
         }
 
-        public async Task<Resultado<InativarFornecedorSaida>> ExecutarAsync(
-            InativarFornecedorEntrada dados,
-            CancellationToken cancellationToken = default)
+        public async Task<Resultado<InativarFornecedorSaida>> ExecutarAsync(InativarFornecedorEntrada dados, CancellationToken cancellationToken = default)
         {
+            #region Inicialização
+
             var stopwatchUseCase = Stopwatch.StartNew();
 
             using var escopo = _logService.IniciarEscopo(new Dictionary<string, object?>
@@ -44,6 +44,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
                 Mensagem: "Iniciando inativação de fornecedor."));
+
+            #endregion
+
+            #region Validação da entrada
 
             var resultadoId = Id.TentarCriar(dados.Id);
 
@@ -62,6 +66,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
                 return Resultado<InativarFornecedorSaida>.Falha(resultadoId.Erros!);
             }
+
+            #endregion
+
+            #region Recuperação do agregado
 
             var stopwatchObterFornecedor = Stopwatch.StartNew();
 
@@ -112,35 +120,47 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 return Resultado<InativarFornecedorSaida>.Falha("FORNECEDOR_NAO_ENCONTRADO");
             }
 
-            var stopwatchInativacao = Stopwatch.StartNew();
+            #endregion
 
-            var resultadoInativacao = fornecedor.Inativar();
+            #region Execução das regras de negócio
 
-            stopwatchInativacao.Stop();
+                #region Inativação do fornecedor
 
-            _logService.RegistrarLogDebug(new RegistroDeLog(
-                Mensagem: "Inativação do agregado Fornecedor concluída.",
-                Propriedades: new Dictionary<string, object?>
-                {
-                    ["OperacaoDominio"] = "Fornecedor.Inativar",
-                    ["DuracaoMs"] = stopwatchInativacao.ElapsedMilliseconds
-                }));
+                var stopwatchInativacao = Stopwatch.StartNew();
 
-            if (resultadoInativacao.EhFalha)
-            {
-                stopwatchUseCase.Stop();
+                var resultadoInativacao = fornecedor.Inativar();
 
-                _logService.RegistrarLogError(new RegistroDeLog(
-                    Mensagem: "Falha ao inativar agregado Fornecedor.",
+                stopwatchInativacao.Stop();
+
+                _logService.RegistrarLogDebug(new RegistroDeLog(
+                    Mensagem: "Inativação do agregado Fornecedor concluída.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["FornecedorId"] = fornecedor.Id.Valor,
-                        ["Erros"] = resultadoInativacao.Erros?.ToArray(),
-                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                        ["OperacaoDominio"] = "Fornecedor.Inativar",
+                        ["DuracaoMs"] = stopwatchInativacao.ElapsedMilliseconds
                     }));
 
-                return Resultado<InativarFornecedorSaida>.Falha(resultadoInativacao.Erros!);
-            }
+                if (resultadoInativacao.EhFalha)
+                {
+                    stopwatchUseCase.Stop();
+
+                    _logService.RegistrarLogError(new RegistroDeLog(
+                        Mensagem: "Falha ao inativar agregado Fornecedor.",
+                        Propriedades: new Dictionary<string, object?>
+                        {
+                            ["FornecedorId"] = fornecedor.Id.Valor,
+                            ["Erros"] = resultadoInativacao.Erros?.ToArray(),
+                            ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                        }));
+
+                    return Resultado<InativarFornecedorSaida>.Falha(resultadoInativacao.Erros!);
+                }
+
+                #endregion
+
+            #endregion
+
+            #region Persistência
 
             var stopwatchAtualizar = Stopwatch.StartNew();
 
@@ -204,6 +224,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 return Resultado<InativarFornecedorSaida>.Falha(resultadoSave.Erros!);
             }
 
+            #endregion
+
+            #region Finalização
+
             stopwatchUseCase.Stop();
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
@@ -219,6 +243,8 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 new InativarFornecedorSaida(
                     Id: fornecedor.Id.Valor,
                     Ativo: fornecedor.Ativo));
+
+            #endregion
         }
     }
 }

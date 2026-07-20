@@ -30,10 +30,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
             _logService = logService;
         }
 
-        public async Task<Resultado<ClassificarProdutoComoMateriaPrimaSaida>> ExecutarAsync(
-            ClassificarProdutoComoMateriaPrimaEntrada dados,
-            CancellationToken cancellationToken = default)
+        public async Task<Resultado<ClassificarProdutoComoMateriaPrimaSaida>> ExecutarAsync(ClassificarProdutoComoMateriaPrimaEntrada dados, CancellationToken cancellationToken = default)
         {
+            #region Inicialização
+
             var stopwatchUseCase = Stopwatch.StartNew();
 
             using var escopo = _logService.IniciarEscopo(new Dictionary<string, object?>
@@ -44,6 +44,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
                 Mensagem: "Iniciando classificação de produto como Matéria-Prima."));
+
+            #endregion
+
+            #region Validação da entrada
 
             var resultadoId = Id.TentarCriar(dados.Id);
 
@@ -62,6 +66,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 
                 return Resultado<ClassificarProdutoComoMateriaPrimaSaida>.Falha(resultadoId.Erros!);
             }
+
+            #endregion
+
+            #region Recuperação do agregado
 
             var stopwatchObterProduto = Stopwatch.StartNew();
 
@@ -104,35 +112,47 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                 return Resultado<ClassificarProdutoComoMateriaPrimaSaida>.Falha("PRODUTO_NAO_ENCONTRADO");
             }
 
-            var stopwatchClassificacao = Stopwatch.StartNew();
+            #endregion
 
-            var resultadoClassificacao = produto.ClassificarComoMateriaPrima();
+            #region Execução das regras de negócio
 
-            stopwatchClassificacao.Stop();
+                #region Classificação do produto como Matéria-Prima
 
-            _logService.RegistrarLogDebug(new RegistroDeLog(
-                Mensagem: "Classificação do agregado Produto como Matéria-Prima concluída.",
-                Propriedades: new Dictionary<string, object?>
-                {
-                    ["OperacaoDominio"] = "Produto.ClassificarComoMateriaPrima",
-                    ["DuracaoMs"] = stopwatchClassificacao.ElapsedMilliseconds
-                }));
+                var stopwatchClassificacao = Stopwatch.StartNew();
 
-            if (resultadoClassificacao.EhFalha)
-            {
-                stopwatchUseCase.Stop();
+                var resultadoClassificacao = produto.ClassificarComoMateriaPrima();
 
-                _logService.RegistrarLogError(new RegistroDeLog(
-                    Mensagem: "Falha ao classificar agregado Produto como Matéria-Prima.",
+                stopwatchClassificacao.Stop();
+
+                _logService.RegistrarLogDebug(new RegistroDeLog(
+                    Mensagem: "Classificação do agregado Produto como Matéria-Prima concluída.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ProdutoId"] = produto.Id.Valor,
-                        ["Erros"] = resultadoClassificacao.Erros?.ToArray(),
-                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                        ["OperacaoDominio"] = "Produto.ClassificarComoMateriaPrima",
+                        ["DuracaoMs"] = stopwatchClassificacao.ElapsedMilliseconds
                     }));
 
-                return Resultado<ClassificarProdutoComoMateriaPrimaSaida>.Falha(resultadoClassificacao.Erros!);
-            }
+                if (resultadoClassificacao.EhFalha)
+                {
+                    stopwatchUseCase.Stop();
+
+                    _logService.RegistrarLogError(new RegistroDeLog(
+                        Mensagem: "Falha ao classificar agregado Produto como Matéria-Prima.",
+                        Propriedades: new Dictionary<string, object?>
+                        {
+                            ["ProdutoId"] = produto.Id.Valor,
+                            ["Erros"] = resultadoClassificacao.Erros?.ToArray(),
+                            ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                        }));
+
+                    return Resultado<ClassificarProdutoComoMateriaPrimaSaida>.Falha(resultadoClassificacao.Erros!);
+                }
+
+                #endregion
+
+            #endregion
+
+            #region Persistência
 
             var stopwatchAtualizar = Stopwatch.StartNew();
 
@@ -196,6 +216,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                 return Resultado<ClassificarProdutoComoMateriaPrimaSaida>.Falha(resultadoSave.Erros!);
             }
 
+            #endregion
+
+            #region Finalização
+
             stopwatchUseCase.Stop();
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
@@ -212,6 +236,8 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                     Id: produto.Id.Valor,
                     Classificacao: produto.Classificacao.ToString(),
                     Ativo: produto.Ativo));
+
+            #endregion
         }
     }
 }

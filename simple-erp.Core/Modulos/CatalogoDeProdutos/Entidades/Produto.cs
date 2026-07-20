@@ -84,6 +84,27 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.Entidades
             return Resultado<Produto>.Sucesso(produto);
         }
 
+        public static Produto Reconstituir(
+            CodigoProduto codigo,
+            DescricaoProduto descricao,
+            UnidadeDeMedida unidadeDeMedida,
+            ClassificacaoProduto classificacao,
+            bool ativo,
+            long id,
+            DateTime dataCriacaoUtc,
+            DateTime dataAtualizacaoUtc)
+        {
+            return new Produto(
+                codigo,
+                descricao,
+                unidadeDeMedida,
+                classificacao,
+                ativo,
+                id,
+                dataCriacaoUtc,
+                dataAtualizacaoUtc);
+        }
+
         public Resultado<bool> AlterarCodigo(CodigoProduto codigo)
         {
             if (codigo is null)

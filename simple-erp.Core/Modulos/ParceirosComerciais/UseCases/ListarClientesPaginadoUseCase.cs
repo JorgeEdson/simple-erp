@@ -1,9 +1,6 @@
-﻿using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Base;
 using simple_erp.Core.Compartilhado.Interfaces;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 
 namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 {
@@ -61,10 +58,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
             _logService = logService;
         }
 
-        public async Task<Resultado<ListarClientesPaginadoSaida>> ExecutarAsync(
-            ListarClientesPaginadoEntrada dados,
-            CancellationToken cancellationToken = default)
+        public async Task<Resultado<ListarClientesPaginadoSaida>> ExecutarAsync(ListarClientesPaginadoEntrada dados, CancellationToken cancellationToken = default)
         {
+            #region Inicialização
+
             var stopwatchUseCase = Stopwatch.StartNew();
 
             using var escopo = _logService.IniciarEscopo(new Dictionary<string, object?>
@@ -82,6 +79,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
                 Mensagem: "Iniciando listagem paginada de clientes."));
+
+            #endregion
+
+            #region Validação dos parâmetros
 
             var erros = new List<string>();
 
@@ -108,6 +109,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
                 return Resultado<ListarClientesPaginadoSaida>.Falha(erros);
             }
+
+            #endregion
+
+            #region Consulta paginada
 
             var filtro = new ListarClientesFiltros(
                 Nome: dados.Nome,
@@ -150,6 +155,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 return Resultado<ListarClientesPaginadoSaida>.Falha(resultadoPaginado.Erros!);
             }
 
+            #endregion
+
+            #region Mapeamento da saída
+
             var pagina = resultadoPaginado.Instancia;
 
             var stopwatchMapeamento = Stopwatch.StartNew();
@@ -175,6 +184,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     ["DuracaoMs"] = stopwatchMapeamento.ElapsedMilliseconds
                 }));
 
+            #endregion
+
+            #region Finalização
+
             stopwatchUseCase.Stop();
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
@@ -196,6 +209,8 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     TotalRegistros: pagina.TotalRegistros,
                     TotalPaginas: pagina.TotalPaginas,
                     Itens: itens));
+
+            #endregion
         }
     }
 }

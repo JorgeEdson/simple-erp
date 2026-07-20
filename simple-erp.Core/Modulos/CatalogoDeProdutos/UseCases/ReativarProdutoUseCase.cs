@@ -28,10 +28,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
             _logService = logService;
         }
 
-        public async Task<Resultado<ReativarProdutoSaida>> ExecutarAsync(
-            ReativarProdutoEntrada dados,
-            CancellationToken cancellationToken = default)
+        public async Task<Resultado<ReativarProdutoSaida>> ExecutarAsync(ReativarProdutoEntrada dados, CancellationToken cancellationToken = default)
         {
+            #region Inicialização
+
             var stopwatchUseCase = Stopwatch.StartNew();
 
             using var escopo = _logService.IniciarEscopo(new Dictionary<string, object?>
@@ -42,6 +42,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
                 Mensagem: "Iniciando reativação de produto."));
+
+            #endregion
+
+            #region Validação da entrada
 
             var resultadoId = Id.TentarCriar(dados.Id);
 
@@ -60,6 +64,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 
                 return Resultado<ReativarProdutoSaida>.Falha(resultadoId.Erros!);
             }
+
+            #endregion
+
+            #region Recuperação do agregado
 
             var stopwatchObterProduto = Stopwatch.StartNew();
 
@@ -110,35 +118,47 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                 return Resultado<ReativarProdutoSaida>.Falha("PRODUTO_NAO_ENCONTRADO");
             }
 
-            var stopwatchAtivacao = Stopwatch.StartNew();
+            #endregion
 
-            var resultadoAtivacao = produto.Ativar();
+            #region Execução das regras de negócio
 
-            stopwatchAtivacao.Stop();
+                #region Reativação do produto
 
-            _logService.RegistrarLogDebug(new RegistroDeLog(
-                Mensagem: "Reativação do agregado Produto concluída.",
-                Propriedades: new Dictionary<string, object?>
-                {
-                    ["OperacaoDominio"] = "Produto.Ativar",
-                    ["DuracaoMs"] = stopwatchAtivacao.ElapsedMilliseconds
-                }));
+                var stopwatchAtivacao = Stopwatch.StartNew();
 
-            if (resultadoAtivacao.EhFalha)
-            {
-                stopwatchUseCase.Stop();
+                var resultadoAtivacao = produto.Ativar();
 
-                _logService.RegistrarLogError(new RegistroDeLog(
-                    Mensagem: "Falha ao reativar agregado Produto.",
+                stopwatchAtivacao.Stop();
+
+                _logService.RegistrarLogDebug(new RegistroDeLog(
+                    Mensagem: "Reativação do agregado Produto concluída.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ProdutoId"] = produto.Id.Valor,
-                        ["Erros"] = resultadoAtivacao.Erros?.ToArray(),
-                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                        ["OperacaoDominio"] = "Produto.Ativar",
+                        ["DuracaoMs"] = stopwatchAtivacao.ElapsedMilliseconds
                     }));
 
-                return Resultado<ReativarProdutoSaida>.Falha(resultadoAtivacao.Erros!);
-            }
+                if (resultadoAtivacao.EhFalha)
+                {
+                    stopwatchUseCase.Stop();
+
+                    _logService.RegistrarLogError(new RegistroDeLog(
+                        Mensagem: "Falha ao reativar agregado Produto.",
+                        Propriedades: new Dictionary<string, object?>
+                        {
+                            ["ProdutoId"] = produto.Id.Valor,
+                            ["Erros"] = resultadoAtivacao.Erros?.ToArray(),
+                            ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                        }));
+
+                    return Resultado<ReativarProdutoSaida>.Falha(resultadoAtivacao.Erros!);
+                }
+
+                #endregion
+
+            #endregion
+
+            #region Persistência
 
             var stopwatchAtualizar = Stopwatch.StartNew();
 
@@ -202,6 +222,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                 return Resultado<ReativarProdutoSaida>.Falha(resultadoSave.Erros!);
             }
 
+            #endregion
+
+            #region Finalização
+
             stopwatchUseCase.Stop();
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
@@ -217,6 +241,8 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                 new ReativarProdutoSaida(
                     Id: produto.Id.Valor,
                     Ativo: produto.Ativo));
+
+            #endregion
         }
     }
 }

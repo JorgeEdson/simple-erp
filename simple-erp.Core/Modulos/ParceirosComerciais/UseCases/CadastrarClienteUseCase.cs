@@ -1,4 +1,4 @@
-﻿using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Base;
 using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
@@ -47,10 +47,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
             _logService = logService;
         }
 
-        public async Task<Resultado<CadastrarClienteSaida>> ExecutarAsync(
-            CadastrarClienteEntrada dados,
-            CancellationToken cancellationToken = default)
+        public async Task<Resultado<CadastrarClienteSaida>> ExecutarAsync(CadastrarClienteEntrada dados, CancellationToken cancellationToken = default)
         {
+            #region Inicialização
+
             var stopwatchUseCase = Stopwatch.StartNew();
 
             using var escopo = _logService.IniciarEscopo(new Dictionary<string, object?>
@@ -62,6 +62,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
                 Mensagem: "Iniciando cadastro de cliente."));
+
+            #endregion
+
+            #region Validação da entrada
 
             var resultadoDocumento = Documento.TentarCriar(dados.Documento);
             var resultadoNome = Nome.TentarCriar(dados.Nome);
@@ -97,6 +101,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
                 return Resultado<CadastrarClienteSaida>.Falha(validacaoCampos.Erros!);
             }
+
+            #endregion
+
+            #region Validação de pré-condições
 
             var stopwatchExisteDocumento = Stopwatch.StartNew();
 
@@ -145,41 +153,53 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 return Resultado<CadastrarClienteSaida>.Falha("CLIENTE_JA_CADASTRADO");
             }
 
-            var stopwatchCriarAgregado = Stopwatch.StartNew();
+            #endregion
 
-            var resultadoCliente = Cliente.Criar(
-                resultadoNome.Instancia,
-                resultadoDocumento.Instancia,
-                resultadoEmail.Instancia,
-                resultadoEndereco.Instancia);
+            #region Execução das regras de negócio
 
-            stopwatchCriarAgregado.Stop();
+                #region Criação do cliente
 
-            _logService.RegistrarLogDebug(new RegistroDeLog(
-                Mensagem: "Criação do agregado Cliente concluída.",
-                Propriedades: new Dictionary<string, object?>
-                {
-                    ["OperacaoDominio"] = "Cliente.Criar",
-                    ["DuracaoMs"] = stopwatchCriarAgregado.ElapsedMilliseconds
-                }));
+                var stopwatchCriarAgregado = Stopwatch.StartNew();
 
-            if (resultadoCliente.EhFalha)
-            {
-                stopwatchUseCase.Stop();
+                var resultadoCliente = Cliente.Criar(
+                    resultadoNome.Instancia,
+                    resultadoDocumento.Instancia,
+                    resultadoEmail.Instancia,
+                    resultadoEndereco.Instancia);
 
-                _logService.RegistrarLogError(new RegistroDeLog(
-                    Mensagem: "Falha ao criar agregado Cliente.",
+                stopwatchCriarAgregado.Stop();
+
+                _logService.RegistrarLogDebug(new RegistroDeLog(
+                    Mensagem: "Criação do agregado Cliente concluída.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["Documento"] = resultadoDocumento.Instancia.Formatado,
-                        ["Erros"] = resultadoCliente.Erros?.ToArray(),
-                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                        ["OperacaoDominio"] = "Cliente.Criar",
+                        ["DuracaoMs"] = stopwatchCriarAgregado.ElapsedMilliseconds
                     }));
 
-                return Resultado<CadastrarClienteSaida>.Falha(resultadoCliente.Erros!);
-            }
+                if (resultadoCliente.EhFalha)
+                {
+                    stopwatchUseCase.Stop();
 
-            var cliente = resultadoCliente.Instancia;
+                    _logService.RegistrarLogError(new RegistroDeLog(
+                        Mensagem: "Falha ao criar agregado Cliente.",
+                        Propriedades: new Dictionary<string, object?>
+                        {
+                            ["Documento"] = resultadoDocumento.Instancia.Formatado,
+                            ["Erros"] = resultadoCliente.Erros?.ToArray(),
+                            ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                        }));
+
+                    return Resultado<CadastrarClienteSaida>.Falha(resultadoCliente.Erros!);
+                }
+
+                var cliente = resultadoCliente.Instancia;
+
+                #endregion
+
+            #endregion
+
+            #region Persistência
 
             var stopwatchAdicionar = Stopwatch.StartNew();
 
@@ -228,6 +248,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 return Resultado<CadastrarClienteSaida>.Falha(resultadoSaveChanges.Erros!);
             }
 
+            #endregion
+
+            #region Finalização
+
             stopwatchUseCase.Stop();
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
@@ -246,6 +270,8 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Nome: cliente.Nome.Valor,
                     Email: cliente.Email.Valor,
                     Ativo: cliente.Ativo));
+
+            #endregion
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Base;
 using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
@@ -47,10 +47,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
             _logService = logService;
         }
 
-        public async Task<Resultado<CadastrarFornecedorSaida>> ExecutarAsync(
-            CadastrarFornecedorEntrada dados,
-            CancellationToken cancellationToken = default)
+        public async Task<Resultado<CadastrarFornecedorSaida>> ExecutarAsync(CadastrarFornecedorEntrada dados, CancellationToken cancellationToken = default)
         {
+            #region Inicialização
+
             var stopwatchUseCase = Stopwatch.StartNew();
 
             using var escopo = _logService.IniciarEscopo(new Dictionary<string, object?>
@@ -62,6 +62,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
                 Mensagem: "Iniciando cadastro de fornecedor."));
+
+            #endregion
+
+            #region Validação da entrada
 
             var resultadoDocumento = Documento.TentarCriar(dados.Documento);
             var resultadoNome = Nome.TentarCriar(dados.Nome);
@@ -97,6 +101,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
                 return Resultado<CadastrarFornecedorSaida>.Falha(validacaoCampos.Erros!);
             }
+
+            #endregion
+
+            #region Validação de pré-condições
 
             var stopwatchExisteDocumento = Stopwatch.StartNew();
 
@@ -145,41 +153,53 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 return Resultado<CadastrarFornecedorSaida>.Falha("FORNECEDOR_JA_CADASTRADO");
             }
 
-            var stopwatchCriarAgregado = Stopwatch.StartNew();
+            #endregion
 
-            var resultadoFornecedor = Fornecedor.Criar(
-                resultadoNome.Instancia,
-                resultadoDocumento.Instancia,
-                resultadoEmail.Instancia,
-                resultadoEndereco.Instancia);
+            #region Execução das regras de negócio
 
-            stopwatchCriarAgregado.Stop();
+                #region Criação do fornecedor
 
-            _logService.RegistrarLogDebug(new RegistroDeLog(
-                Mensagem: "Criação do agregado Fornecedor concluída.",
-                Propriedades: new Dictionary<string, object?>
-                {
-                    ["OperacaoDominio"] = "Fornecedor.Criar",
-                    ["DuracaoMs"] = stopwatchCriarAgregado.ElapsedMilliseconds
-                }));
+                var stopwatchCriarAgregado = Stopwatch.StartNew();
 
-            if (resultadoFornecedor.EhFalha)
-            {
-                stopwatchUseCase.Stop();
+                var resultadoFornecedor = Fornecedor.Criar(
+                    resultadoNome.Instancia,
+                    resultadoDocumento.Instancia,
+                    resultadoEmail.Instancia,
+                    resultadoEndereco.Instancia);
 
-                _logService.RegistrarLogError(new RegistroDeLog(
-                    Mensagem: "Falha ao criar agregado Fornecedor.",
+                stopwatchCriarAgregado.Stop();
+
+                _logService.RegistrarLogDebug(new RegistroDeLog(
+                    Mensagem: "Criação do agregado Fornecedor concluída.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["Documento"] = resultadoDocumento.Instancia.Formatado,
-                        ["Erros"] = resultadoFornecedor.Erros?.ToArray(),
-                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                        ["OperacaoDominio"] = "Fornecedor.Criar",
+                        ["DuracaoMs"] = stopwatchCriarAgregado.ElapsedMilliseconds
                     }));
 
-                return Resultado<CadastrarFornecedorSaida>.Falha(resultadoFornecedor.Erros!);
-            }
+                if (resultadoFornecedor.EhFalha)
+                {
+                    stopwatchUseCase.Stop();
 
-            var fornecedor = resultadoFornecedor.Instancia;
+                    _logService.RegistrarLogError(new RegistroDeLog(
+                        Mensagem: "Falha ao criar agregado Fornecedor.",
+                        Propriedades: new Dictionary<string, object?>
+                        {
+                            ["Documento"] = resultadoDocumento.Instancia.Formatado,
+                            ["Erros"] = resultadoFornecedor.Erros?.ToArray(),
+                            ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                        }));
+
+                    return Resultado<CadastrarFornecedorSaida>.Falha(resultadoFornecedor.Erros!);
+                }
+
+                var fornecedor = resultadoFornecedor.Instancia;
+
+                #endregion
+
+            #endregion
+
+            #region Persistência
 
             var stopwatchAdicionar = Stopwatch.StartNew();
 
@@ -228,6 +248,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 return Resultado<CadastrarFornecedorSaida>.Falha(resultadoSaveChanges.Erros!);
             }
 
+            #endregion
+
+            #region Finalização
+
             stopwatchUseCase.Stop();
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
@@ -247,6 +271,8 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Email: fornecedor.Email.Valor,
                     Ativo: fornecedor.Ativo
                 ));
+
+            #endregion
         }
     }
 }

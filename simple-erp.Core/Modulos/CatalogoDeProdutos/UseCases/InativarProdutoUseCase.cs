@@ -1,10 +1,7 @@
 using simple_erp.Core.Compartilhado.Base;
 using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 
 namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 {
@@ -32,10 +29,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
             _logService = logService;
         }
 
-        public async Task<Resultado<InativarProdutoSaida>> ExecutarAsync(
-            InativarProdutoEntrada dados,
-            CancellationToken cancellationToken = default)
+        public async Task<Resultado<InativarProdutoSaida>> ExecutarAsync(InativarProdutoEntrada dados, CancellationToken cancellationToken = default)
         {
+            #region Inicialização
+
             var stopwatchUseCase = Stopwatch.StartNew();
 
             using var escopo = _logService.IniciarEscopo(new Dictionary<string, object?>
@@ -46,6 +43,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
                 Mensagem: "Iniciando inativação de produto."));
+
+            #endregion
+
+            #region Validação da entrada
 
             var resultadoId = Id.TentarCriar(dados.Id);
 
@@ -64,6 +65,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 
                 return Resultado<InativarProdutoSaida>.Falha(resultadoId.Erros!);
             }
+
+            #endregion
+
+            #region Recuperação do agregado
 
             var stopwatchObterProduto = Stopwatch.StartNew();
 
@@ -106,35 +111,47 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                 return Resultado<InativarProdutoSaida>.Falha("PRODUTO_NAO_ENCONTRADO");
             }
 
-            var stopwatchInativacao = Stopwatch.StartNew();
+            #endregion
 
-            var resultadoInativacao = produto.Inativar();
+            #region Execução das regras de negócio
 
-            stopwatchInativacao.Stop();
+                #region Inativação do produto
 
-            _logService.RegistrarLogDebug(new RegistroDeLog(
-                Mensagem: "Inativação do agregado Produto concluída.",
-                Propriedades: new Dictionary<string, object?>
-                {
-                    ["OperacaoDominio"] = "Produto.Inativar",
-                    ["DuracaoMs"] = stopwatchInativacao.ElapsedMilliseconds
-                }));
+                var stopwatchInativacao = Stopwatch.StartNew();
 
-            if (resultadoInativacao.EhFalha)
-            {
-                stopwatchUseCase.Stop();
+                var resultadoInativacao = produto.Inativar();
 
-                _logService.RegistrarLogError(new RegistroDeLog(
-                    Mensagem: "Falha ao inativar agregado Produto.",
+                stopwatchInativacao.Stop();
+
+                _logService.RegistrarLogDebug(new RegistroDeLog(
+                    Mensagem: "Inativação do agregado Produto concluída.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ProdutoId"] = produto.Id.Valor,
-                        ["Erros"] = resultadoInativacao.Erros?.ToArray(),
-                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                        ["OperacaoDominio"] = "Produto.Inativar",
+                        ["DuracaoMs"] = stopwatchInativacao.ElapsedMilliseconds
                     }));
 
-                return Resultado<InativarProdutoSaida>.Falha(resultadoInativacao.Erros!);
-            }
+                if (resultadoInativacao.EhFalha)
+                {
+                    stopwatchUseCase.Stop();
+
+                    _logService.RegistrarLogError(new RegistroDeLog(
+                        Mensagem: "Falha ao inativar agregado Produto.",
+                        Propriedades: new Dictionary<string, object?>
+                        {
+                            ["ProdutoId"] = produto.Id.Valor,
+                            ["Erros"] = resultadoInativacao.Erros?.ToArray(),
+                            ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                        }));
+
+                    return Resultado<InativarProdutoSaida>.Falha(resultadoInativacao.Erros!);
+                }
+
+                #endregion
+
+            #endregion
+
+            #region Persistência
 
             var stopwatchAtualizar = Stopwatch.StartNew();
 
@@ -198,6 +215,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                 return Resultado<InativarProdutoSaida>.Falha(resultadoSave.Erros!);
             }
 
+            #endregion
+
+            #region Finalização
+
             stopwatchUseCase.Stop();
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
@@ -213,6 +234,8 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                 new InativarProdutoSaida(
                     Id: produto.Id.Valor,
                     Ativo: produto.Ativo));
+
+            #endregion
         }
     }
 }

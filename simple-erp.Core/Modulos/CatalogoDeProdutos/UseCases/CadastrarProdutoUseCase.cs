@@ -40,10 +40,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
             _logService = logService;
         }
 
-        public async Task<Resultado<CadastrarProdutoSaida>> ExecutarAsync(
-            CadastrarProdutoEntrada dados,
-            CancellationToken cancellationToken = default)
+        public async Task<Resultado<CadastrarProdutoSaida>> ExecutarAsync(CadastrarProdutoEntrada dados, CancellationToken cancellationToken = default)
         {
+            #region Inicialização
+
             var stopwatchUseCase = Stopwatch.StartNew();
 
             using var escopo = _logService.IniciarEscopo(new Dictionary<string, object?>
@@ -56,6 +56,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
                 Mensagem: "Iniciando cadastro de produto."));
+
+            #endregion
+
+            #region Validação da entrada
 
             var resultadoCodigo = CodigoProduto.TentarCriar(dados.Codigo);
             var resultadoDescricao = DescricaoProduto.TentarCriar(dados.Descricao);
@@ -100,6 +104,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                     return Resultado<CadastrarProdutoSaida>.Falha("CLASSIFICACAO_PRODUTO_INVALIDA");
                 }
             }
+
+            #endregion
+
+            #region Validação de pré-condições
 
             var stopwatchExisteCodigo = Stopwatch.StartNew();
 
@@ -148,41 +156,53 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                 return Resultado<CadastrarProdutoSaida>.Falha("PRODUTO_JA_CADASTRADO");
             }
 
-            var stopwatchCriarAgregado = Stopwatch.StartNew();
+            #endregion
 
-            var resultadoProduto = Produto.Criar(
-                resultadoCodigo.Instancia,
-                resultadoDescricao.Instancia,
-                resultadoUnidade.Instancia,
-                classificacao);
+            #region Execução das regras de negócio
 
-            stopwatchCriarAgregado.Stop();
+                #region Criação do produto
 
-            _logService.RegistrarLogDebug(new RegistroDeLog(
-                Mensagem: "Criação do agregado Produto concluída.",
-                Propriedades: new Dictionary<string, object?>
-                {
-                    ["OperacaoDominio"] = "Produto.Criar",
-                    ["DuracaoMs"] = stopwatchCriarAgregado.ElapsedMilliseconds
-                }));
+                var stopwatchCriarAgregado = Stopwatch.StartNew();
 
-            if (resultadoProduto.EhFalha)
-            {
-                stopwatchUseCase.Stop();
+                var resultadoProduto = Produto.Criar(
+                    resultadoCodigo.Instancia,
+                    resultadoDescricao.Instancia,
+                    resultadoUnidade.Instancia,
+                    classificacao);
 
-                _logService.RegistrarLogError(new RegistroDeLog(
-                    Mensagem: "Falha ao criar agregado Produto.",
+                stopwatchCriarAgregado.Stop();
+
+                _logService.RegistrarLogDebug(new RegistroDeLog(
+                    Mensagem: "Criação do agregado Produto concluída.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["Codigo"] = resultadoCodigo.Instancia.Valor,
-                        ["Erros"] = resultadoProduto.Erros?.ToArray(),
-                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                        ["OperacaoDominio"] = "Produto.Criar",
+                        ["DuracaoMs"] = stopwatchCriarAgregado.ElapsedMilliseconds
                     }));
 
-                return Resultado<CadastrarProdutoSaida>.Falha(resultadoProduto.Erros!);
-            }
+                if (resultadoProduto.EhFalha)
+                {
+                    stopwatchUseCase.Stop();
 
-            var produto = resultadoProduto.Instancia;
+                    _logService.RegistrarLogError(new RegistroDeLog(
+                        Mensagem: "Falha ao criar agregado Produto.",
+                        Propriedades: new Dictionary<string, object?>
+                        {
+                            ["Codigo"] = resultadoCodigo.Instancia.Valor,
+                            ["Erros"] = resultadoProduto.Erros?.ToArray(),
+                            ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                        }));
+
+                    return Resultado<CadastrarProdutoSaida>.Falha(resultadoProduto.Erros!);
+                }
+
+                var produto = resultadoProduto.Instancia;
+
+                #endregion
+
+            #endregion
+
+            #region Persistência
 
             var stopwatchAdicionar = Stopwatch.StartNew();
 
@@ -231,6 +251,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                 return Resultado<CadastrarProdutoSaida>.Falha(resultadoSaveChanges.Erros!);
             }
 
+            #endregion
+
+            #region Finalização
+
             stopwatchUseCase.Stop();
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
@@ -251,6 +275,8 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                     UnidadeDeMedida: produto.UnidadeDeMedida.Valor,
                     Classificacao: produto.Classificacao.ToString(),
                     Ativo: produto.Ativo));
+
+            #endregion
         }
     }
 }

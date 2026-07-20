@@ -1,0 +1,105 @@
+using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace simple_erp.Core.Compartilhado.Eventos
+{  
+    public sealed class DispatcherDeEventos : IDispatcherDeEventos
+    {
+        private readonly IResolvedorDeManipuladores _resolvedor;
+        private readonly ILogService _logService;
+
+        public DispatcherDeEventos(
+            IResolvedorDeManipuladores resolvedor,
+            ILogService logService)
+        {
+            _resolvedor = resolvedor;
+            _logService = logService;
+        }
+
+        public async Task<Resultado<bool>> DespacharAsync(
+            IEnumerable<EventoDeDominio> eventos,
+            CancellationToken cancellationToken = default)
+        {
+            if (eventos is null)
+                return Resultado<bool>.Sucesso(true);
+
+            var erros = new List<string>();
+
+            foreach (var evento in eventos)
+            {
+                if (evento is null)
+                    continue;
+
+                var tipoEvento = evento.GetType();
+                var manipuladores = _resolvedor.ResolverPara(tipoEvento);
+
+                if (manipuladores.Count == 0)
+                {
+                    _logService.RegistrarLogDebug(new RegistroDeLog(
+                        Mensagem: "Evento de domínio sem handlers registrados.",
+                        Propriedades: new Dictionary<string, object?>
+                        {
+                            ["Evento"] = tipoEvento.Name,
+                            ["IdEvento"] = evento.IdEvento.Valor
+                        }));
+                    continue;
+                }
+
+                foreach (var manipulador in manipuladores)
+                {
+                    var resultado = await InvocarAsync(manipulador, evento, cancellationToken);
+
+                    if (resultado.EhFalha)
+                    {
+                        erros.AddRange(resultado.Erros!);
+
+                        _logService.RegistrarLogWarning(new RegistroDeLog(
+                            Mensagem: "Handler de evento de domínio retornou falha.",
+                            Propriedades: new Dictionary<string, object?>
+                            {
+                                ["Evento"] = tipoEvento.Name,
+                                ["Handler"] = manipulador.GetType().Name,
+                                ["Erros"] = resultado.Erros?.ToArray()
+                            }));
+                    }
+                    else
+                    {
+                        _logService.RegistrarLogDebug(new RegistroDeLog(
+                            Mensagem: "Handler de evento de domínio executado com sucesso.",
+                            Propriedades: new Dictionary<string, object?>
+                            {
+                                ["Evento"] = tipoEvento.Name,
+                                ["Handler"] = manipulador.GetType().Name
+                            }));
+                    }
+                }
+            }
+
+            return erros.Count > 0
+                ? Resultado<bool>.Falha(erros)
+                : Resultado<bool>.Sucesso(true);
+        }
+
+        /// <summary>
+        /// Invoca o handler correspondente via double-dispatch dinâmico: o binder de
+        /// runtime resolve a sobrecarga ManipularAsync do tipo concreto do evento.
+        /// </summary>
+        private static async Task<Resultado<bool>> InvocarAsync(
+            object manipulador,
+            EventoDeDominio evento,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                return await ((dynamic)manipulador).ManipularAsync((dynamic)evento, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                return Resultado<bool>.Falha(ex.Message);
+            }
+        }
+    }
+}

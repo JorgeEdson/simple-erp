@@ -96,5 +96,26 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.Entidades
 
             return Resultado<bool>.Sucesso(true);
         }
+
+        public static Cliente Reconstituir(
+            Nome nome,
+            Documento documento,
+            Email email,
+            Endereco endereco,
+            bool ativo,
+            long id,
+            DateTime dataCriacaoUtc,
+            DateTime dataAtualizacaoUtc)
+        {
+            return new Cliente(
+                nome,
+                documento,
+                email,
+                endereco,
+                ativo,
+                id,
+                dataCriacaoUtc,
+                dataAtualizacaoUtc);
+        }
     }
 }

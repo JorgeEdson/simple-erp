@@ -1,4 +1,4 @@
-﻿using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Base;
 using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using System.Diagnostics;
@@ -33,6 +33,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
         string Cep,
         string Pais
     );
+
     public sealed class ObterFornecedorPorIdUseCase : IObterFornecedorPorIdUseCase
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -46,10 +47,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
             _logService = logService;
         }
 
-        public async Task<Resultado<ObterFornecedorPorIdSaida>> ExecutarAsync(
-            ObterFornecedorPorIdEntrada dados,
-            CancellationToken cancellationToken = default)
+        public async Task<Resultado<ObterFornecedorPorIdSaida>> ExecutarAsync(ObterFornecedorPorIdEntrada dados, CancellationToken cancellationToken = default)
         {
+            #region Inicialização
+
             var stopwatchUseCase = Stopwatch.StartNew();
 
             using var escopo = _logService.IniciarEscopo(new Dictionary<string, object?>
@@ -60,6 +61,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
                 Mensagem: "Iniciando obtenção de fornecedor por id."));
+
+            #endregion
+
+            #region Validação da entrada
 
             var resultadoId = Id.TentarCriar(dados.Id);
 
@@ -78,6 +83,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
                 return Resultado<ObterFornecedorPorIdSaida>.Falha(resultadoId.Erros!);
             }
+
+            #endregion
+
+            #region Recuperação do agregado
 
             var stopwatchObterFornecedor = Stopwatch.StartNew();
 
@@ -128,6 +137,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 return Resultado<ObterFornecedorPorIdSaida>.Falha("FORNECEDOR_NAO_ENCONTRADO");
             }
 
+            #endregion
+
+            #region Mapeamento da saída
+
             var stopwatchMapeamento = Stopwatch.StartNew();
 
             var saida = new ObterFornecedorPorIdSaida(
@@ -158,6 +171,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     ["DuracaoMs"] = stopwatchMapeamento.ElapsedMilliseconds
                 }));
 
+            #endregion
+
+            #region Finalização
+
             stopwatchUseCase.Stop();
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
@@ -170,6 +187,8 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 }));
 
             return Resultado<ObterFornecedorPorIdSaida>.Sucesso(saida);
+
+            #endregion
         }
     }
 }

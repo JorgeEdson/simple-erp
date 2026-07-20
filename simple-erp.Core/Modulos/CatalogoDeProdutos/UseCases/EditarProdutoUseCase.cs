@@ -40,10 +40,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
             _logService = logService;
         }
 
-        public async Task<Resultado<EditarProdutoSaida>> ExecutarAsync(
-            EditarProdutoEntrada dados,
-            CancellationToken cancellationToken = default)
+        public async Task<Resultado<EditarProdutoSaida>> ExecutarAsync(EditarProdutoEntrada dados, CancellationToken cancellationToken = default)
         {
+            #region Inicialização
+
             var stopwatchUseCase = Stopwatch.StartNew();
 
             using var escopo = _logService.IniciarEscopo(new Dictionary<string, object?>
@@ -57,6 +57,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
                 Mensagem: "Iniciando edição de produto."));
+
+            #endregion
+
+            #region Validação da entrada
 
             var resultadoId = Id.TentarCriar(dados.Id);
             var resultadoCodigo = CodigoProduto.TentarCriar(dados.Codigo);
@@ -83,6 +87,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 
                 return Resultado<EditarProdutoSaida>.Falha(validacaoCampos.Erros!);
             }
+
+            #endregion
+
+            #region Recuperação do agregado
 
             var stopwatchObterProduto = Stopwatch.StartNew();
 
@@ -132,6 +140,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 
                 return Resultado<EditarProdutoSaida>.Falha("PRODUTO_NAO_ENCONTRADO");
             }
+
+            #endregion
+
+            #region Validação de pré-condições
 
             var codigoFoiAlterado = !produto.Codigo.IgualA(resultadoCodigo.Instancia);
 
@@ -188,30 +200,42 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                 }
             }
 
-            var resultadoAlterarCodigo = produto.AlterarCodigo(resultadoCodigo.Instancia);
-            var resultadoAlterarDescricao = produto.AlterarDescricao(resultadoDescricao.Instancia);
-            var resultadoAlterarUnidade = produto.AlterarUnidadeDeMedida(resultadoUnidade.Instancia);
+            #endregion
 
-            var resultadoAlteracoes = Resultado.Combinar(
-                resultadoAlterarCodigo,
-                resultadoAlterarDescricao,
-                resultadoAlterarUnidade);
+            #region Execução das regras de negócio
 
-            if (resultadoAlteracoes.EhFalha)
-            {
-                stopwatchUseCase.Stop();
+                #region Alteração dos dados do produto
 
-                _logService.RegistrarLogError(new RegistroDeLog(
-                    Mensagem: "Falha ao aplicar alterações no agregado Produto.",
-                    Propriedades: new Dictionary<string, object?>
-                    {
-                        ["ProdutoId"] = produto.Id.Valor,
-                        ["Erros"] = resultadoAlteracoes.Erros?.ToArray(),
-                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
-                    }));
+                var resultadoAlterarCodigo = produto.AlterarCodigo(resultadoCodigo.Instancia);
+                var resultadoAlterarDescricao = produto.AlterarDescricao(resultadoDescricao.Instancia);
+                var resultadoAlterarUnidade = produto.AlterarUnidadeDeMedida(resultadoUnidade.Instancia);
 
-                return Resultado<EditarProdutoSaida>.Falha(resultadoAlteracoes.Erros!);
-            }
+                var resultadoAlteracoes = Resultado.Combinar(
+                    resultadoAlterarCodigo,
+                    resultadoAlterarDescricao,
+                    resultadoAlterarUnidade);
+
+                if (resultadoAlteracoes.EhFalha)
+                {
+                    stopwatchUseCase.Stop();
+
+                    _logService.RegistrarLogError(new RegistroDeLog(
+                        Mensagem: "Falha ao aplicar alterações no agregado Produto.",
+                        Propriedades: new Dictionary<string, object?>
+                        {
+                            ["ProdutoId"] = produto.Id.Valor,
+                            ["Erros"] = resultadoAlteracoes.Erros?.ToArray(),
+                            ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                        }));
+
+                    return Resultado<EditarProdutoSaida>.Falha(resultadoAlteracoes.Erros!);
+                }
+
+                #endregion
+
+            #endregion
+
+            #region Persistência
 
             var stopwatchAtualizar = Stopwatch.StartNew();
 
@@ -275,6 +299,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                 return Resultado<EditarProdutoSaida>.Falha(resultadoSave.Erros!);
             }
 
+            #endregion
+
+            #region Finalização
+
             stopwatchUseCase.Stop();
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
@@ -294,6 +322,8 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                     UnidadeDeMedida: produto.UnidadeDeMedida.Valor,
                     Classificacao: produto.Classificacao.ToString(),
                     Ativo: produto.Ativo));
+
+            #endregion
         }
     }
 }

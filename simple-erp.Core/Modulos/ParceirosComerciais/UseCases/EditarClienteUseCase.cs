@@ -1,4 +1,4 @@
-﻿using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Base;
 using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
@@ -33,6 +33,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
         string Email,
         bool Ativo
     );
+
     public sealed class EditarClienteUseCase : IEditarClienteUseCase
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -46,10 +47,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
             _logService = logService;
         }
 
-        public async Task<Resultado<EditarClienteSaida>> ExecutarAsync(
-            EditarClienteEntrada dados,
-            CancellationToken cancellationToken = default)
+        public async Task<Resultado<EditarClienteSaida>> ExecutarAsync(EditarClienteEntrada dados, CancellationToken cancellationToken = default)
         {
+            #region Inicialização
+
             var stopwatchUseCase = Stopwatch.StartNew();
 
             using var escopo = _logService.IniciarEscopo(new Dictionary<string, object?>
@@ -62,6 +63,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
                 Mensagem: "Iniciando edição de cliente."));
+
+            #endregion
+
+            #region Validação da entrada
 
             var resultadoId = Id.TentarCriar(dados.Id);
             var resultadoDocumento = Documento.TentarCriar(dados.Documento);
@@ -99,6 +104,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
                 return Resultado<EditarClienteSaida>.Falha(validacaoCampos.Erros!);
             }
+
+            #endregion
+
+            #region Recuperação do agregado
 
             var stopwatchObterCliente = Stopwatch.StartNew();
 
@@ -148,6 +157,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
                 return Resultado<EditarClienteSaida>.Falha("CLIENTE_NAO_ENCONTRADO");
             }
+
+            #endregion
+
+            #region Validação de pré-condições
 
             var documentoFoiAlterado = !cliente.Documento.IgualA(resultadoDocumento.Instancia);
 
@@ -204,32 +217,44 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 }
             }
 
-            var resultadoAlterarNome = cliente.AlterarNome(resultadoNome.Instancia);
-            var resultadoAlterarDocumento = cliente.AlterarDocumento(resultadoDocumento.Instancia);
-            var resultadoAlterarEmail = cliente.AlterarEmail(resultadoEmail.Instancia);
-            var resultadoAlterarEndereco = cliente.AlterarEndereco(resultadoEndereco.Instancia);
+            #endregion
 
-            var resultadoAlteracoes = Resultado.Combinar(
-                resultadoAlterarNome,
-                resultadoAlterarDocumento,
-                resultadoAlterarEmail,
-                resultadoAlterarEndereco);
+            #region Execução das regras de negócio
 
-            if (resultadoAlteracoes.EhFalha)
-            {
-                stopwatchUseCase.Stop();
+                #region Alteração dos dados do cliente
 
-                _logService.RegistrarLogError(new RegistroDeLog(
-                    Mensagem: "Falha ao aplicar alterações no agregado Cliente.",
-                    Propriedades: new Dictionary<string, object?>
-                    {
-                        ["ClienteId"] = cliente.Id.Valor,
-                        ["Erros"] = resultadoAlteracoes.Erros?.ToArray(),
-                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
-                    }));
+                var resultadoAlterarNome = cliente.AlterarNome(resultadoNome.Instancia);
+                var resultadoAlterarDocumento = cliente.AlterarDocumento(resultadoDocumento.Instancia);
+                var resultadoAlterarEmail = cliente.AlterarEmail(resultadoEmail.Instancia);
+                var resultadoAlterarEndereco = cliente.AlterarEndereco(resultadoEndereco.Instancia);
 
-                return Resultado<EditarClienteSaida>.Falha(resultadoAlteracoes.Erros!);
-            }
+                var resultadoAlteracoes = Resultado.Combinar(
+                    resultadoAlterarNome,
+                    resultadoAlterarDocumento,
+                    resultadoAlterarEmail,
+                    resultadoAlterarEndereco);
+
+                if (resultadoAlteracoes.EhFalha)
+                {
+                    stopwatchUseCase.Stop();
+
+                    _logService.RegistrarLogError(new RegistroDeLog(
+                        Mensagem: "Falha ao aplicar alterações no agregado Cliente.",
+                        Propriedades: new Dictionary<string, object?>
+                        {
+                            ["ClienteId"] = cliente.Id.Valor,
+                            ["Erros"] = resultadoAlteracoes.Erros?.ToArray(),
+                            ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                        }));
+
+                    return Resultado<EditarClienteSaida>.Falha(resultadoAlteracoes.Erros!);
+                }
+
+                #endregion
+
+            #endregion
+
+            #region Persistência
 
             var stopwatchAtualizar = Stopwatch.StartNew();
 
@@ -293,6 +318,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 return Resultado<EditarClienteSaida>.Falha(resultadoSave.Erros!);
             }
 
+            #endregion
+
+            #region Finalização
+
             stopwatchUseCase.Stop();
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
@@ -311,6 +340,8 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Nome: cliente.Nome.Valor,
                     Email: cliente.Email.Valor,
                     Ativo: cliente.Ativo));
+
+            #endregion
         }
     }
 }

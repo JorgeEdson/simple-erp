@@ -1,10 +1,7 @@
-﻿using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Base;
 using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 
 namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 {
@@ -32,10 +29,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
             _logService = logService;
         }
 
-        public async Task<Resultado<InativarClienteSaida>> ExecutarAsync(
-            InativarClienteEntrada dados,
-            CancellationToken cancellationToken = default)
+        public async Task<Resultado<InativarClienteSaida>> ExecutarAsync(InativarClienteEntrada dados, CancellationToken cancellationToken = default)
         {
+            #region Inicialização
+
             var stopwatchUseCase = Stopwatch.StartNew();
 
             using var escopo = _logService.IniciarEscopo(new Dictionary<string, object?>
@@ -46,6 +43,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
                 Mensagem: "Iniciando inativação de cliente."));
+
+            #endregion
+
+            #region Validação da entrada
 
             var resultadoId = Id.TentarCriar(dados.Id);
 
@@ -64,6 +65,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
                 return Resultado<InativarClienteSaida>.Falha(resultadoId.Erros!);
             }
+
+            #endregion
+
+            #region Recuperação do agregado
 
             var stopwatchObterCliente = Stopwatch.StartNew();
 
@@ -104,35 +109,47 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 return Resultado<InativarClienteSaida>.Falha("CLIENTE_NAO_ENCONTRADO");
             }
 
-            var stopwatchInativacao = Stopwatch.StartNew();
+            #endregion
 
-            var resultadoInativacao = cliente.Inativar();
+            #region Execução das regras de negócio
 
-            stopwatchInativacao.Stop();
+                #region Inativação do cliente
 
-            _logService.RegistrarLogDebug(new RegistroDeLog(
-                Mensagem: "Inativação do agregado Cliente concluída.",
-                Propriedades: new Dictionary<string, object?>
-                {
-                    ["OperacaoDominio"] = "Cliente.Inativar",
-                    ["DuracaoMs"] = stopwatchInativacao.ElapsedMilliseconds
-                }));
+                var stopwatchInativacao = Stopwatch.StartNew();
 
-            if (resultadoInativacao.EhFalha)
-            {
-                stopwatchUseCase.Stop();
+                var resultadoInativacao = cliente.Inativar();
 
-                _logService.RegistrarLogError(new RegistroDeLog(
-                    Mensagem: "Falha ao inativar agregado Cliente.",
+                stopwatchInativacao.Stop();
+
+                _logService.RegistrarLogDebug(new RegistroDeLog(
+                    Mensagem: "Inativação do agregado Cliente concluída.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ClienteId"] = cliente.Id.Valor,
-                        ["Erros"] = resultadoInativacao.Erros?.ToArray(),
-                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                        ["OperacaoDominio"] = "Cliente.Inativar",
+                        ["DuracaoMs"] = stopwatchInativacao.ElapsedMilliseconds
                     }));
 
-                return Resultado<InativarClienteSaida>.Falha(resultadoInativacao.Erros!);
-            }
+                if (resultadoInativacao.EhFalha)
+                {
+                    stopwatchUseCase.Stop();
+
+                    _logService.RegistrarLogError(new RegistroDeLog(
+                        Mensagem: "Falha ao inativar agregado Cliente.",
+                        Propriedades: new Dictionary<string, object?>
+                        {
+                            ["ClienteId"] = cliente.Id.Valor,
+                            ["Erros"] = resultadoInativacao.Erros?.ToArray(),
+                            ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                        }));
+
+                    return Resultado<InativarClienteSaida>.Falha(resultadoInativacao.Erros!);
+                }
+
+                #endregion
+
+            #endregion
+
+            #region Persistência
 
             var stopwatchAtualizar = Stopwatch.StartNew();
 
@@ -196,6 +213,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 return Resultado<InativarClienteSaida>.Falha(resultadoSave.Erros!);
             }
 
+            #endregion
+
+            #region Finalização
+
             stopwatchUseCase.Stop();
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
@@ -211,6 +232,8 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 new InativarClienteSaida(
                     Id: cliente.Id.Valor,
                     Ativo: cliente.Ativo));
+
+            #endregion
         }
     }
 }

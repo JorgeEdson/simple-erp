@@ -1,10 +1,7 @@
 using simple_erp.Core.Compartilhado.Base;
 using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.ObjetosDeValor;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 
 namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 {
@@ -57,10 +54,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
             _logService = logService;
         }
 
-        public async Task<Resultado<ListarProdutosPaginadoSaida>> ExecutarAsync(
-            ListarProdutosPaginadoEntrada dados,
-            CancellationToken cancellationToken = default)
+        public async Task<Resultado<ListarProdutosPaginadoSaida>> ExecutarAsync(ListarProdutosPaginadoEntrada dados, CancellationToken cancellationToken = default)
         {
+            #region Inicialização
+
             var stopwatchUseCase = Stopwatch.StartNew();
 
             using var escopo = _logService.IniciarEscopo(new Dictionary<string, object?>
@@ -77,6 +74,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
                 Mensagem: "Iniciando listagem paginada de produtos."));
+
+            #endregion
+
+            #region Validação dos parâmetros
 
             var erros = new List<string>();
 
@@ -118,6 +119,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                 return Resultado<ListarProdutosPaginadoSaida>.Falha(erros);
             }
 
+            #endregion
+
+            #region Consulta paginada
+
             var filtro = new ListarProdutosFiltros(
                 Codigo: dados.Codigo,
                 Descricao: dados.Descricao,
@@ -158,6 +163,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                 return Resultado<ListarProdutosPaginadoSaida>.Falha(resultadoPaginado.Erros!);
             }
 
+            #endregion
+
+            #region Mapeamento da saída
+
             var pagina = resultadoPaginado.Instancia;
 
             var stopwatchMapeamento = Stopwatch.StartNew();
@@ -182,6 +191,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                     ["DuracaoMs"] = stopwatchMapeamento.ElapsedMilliseconds
                 }));
 
+            #endregion
+
+            #region Finalização
+
             stopwatchUseCase.Stop();
 
             _logService.RegistrarLogInformation(new RegistroDeLog(
@@ -203,6 +216,8 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                     TotalRegistros: pagina.TotalRegistros,
                     TotalPaginas: pagina.TotalPaginas,
                     Itens: itens));
+
+            #endregion
         }
     }
 }
