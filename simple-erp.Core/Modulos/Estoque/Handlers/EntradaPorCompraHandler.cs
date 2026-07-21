@@ -5,19 +5,14 @@ using simple_erp.Core.Modulos.Estoque.UseCases;
 using simple_erp.Core.Modulos.Suprimentos.Eventos;
 
 namespace simple_erp.Core.Modulos.Estoque.Handlers
-{
-    /// <summary>
-    /// Handler de integração: quando uma compra é efetivada (evento do contexto de
-    /// Suprimentos), o Estoque reage dando ENTRADA por compra — uma movimentação por
-    /// item, com referência ao pedido de compra de origem.
-    /// </summary>
-    public sealed class ManipuladorEntradaPorCompra
+{   
+    public sealed class EntradaPorCompraHandler
         : IManipuladorDeEventoDeDominio<PedidoDeCompraEfetivado>
     {
         private readonly IRegistrarMovimentacaoDeEstoqueUseCase _registrarMovimentacao;
         private readonly ILogService _logService;
 
-        public ManipuladorEntradaPorCompra(
+        public EntradaPorCompraHandler(
             IRegistrarMovimentacaoDeEstoqueUseCase registrarMovimentacao,
             ILogService logService)
         {
@@ -33,7 +28,7 @@ namespace simple_erp.Core.Modulos.Estoque.Handlers
                 Mensagem: "Reagindo à efetivação de compra: registrando entradas de estoque.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["Handler"] = nameof(ManipuladorEntradaPorCompra),
+                    ["Handler"] = nameof(EntradaPorCompraHandler),
                     ["PedidoDeCompraId"] = evento.IdPedidoDeCompra.Valor,
                     ["QuantidadeItens"] = evento.Itens.Count
                 }));

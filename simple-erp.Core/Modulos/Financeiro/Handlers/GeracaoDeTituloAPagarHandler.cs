@@ -5,16 +5,8 @@ using simple_erp.Core.Modulos.Suprimentos.Eventos;
 using System;
 
 namespace simple_erp.Core.Modulos.Financeiro.Handlers
-{
-    /// <summary>
-    /// Handler de integração: quando uma compra é efetivada (evento do contexto de
-    /// Suprimentos), o Financeiro reage emitindo um TÍTULO A PAGAR para o fornecedor,
-    /// no valor total do pedido e com um prazo de vencimento padrão.
-    ///
-    /// Esta é a "rota A" da decisão de negócio (gerar o título na efetivação). A "rota B"
-    /// alternativa seria reagir a PedidoDeCompraAprovado.
-    /// </summary>
-    public sealed class ManipuladorGeracaoDeTituloAPagar
+{   
+    public sealed class GeracaoDeTituloAPagarHandler
         : IManipuladorDeEventoDeDominio<PedidoDeCompraEfetivado>
     {
         private const int PrazoPadraoDeVencimentoEmDias = 30;
@@ -22,7 +14,7 @@ namespace simple_erp.Core.Modulos.Financeiro.Handlers
         private readonly IEmitirTituloAPagarUseCase _emitirTituloAPagar;
         private readonly ILogService _logService;
 
-        public ManipuladorGeracaoDeTituloAPagar(
+        public GeracaoDeTituloAPagarHandler(
             IEmitirTituloAPagarUseCase emitirTituloAPagar,
             ILogService logService)
         {
@@ -38,7 +30,7 @@ namespace simple_erp.Core.Modulos.Financeiro.Handlers
                 Mensagem: "Reagindo à efetivação de compra: emitindo título a pagar.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["Handler"] = nameof(ManipuladorGeracaoDeTituloAPagar),
+                    ["Handler"] = nameof(GeracaoDeTituloAPagarHandler),
                     ["PedidoDeCompraId"] = evento.IdPedidoDeCompra.Valor,
                     ["ValorTotal"] = evento.ValorTotal
                 }));

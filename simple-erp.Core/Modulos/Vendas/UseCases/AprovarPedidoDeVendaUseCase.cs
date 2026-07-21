@@ -1,8 +1,6 @@
 using simple_erp.Core.Compartilhado.Base;
 using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
-using simple_erp.Core.Modulos.Estoque.ObjetosDeValor;
-using simple_erp.Core.Modulos.Estoque.UseCases;
 using simple_erp.Core.Modulos.Vendas.Entidades;
 using System.Diagnostics;
 
@@ -24,16 +22,16 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogService _logService;
-        private readonly IRegistrarMovimentacaoDeEstoqueUseCase _registrarMovimentacao;
+        private readonly IDispatcherDeEventos _dispatcher;
 
         public AprovarPedidoDeVendaUseCase(
             IUnitOfWork unitOfWork,
             ILogService logService,
-            IRegistrarMovimentacaoDeEstoqueUseCase registrarMovimentacao)
+            IDispatcherDeEventos dispatcher)
         {
             _unitOfWork = unitOfWork;
             _logService = logService;
-            _registrarMovimentacao = registrarMovimentacao;
+            _dispatcher = dispatcher;
         }
 
         public async Task<Resultado<AprovarPedidoDeVendaSaida>> ExecutarAsync(AprovarPedidoDeVendaEntrada dados, CancellationToken cancellationToken = default)
@@ -214,37 +212,6 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
 
             #endregion
 
-            #region Baixa no estoque (saída por venda)
-
-            foreach (var item in pedido.Itens)
-            {
-                var entrada = new RegistrarMovimentacaoDeEstoqueEntrada(
-                    IdProduto: item.IdProduto,
-                    Tipo: TipoDeMovimentacao.SaidaPorVenda,
-                    Quantidade: item.Quantidade,
-                    OrigemTipo: TipoOrigemMovimentacao.Venda,
-                    OrigemIdReferencia: pedido.Id.Valor,
-                    PermitirSaldoNegativo: false);
-
-                var resultadoMovimentacao = await _registrarMovimentacao.ExecutarAsync(entrada, cancellationToken);
-
-                if (resultadoMovimentacao.EhFalha)
-                {
-                    stopwatchUseCase.Stop();
-                    _logService.RegistrarLogError(new RegistroDeLog(
-                        Mensagem: "Falha ao dar baixa no estoque durante a aprovação da venda.",
-                        Propriedades: new Dictionary<string, object?>
-                        {
-                            ["PedidoDeVendaId"] = pedido.Id.Valor,
-                            ["Erros"] = resultadoMovimentacao.Erros?.ToArray(),
-                            ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
-                        }));
-                    return Resultado<AprovarPedidoDeVendaSaida>.Falha(resultadoMovimentacao.Erros!);
-                }
-            }
-
-            #endregion
-
             #endregion
 
             #region Persistência
@@ -271,6 +238,26 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
                 return Resultado<AprovarPedidoDeVendaSaida>.Falha(resultadoSave.Erros!);
+            }
+
+            #endregion
+
+            #region Publicação dos eventos de domínio
+            
+            var eventos = pedido.EventosDeDominio.ToList();
+            pedido.LimparEventosDeDominio();
+
+            var resultadoDespacho = await _dispatcher.DespacharAsync(eventos, cancellationToken);
+
+            if (resultadoDespacho.EhFalha)
+            {
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Aprovação persistida, mas um ou mais handlers de evento falharam (consistência eventual).",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["PedidoDeVendaId"] = pedido.Id.Valor,
+                        ["Erros"] = resultadoDespacho.Erros?.ToArray()
+                    }));
             }
 
             #endregion

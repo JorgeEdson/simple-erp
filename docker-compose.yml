@@ -1,0 +1,24 @@
+# Postgres local para desenvolvimento do Simple ERP.
+# Uso: docker compose up -d
+# Connection string padrão (igual à SimpleErpDbContextFactory):
+#   Host=localhost;Port=5432;Database=simple_erp;Username=simple_erp;Password=simple_erp
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: simple-erp-postgres
+    environment:
+      POSTGRES_DB: simple_erp
+      POSTGRES_USER: simple_erp
+      POSTGRES_PASSWORD: simple_erp
+    ports:
+      - "5432:5432"
+    volumes:
+      - simple-erp-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U simple_erp -d simple_erp"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  simple-erp-pgdata:

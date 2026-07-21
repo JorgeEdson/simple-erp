@@ -19,11 +19,11 @@ namespace simple_erp.Testes.Modulos.Financeiro
         private readonly IEmitirTituloAPagarUseCase _emitir =
             Substitute.For<IEmitirTituloAPagarUseCase>();
         private readonly ILogService _logService = Substitute.For<ILogService>();
-        private readonly ManipuladorGeracaoDeTituloAPagar _handler;
+        private readonly GeracaoDeTituloAPagarHandler _handler;
 
         public ManipuladorGeracaoDeTituloAPagarTests()
         {
-            _handler = new ManipuladorGeracaoDeTituloAPagar(_emitir, _logService);
+            _handler = new GeracaoDeTituloAPagarHandler(_emitir, _logService);
         }
 
         private static PedidoDeCompraEfetivado Evento(decimal valorTotal = 44.00m) =>

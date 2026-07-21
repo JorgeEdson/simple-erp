@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>simple_erp.Infraestrutura</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Provider PostgreSQL (traz Microsoft.EntityFrameworkCore transitivamente) -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <!-- snake_case para tabelas/colunas, convenção idiomática do Postgres -->
+    <PackageReference Include="EFCore.NamingConventions" Version="10.0.1" />
+    <!-- Necessário para gerar migrations com dotnet ef (fase futura) -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.10">
+      <PrivateAssets>all</PrivateAssets>
+      <!-- "compile" incluído para permitir implementar IDesignTimeDbContextFactory -->
+      <IncludeAssets>compile; runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\simple-erp.Core\simple-erp.Core.csproj" />
+  </ItemGroup>
+
+</Project>

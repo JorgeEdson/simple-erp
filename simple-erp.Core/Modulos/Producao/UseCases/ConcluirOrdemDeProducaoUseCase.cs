@@ -1,8 +1,6 @@
 using simple_erp.Core.Compartilhado.Base;
 using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
-using simple_erp.Core.Modulos.Estoque.ObjetosDeValor;
-using simple_erp.Core.Modulos.Estoque.UseCases;
 using simple_erp.Core.Modulos.Producao.Entidades;
 using System.Diagnostics;
 
@@ -26,16 +24,16 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogService _logService;
-        private readonly IRegistrarMovimentacaoDeEstoqueUseCase _registrarMovimentacao;
+        private readonly IDispatcherDeEventos _dispatcher;
 
         public ConcluirOrdemDeProducaoUseCase(
             IUnitOfWork unitOfWork,
             ILogService logService,
-            IRegistrarMovimentacaoDeEstoqueUseCase registrarMovimentacao)
+            IDispatcherDeEventos dispatcher)
         {
             _unitOfWork = unitOfWork;
             _logService = logService;
-            _registrarMovimentacao = registrarMovimentacao;
+            _dispatcher = dispatcher;
         }
 
         public async Task<Resultado<ConcluirOrdemDeProducaoSaida>> ExecutarAsync(ConcluirOrdemDeProducaoEntrada dados, CancellationToken cancellationToken = default)
@@ -114,46 +112,6 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
 
             #region Execução das regras de negócio
 
-                #region Baixa das matérias-primas (saída por produção)
-
-                var resultadoBaixas = await RegistrarBaixasDeMateriaPrimaAsync(ordem, cancellationToken);
-
-                if (resultadoBaixas.EhFalha)
-                {
-                    stopwatchUseCase.Stop();
-                    _logService.RegistrarLogWarning(new RegistroDeLog(
-                        Mensagem: "Falha ao dar baixa das matérias-primas na conclusão da ordem.",
-                        Propriedades: new Dictionary<string, object?>
-                        {
-                            ["OrdemDeProducaoId"] = ordem.Id.Valor,
-                            ["Erros"] = resultadoBaixas.Erros?.ToArray(),
-                            ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
-                        }));
-                    return Resultado<ConcluirOrdemDeProducaoSaida>.Falha(resultadoBaixas.Erros!);
-                }
-
-                #endregion
-
-                #region Entrada do produto acabado (entrada por produção)
-
-                var resultadoEntrada = await RegistrarEntradaDoProdutoAcabadoAsync(ordem, cancellationToken);
-
-                if (resultadoEntrada.EhFalha)
-                {
-                    stopwatchUseCase.Stop();
-                    _logService.RegistrarLogError(new RegistroDeLog(
-                        Mensagem: "Falha ao dar entrada do produto acabado na conclusão da ordem.",
-                        Propriedades: new Dictionary<string, object?>
-                        {
-                            ["OrdemDeProducaoId"] = ordem.Id.Valor,
-                            ["Erros"] = resultadoEntrada.Erros?.ToArray(),
-                            ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
-                        }));
-                    return Resultado<ConcluirOrdemDeProducaoSaida>.Falha(resultadoEntrada.Erros!);
-                }
-
-                #endregion
-
                 #region Conclusão da ordem de produção
 
                 var resultadoConcluir = ordem.Concluir();
@@ -196,6 +154,29 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
 
             #endregion
 
+            #region Publicação dos eventos de domínio
+
+            // O evento OrdemDeProducaoConcluida é despachado após a persistência: o
+            // Estoque reage com a SAÍDA por produção das matérias-primas e a ENTRADA
+            // por produção do produto acabado (◆), com referência à ordem (seção 5.3).
+            var eventos = ordem.EventosDeDominio.ToList();
+            ordem.LimparEventosDeDominio();
+
+            var resultadoDespacho = await _dispatcher.DespacharAsync(eventos, cancellationToken);
+
+            if (resultadoDespacho.EhFalha)
+            {
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Conclusão persistida, mas um ou mais handlers de evento falharam (consistência eventual).",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["OrdemDeProducaoId"] = ordem.Id.Valor,
+                        ["Erros"] = resultadoDespacho.Erros?.ToArray()
+                    }));
+            }
+
+            #endregion
+
             #region Finalização
 
             stopwatchUseCase.Stop();
@@ -212,49 +193,6 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
             return Resultado<ConcluirOrdemDeProducaoSaida>.Sucesso(Mapear(ordem));
 
             #endregion
-        }
-
-        private async Task<Resultado<bool>> RegistrarBaixasDeMateriaPrimaAsync(
-            OrdemDeProducao ordem,
-            CancellationToken cancellationToken)
-        {
-            foreach (var necessidade in ordem.Necessidades)
-            {
-                var entrada = new RegistrarMovimentacaoDeEstoqueEntrada(
-                    IdProduto: necessidade.IdInsumo,
-                    Tipo: TipoDeMovimentacao.SaidaPorProducao,
-                    Quantidade: necessidade.QuantidadeNecessaria,
-                    OrigemTipo: TipoOrigemMovimentacao.Producao,
-                    OrigemIdReferencia: ordem.Id.Valor,
-                    PermitirSaldoNegativo: false);
-
-                var resultado = await _registrarMovimentacao.ExecutarAsync(entrada, cancellationToken);
-
-                if (resultado.EhFalha)
-                    return Resultado<bool>.Falha(resultado.Erros!);
-            }
-
-            return Resultado<bool>.Sucesso(true);
-        }
-
-        private async Task<Resultado<bool>> RegistrarEntradaDoProdutoAcabadoAsync(
-            OrdemDeProducao ordem,
-            CancellationToken cancellationToken)
-        {
-            var entrada = new RegistrarMovimentacaoDeEstoqueEntrada(
-                IdProduto: ordem.IdProdutoFabricado.Valor,
-                Tipo: TipoDeMovimentacao.EntradaPorProducao,
-                Quantidade: ordem.QuantidadeAProduzir,
-                OrigemTipo: TipoOrigemMovimentacao.Producao,
-                OrigemIdReferencia: ordem.Id.Valor,
-                PermitirSaldoNegativo: false);
-
-            var resultado = await _registrarMovimentacao.ExecutarAsync(entrada, cancellationToken);
-
-            if (resultado.EhFalha)
-                return Resultado<bool>.Falha(resultado.Erros!);
-
-            return Resultado<bool>.Sucesso(true);
         }
 
         private static ConcluirOrdemDeProducaoSaida Mapear(OrdemDeProducao ordem)

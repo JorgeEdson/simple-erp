@@ -23,13 +23,16 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogService _logService;
+        private readonly IDispatcherDeEventos _dispatcher;
 
         public AtivarComposicaoDeProdutoUseCase(
             IUnitOfWork unitOfWork,
-            ILogService logService)
+            ILogService logService,
+            IDispatcherDeEventos dispatcher)
         {
             _unitOfWork = unitOfWork;
             _logService = logService;
+            _dispatcher = dispatcher;
         }
 
         public async Task<Resultado<AtivarComposicaoDeProdutoSaida>> ExecutarAsync(AtivarComposicaoDeProdutoEntrada dados, CancellationToken cancellationToken = default)
@@ -101,19 +104,6 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
 
             #region Execução das regras de negócio
 
-                #region Desativação da versão ativa atual
-
-                var resultadoDesativacao = await DesativarAtivaAtualAsync(
-                    composicao, cancellationToken);
-
-                if (resultadoDesativacao.EhFalha)
-                {
-                    stopwatchUseCase.Stop();
-                    return Resultado<AtivarComposicaoDeProdutoSaida>.Falha(resultadoDesativacao.Erros!);
-                }
-
-                #endregion
-
                 #region Ativação da versão
 
                 composicao.Ativar();
@@ -150,6 +140,29 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
 
             #endregion
 
+            #region Publicação dos eventos de domínio
+
+            // Domain Event intra-contexto: ComposicaoDeProdutoAtivada é despachado após
+            // a persistência e o handler do próprio contexto desativa a versão
+            // anteriormente ativa (invariante "apenas uma receita ativa por produto").
+            var eventos = composicao.EventosDeDominio.ToList();
+            composicao.LimparEventosDeDominio();
+
+            var resultadoDespacho = await _dispatcher.DespacharAsync(eventos, cancellationToken);
+
+            if (resultadoDespacho.EhFalha)
+            {
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Ativação persistida, mas um ou mais handlers de evento falharam (consistência eventual).",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["ComposicaoId"] = composicao.Id.Valor,
+                        ["Erros"] = resultadoDespacho.Erros?.ToArray()
+                    }));
+            }
+
+            #endregion
+
             #region Finalização
 
             stopwatchUseCase.Stop();
@@ -166,41 +179,6 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
             return Resultado<AtivarComposicaoDeProdutoSaida>.Sucesso(Mapear(composicao));
 
             #endregion
-        }
-
-        private async Task<Resultado<bool>> DesativarAtivaAtualAsync(
-            ComposicaoDeProduto composicaoAlvo,
-            CancellationToken cancellationToken)
-        {
-            var existeAtiva = await _unitOfWork.ComposicoesDeProdutoRepository
-                .ExisteAtivaPorProdutoAsync(composicaoAlvo.IdProdutoFabricado, cancellationToken);
-
-            if (existeAtiva.EhFalha)
-                return Resultado<bool>.Falha(existeAtiva.Erros!);
-
-            if (!existeAtiva.Instancia)
-                return Resultado<bool>.Sucesso(true);
-
-            var resultadoAtiva = await _unitOfWork.ComposicoesDeProdutoRepository
-                .ObterAtivaPorProdutoAsync(composicaoAlvo.IdProdutoFabricado, cancellationToken);
-
-            if (resultadoAtiva.EhFalha)
-                return Resultado<bool>.Falha(resultadoAtiva.Erros!);
-
-            var ativaAtual = resultadoAtiva.Instancia;
-
-            if (ativaAtual is null || ativaAtual.Id.IgualA(composicaoAlvo.Id))
-                return Resultado<bool>.Sucesso(true);
-
-            ativaAtual.Inativar();
-
-            var resultadoAtualizar = await _unitOfWork.ComposicoesDeProdutoRepository
-                .AtualizarAsync(ativaAtual, cancellationToken);
-
-            if (resultadoAtualizar.EhFalha)
-                return Resultado<bool>.Falha(resultadoAtualizar.Erros!);
-
-            return Resultado<bool>.Sucesso(true);
         }
 
         private static AtivarComposicaoDeProdutoSaida Mapear(ComposicaoDeProduto composicao)

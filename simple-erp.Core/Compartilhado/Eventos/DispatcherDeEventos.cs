@@ -83,10 +83,7 @@ namespace simple_erp.Core.Compartilhado.Eventos
                 : Resultado<bool>.Sucesso(true);
         }
 
-        /// <summary>
-        /// Invoca o handler correspondente via double-dispatch dinâmico: o binder de
-        /// runtime resolve a sobrecarga ManipularAsync do tipo concreto do evento.
-        /// </summary>
+        
         private static async Task<Resultado<bool>> InvocarAsync(
             object manipulador,
             EventoDeDominio evento,
