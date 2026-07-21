@@ -10,6 +10,13 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.Entidades
 {
     public sealed class Produto : Entidade<Produto>
     {
+#pragma warning disable CS8618 // Construtor de materialização do EF Core: as propriedades são preenchidas pelo provider.
+        /// <summary>Construtor de materialização do EF Core.</summary>
+        private Produto()
+        {
+        }
+#pragma warning restore CS8618
+
         private Produto(
             CodigoProduto codigo,
             DescricaoProduto descricao,

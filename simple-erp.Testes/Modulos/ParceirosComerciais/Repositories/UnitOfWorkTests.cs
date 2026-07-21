@@ -2,7 +2,13 @@ using FluentAssertions;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Infraestrutura.Persistencia;
 using simple_erp.Infraestrutura.Persistencia.Contexto;
+using simple_erp.Infraestrutura.Repositorios.CatalogoDeProdutos;
+using simple_erp.Infraestrutura.Repositorios.Estoque;
+using simple_erp.Infraestrutura.Repositorios.Financeiro;
 using simple_erp.Infraestrutura.Repositorios.ParceirosComerciais;
+using simple_erp.Infraestrutura.Repositorios.Producao;
+using simple_erp.Infraestrutura.Repositorios.Suprimentos;
+using simple_erp.Infraestrutura.Repositorios.Vendas;
 using simple_erp.Testes.Compartilhado.Builders;
 
 namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
@@ -23,7 +29,17 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
         public Task DisposeAsync() => Task.CompletedTask;
 
         private static UnitOfWork CriarUnitOfWork(SimpleErpDbContext contexto) =>
-            new(contexto, new ClienteRepository(contexto), new FornecedorRepository(contexto));
+            new(contexto,
+                new ClienteRepository(contexto),
+                new FornecedorRepository(contexto),
+                new ProdutoRepository(contexto),
+                new SaldoDeEstoqueRepository(contexto),
+                new MovimentacaoDeEstoqueRepository(contexto),
+                new TituloRepository(contexto),
+                new PedidoDeCompraRepository(contexto),
+                new OrdemDeProducaoRepository(contexto),
+                new ComposicaoDeProdutoRepository(contexto),
+                new PedidoDeVendaRepository(contexto));
 
         [Fact]
         public async Task SaveChangesAsync_DevePersistirOTrabalhoDosRepositorios()
@@ -105,15 +121,23 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
         }
 
         [Fact]
-        public async Task RepositoriosNaoImplementados_DevemLancarComMensagemDoPlanoIncremental()
+        public void TodosOsRepositorios_DevemEstarDisponiveis()
         {
-            await using var contexto = _fixture.CriarContexto();
+            // Com Vendas, a infraestrutura está completa: nenhum repositório do
+            // UnitOfWork lança por falta de implementação.
+            using var contexto = _fixture.CriarContexto();
             var uow = CriarUnitOfWork(contexto);
 
-            var acao = () => uow.ProdutosRepository;
-
-            acao.Should().Throw<NotImplementedException>()
-                .WithMessage("*Catálogo de Produtos*");
+            uow.ClientesRepository.Should().NotBeNull();
+            uow.FornecedoresRepository.Should().NotBeNull();
+            uow.ProdutosRepository.Should().NotBeNull();
+            uow.SaldosDeEstoqueRepository.Should().NotBeNull();
+            uow.MovimentacoesDeEstoqueRepository.Should().NotBeNull();
+            uow.TitulosRepository.Should().NotBeNull();
+            uow.PedidosDeCompraRepository.Should().NotBeNull();
+            uow.OrdensDeProducaoRepository.Should().NotBeNull();
+            uow.ComposicoesDeProdutoRepository.Should().NotBeNull();
+            uow.PedidosDeVendaRepository.Should().NotBeNull();
         }
     }
 }

@@ -9,16 +9,16 @@ using simple_erp.Core.Modulos.CatalogoDeProdutos.ObjetosDeValor;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases;
 using simple_erp.Testes.Compartilhado.Builders;
 
-namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
+namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
 {
-    public sealed class ClassificarProdutoComoMateriaPrimaUseCaseTests
+    public sealed class ClassificarProdutoComoFabricadoUseCaseTests
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IProdutoRepository _produtosRepository;
         private readonly ILogService _logService;
-        private readonly ClassificarProdutoComoMateriaPrimaUseCase _useCase;
+        private readonly ClassificarProdutoComoFabricadoUseCase _useCase;
 
-        public ClassificarProdutoComoMateriaPrimaUseCaseTests()
+        public ClassificarProdutoComoFabricadoUseCaseTests()
         {
             _unitOfWork = Substitute.For<IUnitOfWork>();
             _produtosRepository = Substitute.For<IProdutoRepository>();
@@ -30,14 +30,14 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
                 .IniciarEscopo(Arg.Any<Dictionary<string, object?>>())
                 .Returns(Substitute.For<IDisposable>());
 
-            _useCase = new ClassificarProdutoComoMateriaPrimaUseCase(_unitOfWork, _logService);
+            _useCase = new ClassificarProdutoComoFabricadoUseCase(_unitOfWork, _logService);
         }
 
         [Fact]
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoIdForInvalido()
         {
             // Arrange
-            var entrada = new ClassificarProdutoComoMateriaPrimaEntrada(0);
+            var entrada = new ClassificarProdutoComoFabricadoEntrada(0);
 
             // Act
             var resultado = await _useCase.ExecutarAsync(entrada);
@@ -63,7 +63,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoOcorrerErroAoObterProdutoPorId()
         {
             // Arrange
-            var entrada = new ClassificarProdutoComoMateriaPrimaEntrada(123456);
+            var entrada = new ClassificarProdutoComoFabricadoEntrada(123456);
 
             _produtosRepository
                 .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
@@ -89,7 +89,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoProdutoNaoForEncontrado()
         {
             // Arrange
-            var entrada = new ClassificarProdutoComoMateriaPrimaEntrada(123456);
+            var entrada = new ClassificarProdutoComoFabricadoEntrada(123456);
 
             _produtosRepository
                 .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
@@ -120,7 +120,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
                 .Inativo()
                 .Criar();
 
-            var entrada = new ClassificarProdutoComoMateriaPrimaEntrada(produto.Id.Valor);
+            var entrada = new ClassificarProdutoComoFabricadoEntrada(produto.Id.Valor);
 
             _produtosRepository
                 .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
@@ -150,7 +150,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
                 .ComId(123456)
                 .Criar();
 
-            var entrada = new ClassificarProdutoComoMateriaPrimaEntrada(produto.Id.Valor);
+            var entrada = new ClassificarProdutoComoFabricadoEntrada(produto.Id.Valor);
 
             _produtosRepository
                 .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
@@ -180,7 +180,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
                 .ComId(123456)
                 .Criar();
 
-            var entrada = new ClassificarProdutoComoMateriaPrimaEntrada(produto.Id.Valor);
+            var entrada = new ClassificarProdutoComoFabricadoEntrada(produto.Id.Valor);
 
             _produtosRepository
                 .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
@@ -206,7 +206,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
                 .AtualizarAsync(
                     Arg.Is<Produto>(p =>
                         p.Id.Valor == produto.Id.Valor &&
-                        p.Classificacao == ClassificacaoProduto.MateriaPrima),
+                        p.Classificacao == ClassificacaoProduto.Fabricado),
                     Arg.Any<CancellationToken>());
 
             await _unitOfWork
@@ -215,7 +215,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
         }
 
         [Fact]
-        public async Task ExecutarAsync_DeveClassificarProdutoComoMateriaPrimaComSucesso_QuandoDadosForemValidos()
+        public async Task ExecutarAsync_DeveClassificarProdutoComoFabricadoComSucesso_QuandoDadosForemValidos()
         {
             // Arrange
             var produto = ProdutoBuilder.Novo()
@@ -223,7 +223,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
                 .SemClassificacao()
                 .Criar();
 
-            var entrada = new ClassificarProdutoComoMateriaPrimaEntrada(produto.Id.Valor);
+            var entrada = new ClassificarProdutoComoFabricadoEntrada(produto.Id.Valor);
 
             _produtosRepository
                 .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
@@ -243,7 +243,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
             // Assert
             resultado.EhSucesso.Should().BeTrue();
             resultado.Instancia.Id.Should().Be(produto.Id.Valor);
-            resultado.Instancia.Classificacao.Should().Be(ClassificacaoProduto.MateriaPrima.ToString());
+            resultado.Instancia.Classificacao.Should().Be(ClassificacaoProduto.Fabricado.ToString());
             resultado.Instancia.Ativo.Should().BeTrue();
 
             await _produtosRepository
@@ -257,7 +257,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
                 .AtualizarAsync(
                     Arg.Is<Produto>(p =>
                         p.Id.Valor == produto.Id.Valor &&
-                        p.Classificacao == ClassificacaoProduto.MateriaPrima),
+                        p.Classificacao == ClassificacaoProduto.Fabricado),
                     Arg.Any<CancellationToken>());
 
             await _unitOfWork

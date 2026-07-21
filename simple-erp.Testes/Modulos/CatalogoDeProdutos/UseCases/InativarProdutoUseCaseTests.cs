@@ -5,20 +5,22 @@ using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Entidades;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Interfaces.Repositorios;
-using simple_erp.Core.Modulos.CatalogoDeProdutos.ObjetosDeValor;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases;
 using simple_erp.Testes.Compartilhado.Builders;
+using System;
+using System.Collections.Generic;
+using System.Text;
 
-namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
+namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
 {
-    public sealed class ClassificarProdutoComoFabricadoUseCaseTests
+    public sealed class InativarProdutoUseCaseTests
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IProdutoRepository _produtosRepository;
         private readonly ILogService _logService;
-        private readonly ClassificarProdutoComoFabricadoUseCase _useCase;
+        private readonly InativarProdutoUseCase _useCase;
 
-        public ClassificarProdutoComoFabricadoUseCaseTests()
+        public InativarProdutoUseCaseTests()
         {
             _unitOfWork = Substitute.For<IUnitOfWork>();
             _produtosRepository = Substitute.For<IProdutoRepository>();
@@ -30,14 +32,14 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
                 .IniciarEscopo(Arg.Any<Dictionary<string, object?>>())
                 .Returns(Substitute.For<IDisposable>());
 
-            _useCase = new ClassificarProdutoComoFabricadoUseCase(_unitOfWork, _logService);
+            _useCase = new InativarProdutoUseCase(_unitOfWork, _logService);
         }
 
         [Fact]
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoIdForInvalido()
         {
             // Arrange
-            var entrada = new ClassificarProdutoComoFabricadoEntrada(0);
+            var entrada = new InativarProdutoEntrada(0);
 
             // Act
             var resultado = await _useCase.ExecutarAsync(entrada);
@@ -63,7 +65,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoOcorrerErroAoObterProdutoPorId()
         {
             // Arrange
-            var entrada = new ClassificarProdutoComoFabricadoEntrada(123456);
+            var entrada = new InativarProdutoEntrada(123456);
 
             _produtosRepository
                 .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
@@ -89,7 +91,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoProdutoNaoForEncontrado()
         {
             // Arrange
-            var entrada = new ClassificarProdutoComoFabricadoEntrada(123456);
+            var entrada = new InativarProdutoEntrada(123456);
 
             _produtosRepository
                 .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
@@ -112,37 +114,6 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
         }
 
         [Fact]
-        public async Task ExecutarAsync_DeveRetornarFalha_QuandoProdutoEstiverInativo()
-        {
-            // Arrange
-            var produto = ProdutoBuilder.Novo()
-                .ComId(123456)
-                .Inativo()
-                .Criar();
-
-            var entrada = new ClassificarProdutoComoFabricadoEntrada(produto.Id.Valor);
-
-            _produtosRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
-                .Returns(Resultado<Produto?>.Sucesso(produto));
-
-            // Act
-            var resultado = await _useCase.ExecutarAsync(entrada);
-
-            // Assert
-            resultado.EhFalha.Should().BeTrue();
-            resultado.Erros.Should().Contain("PRODUTO_INATIVO_NAO_PODE_SER_CLASSIFICADO");
-
-            await _produtosRepository
-                .DidNotReceive()
-                .AtualizarAsync(Arg.Any<Produto>(), Arg.Any<CancellationToken>());
-
-            await _unitOfWork
-                .DidNotReceive()
-                .SaveChangesAsync(Arg.Any<CancellationToken>());
-        }
-
-        [Fact]
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoAtualizarFalhar()
         {
             // Arrange
@@ -150,7 +121,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
                 .ComId(123456)
                 .Criar();
 
-            var entrada = new ClassificarProdutoComoFabricadoEntrada(produto.Id.Valor);
+            var entrada = new InativarProdutoEntrada(produto.Id.Valor);
 
             _produtosRepository
                 .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
@@ -180,7 +151,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
                 .ComId(123456)
                 .Criar();
 
-            var entrada = new ClassificarProdutoComoFabricadoEntrada(produto.Id.Valor);
+            var entrada = new InativarProdutoEntrada(produto.Id.Valor);
 
             _produtosRepository
                 .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
@@ -206,7 +177,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
                 .AtualizarAsync(
                     Arg.Is<Produto>(p =>
                         p.Id.Valor == produto.Id.Valor &&
-                        p.Classificacao == ClassificacaoProduto.Fabricado),
+                        p.Ativo == false),
                     Arg.Any<CancellationToken>());
 
             await _unitOfWork
@@ -215,15 +186,14 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
         }
 
         [Fact]
-        public async Task ExecutarAsync_DeveClassificarProdutoComoFabricadoComSucesso_QuandoDadosForemValidos()
+        public async Task ExecutarAsync_DeveInativarProdutoComSucesso_QuandoDadosForemValidos()
         {
             // Arrange
             var produto = ProdutoBuilder.Novo()
                 .ComId(123456)
-                .SemClassificacao()
                 .Criar();
 
-            var entrada = new ClassificarProdutoComoFabricadoEntrada(produto.Id.Valor);
+            var entrada = new InativarProdutoEntrada(produto.Id.Valor);
 
             _produtosRepository
                 .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
@@ -243,8 +213,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
             // Assert
             resultado.EhSucesso.Should().BeTrue();
             resultado.Instancia.Id.Should().Be(produto.Id.Valor);
-            resultado.Instancia.Classificacao.Should().Be(ClassificacaoProduto.Fabricado.ToString());
-            resultado.Instancia.Ativo.Should().BeTrue();
+            resultado.Instancia.Ativo.Should().BeFalse();
 
             await _produtosRepository
                 .Received(1)
@@ -257,7 +226,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
                 .AtualizarAsync(
                     Arg.Is<Produto>(p =>
                         p.Id.Valor == produto.Id.Valor &&
-                        p.Classificacao == ClassificacaoProduto.Fabricado),
+                        p.Ativo == false),
                     Arg.Any<CancellationToken>());
 
             await _unitOfWork

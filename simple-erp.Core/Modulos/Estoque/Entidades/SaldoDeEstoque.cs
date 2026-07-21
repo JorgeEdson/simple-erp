@@ -15,6 +15,13 @@ namespace simple_erp.Core.Modulos.Estoque.Entidades
     /// </summary>
     public sealed class SaldoDeEstoque : Entidade<SaldoDeEstoque>
     {
+#pragma warning disable CS8618 // Construtor de materialização do EF Core: as propriedades são preenchidas pelo provider.
+        /// <summary>Construtor de materialização do EF Core.</summary>
+        private SaldoDeEstoque()
+        {
+        }
+#pragma warning restore CS8618
+
         private SaldoDeEstoque(
             Id idProduto,
             decimal quantidadeAtual,

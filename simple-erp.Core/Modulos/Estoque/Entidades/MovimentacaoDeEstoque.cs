@@ -8,6 +8,13 @@ namespace simple_erp.Core.Modulos.Estoque.Entidades
 { 
     public sealed class MovimentacaoDeEstoque : Entidade<MovimentacaoDeEstoque>
     {
+#pragma warning disable CS8618 // Construtor de materialização do EF Core: as propriedades são preenchidas pelo provider.
+        /// <summary>Construtor de materialização do EF Core.</summary>
+        private MovimentacaoDeEstoque()
+        {
+        }
+#pragma warning restore CS8618
+
         private MovimentacaoDeEstoque(
             Id idProduto,
             TipoDeMovimentacao tipo,

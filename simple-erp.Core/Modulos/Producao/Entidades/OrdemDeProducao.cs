@@ -8,7 +8,17 @@ namespace simple_erp.Core.Modulos.Producao.Entidades
   
     public sealed class OrdemDeProducao : Entidade<OrdemDeProducao>
     {
-        private readonly List<NecessidadeDeMateriaPrima> _necessidades;
+        // Não é readonly para que o provider de persistência (EF Core) possa
+        // materializar a coleção a partir da coluna jsonb pelo campo de apoio.
+        private List<NecessidadeDeMateriaPrima> _necessidades;
+
+#pragma warning disable CS8618 // Construtor de materialização do EF Core: as propriedades são preenchidas pelo provider.
+        /// <summary>Construtor de materialização do EF Core.</summary>
+        private OrdemDeProducao()
+        {
+            _necessidades = new List<NecessidadeDeMateriaPrima>();
+        }
+#pragma warning restore CS8618
 
         private OrdemDeProducao(
             Id idProdutoFabricado,

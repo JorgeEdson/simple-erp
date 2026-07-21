@@ -11,7 +11,17 @@ namespace simple_erp.Core.Modulos.Vendas.Entidades
   
     public sealed class PedidoDeVenda : Entidade<PedidoDeVenda>
     {
-        private readonly List<ItemDePedidoDeVenda> _itens;
+        // Não é readonly para que o provider de persistência (EF Core) possa
+        // materializar a coleção a partir da coluna jsonb pelo campo de apoio.
+        private List<ItemDePedidoDeVenda> _itens;
+
+#pragma warning disable CS8618 // Construtor de materialização do EF Core: as propriedades são preenchidas pelo provider.
+        /// <summary>Construtor de materialização do EF Core.</summary>
+        private PedidoDeVenda()
+        {
+            _itens = new List<ItemDePedidoDeVenda>();
+        }
+#pragma warning restore CS8618
 
         private PedidoDeVenda(
             int numero,

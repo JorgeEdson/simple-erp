@@ -9,7 +9,7 @@ using simple_erp.Core.Modulos.CatalogoDeProdutos.ObjetosDeValor;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases;
 using simple_erp.Testes.Compartilhado.Builders;
 
-namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
+namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
 {
     public sealed class EditarProdutoUseCaseTests
     {

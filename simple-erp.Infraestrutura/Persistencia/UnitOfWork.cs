@@ -21,41 +21,52 @@ namespace simple_erp.Infraestrutura.Persistencia
         public UnitOfWork(
             SimpleErpDbContext contexto,
             IClienteRepository clientesRepository,
-            IFornecedorRepository fornecedoresRepository)
+            IFornecedorRepository fornecedoresRepository,
+            IProdutoRepository produtosRepository,
+            ISaldoDeEstoqueRepository saldosDeEstoqueRepository,
+            IMovimentacaoDeEstoqueRepository movimentacoesDeEstoqueRepository,
+            ITituloRepository titulosRepository,
+            IPedidoDeCompraRepository pedidosDeCompraRepository,
+            IOrdemDeProducaoRepository ordensDeProducaoRepository,
+            IComposicaoDeProdutoRepository composicoesDeProdutoRepository,
+            IPedidoDeVendaRepository pedidosDeVendaRepository)
         {
             _contexto = contexto;
             ClientesRepository = clientesRepository;
             FornecedoresRepository = fornecedoresRepository;
+            ProdutosRepository = produtosRepository;
+            SaldosDeEstoqueRepository = saldosDeEstoqueRepository;
+            MovimentacoesDeEstoqueRepository = movimentacoesDeEstoqueRepository;
+            TitulosRepository = titulosRepository;
+            PedidosDeCompraRepository = pedidosDeCompraRepository;
+            OrdensDeProducaoRepository = ordensDeProducaoRepository;
+            ComposicoesDeProdutoRepository = composicoesDeProdutoRepository;
+            PedidosDeVendaRepository = pedidosDeVendaRepository;
         }
 
         // Módulo Parceiros Comerciais — implementado.
         public IClienteRepository ClientesRepository { get; }
         public IFornecedorRepository FornecedoresRepository { get; }
 
-        // Próximos módulos, na ordem do plano incremental.
-        public IProdutoRepository ProdutosRepository =>
-            throw PendenteDeImplementacao("Catálogo de Produtos", nameof(ProdutosRepository));
+        // Módulo Catálogo de Produtos — implementado.
+        public IProdutoRepository ProdutosRepository { get; }
 
-        public IPedidoDeCompraRepository PedidosDeCompraRepository =>
-            throw PendenteDeImplementacao("Suprimentos", nameof(PedidosDeCompraRepository));
+        // Módulo Estoque — implementado.
+        public ISaldoDeEstoqueRepository SaldosDeEstoqueRepository { get; }
+        public IMovimentacaoDeEstoqueRepository MovimentacoesDeEstoqueRepository { get; }
 
-        public ISaldoDeEstoqueRepository SaldosDeEstoqueRepository =>
-            throw PendenteDeImplementacao("Estoque", nameof(SaldosDeEstoqueRepository));
+        // Módulo Financeiro — implementado.
+        public ITituloRepository TitulosRepository { get; }
 
-        public IMovimentacaoDeEstoqueRepository MovimentacoesDeEstoqueRepository =>
-            throw PendenteDeImplementacao("Estoque", nameof(MovimentacoesDeEstoqueRepository));
+        // Módulo Suprimentos — implementado.
+        public IPedidoDeCompraRepository PedidosDeCompraRepository { get; }
 
-        public IComposicaoDeProdutoRepository ComposicoesDeProdutoRepository =>
-            throw PendenteDeImplementacao("Produção/Composição", nameof(ComposicoesDeProdutoRepository));
+        // Módulo Produção (e subdomínio Composição) — implementado.
+        public IOrdemDeProducaoRepository OrdensDeProducaoRepository { get; }
+        public IComposicaoDeProdutoRepository ComposicoesDeProdutoRepository { get; }
 
-        public IOrdemDeProducaoRepository OrdensDeProducaoRepository =>
-            throw PendenteDeImplementacao("Produção", nameof(OrdensDeProducaoRepository));
-
-        public IPedidoDeVendaRepository PedidosDeVendaRepository =>
-            throw PendenteDeImplementacao("Vendas", nameof(PedidosDeVendaRepository));
-
-        public ITituloRepository TitulosRepository =>
-            throw PendenteDeImplementacao("Financeiro", nameof(TitulosRepository));
+        // Módulo Vendas — implementado (último módulo; a infraestrutura está completa).
+        public IPedidoDeVendaRepository PedidosDeVendaRepository { get; }
 
         public async Task<Resultado<bool>> BeginTransactionAsync(CancellationToken ct = default)
         {
@@ -131,9 +142,5 @@ namespace simple_erp.Infraestrutura.Persistencia
             if (_transacaoAtual is not null)
                 await _transacaoAtual.DisposeAsync();
         }
-
-        private static NotImplementedException PendenteDeImplementacao(string modulo, string repositorio) =>
-            new($"Repositório '{repositorio}' (módulo {modulo}) ainda não foi implementado na infraestrutura. " +
-                "Os módulos estão sendo entregues incrementalmente — Parceiros Comerciais é o primeiro.");
     }
 }

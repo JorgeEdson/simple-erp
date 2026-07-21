@@ -7,7 +7,7 @@ using simple_erp.Core.Modulos.CatalogoDeProdutos.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.ObjetosDeValor;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases;
 
-namespace simple_erp.Testes.Modulos.CatalogoDeProdutos
+namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
 {
     public sealed class CadastrarProdutoUseCaseTests
     {

@@ -10,7 +10,17 @@ namespace simple_erp.Core.Modulos.Financeiro.Entidades
 {   
     public sealed class Titulo : Entidade<Titulo>
     {
-        private readonly List<BaixaDoTitulo> _baixas;
+        // Não é readonly para que o provider de persistência (EF Core) possa
+        // materializar a coleção a partir da coluna jsonb pelo campo de apoio.
+        private List<BaixaDoTitulo> _baixas;
+
+#pragma warning disable CS8618 // Construtor de materialização do EF Core: as propriedades são preenchidas pelo provider.
+        /// <summary>Construtor de materialização do EF Core.</summary>
+        private Titulo()
+        {
+            _baixas = new List<BaixaDoTitulo>();
+        }
+#pragma warning restore CS8618
 
         private Titulo(
             TipoDeTitulo tipo,
