@@ -8,7 +8,7 @@ using simple_erp.Core.Modulos.ParceirosComerciais.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.ParceirosComerciais.UseCases;
 using simple_erp.Testes.Compartilhado.Builders;
 
-namespace simple_erp.Testes.Modulos.ParceirosComerciais
+namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 {
     public sealed class ObterFornecedorPorIdUseCaseTests
     {

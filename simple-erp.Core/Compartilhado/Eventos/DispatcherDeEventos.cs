@@ -84,6 +84,13 @@ namespace simple_erp.Core.Compartilhado.Eventos
         }
 
         
+        /// <summary>
+        /// Invoca o handler pelo tipo fechado da interface
+        /// (IManipuladorDeEventoDeDominio&lt;TipoConcretoDoEvento&gt;) via reflection.
+        /// Não usa `dynamic`: o binder de runtime só enxerga tipos públicos e
+        /// falharia com handlers internal/privados ou proxies de teste — a
+        /// invocação pela interface funciona para qualquer visibilidade.
+        /// </summary>
         private static async Task<Resultado<bool>> InvocarAsync(
             object manipulador,
             EventoDeDominio evento,
@@ -91,7 +98,24 @@ namespace simple_erp.Core.Compartilhado.Eventos
         {
             try
             {
-                return await ((dynamic)manipulador).ManipularAsync((dynamic)evento, cancellationToken);
+                var tipoDaInterface = typeof(IManipuladorDeEventoDeDominio<>)
+                    .MakeGenericType(evento.GetType());
+
+                if (!tipoDaInterface.IsInstanceOfType(manipulador))
+                    return Resultado<bool>.Falha("HANDLER_INCOMPATIVEL_COM_O_EVENTO");
+
+                var metodo = tipoDaInterface.GetMethod(
+                    nameof(IManipuladorDeEventoDeDominio<EventoDeDominio>.ManipularAsync))!;
+
+                var tarefa = (Task<Resultado<bool>>)metodo.Invoke(
+                    manipulador, new object?[] { evento, cancellationToken })!;
+
+                return await tarefa;
+            }
+            catch (System.Reflection.TargetInvocationException ex)
+            {
+                // Exceção lançada DENTRO do handler — a causa real está na inner.
+                return Resultado<bool>.Falha(ex.InnerException?.Message ?? ex.Message);
             }
             catch (Exception ex)
             {

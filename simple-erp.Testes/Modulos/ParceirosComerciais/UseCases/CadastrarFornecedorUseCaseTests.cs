@@ -11,7 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace simple_erp.Testes.Modulos.ParceirosComerciais
+namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 {
     public sealed class CadastrarFornecedorUseCaseTests
     {

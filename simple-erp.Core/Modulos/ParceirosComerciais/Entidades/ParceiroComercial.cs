@@ -9,6 +9,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.Entidades
 {
     public abstract class ParceiroComercial : Entidade<ParceiroComercial>
     {
+        protected ParceiroComercial()
+        {
+        }
+
         protected ParceiroComercial(
             Nome nome,
             Documento documento,

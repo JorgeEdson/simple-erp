@@ -8,7 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Provider PostgreSQL (traz Microsoft.EntityFrameworkCore transitivamente) -->
+    <!-- EF fixado explicitamente para alinhar a versão em toda a solução
+         (o Design abaixo usa 10.0.10; sem isso, projetos que referenciam a
+         Infraestrutura resolveriam 10.0.4 via Npgsql e o build falharia com CS1705) -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.10" />
+    <!-- Provider PostgreSQL -->
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <!-- snake_case para tabelas/colunas, convenção idiomática do Postgres -->
     <PackageReference Include="EFCore.NamingConventions" Version="10.0.1" />

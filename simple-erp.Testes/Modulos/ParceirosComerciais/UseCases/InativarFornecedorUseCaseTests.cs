@@ -8,35 +8,35 @@ using simple_erp.Core.Modulos.ParceirosComerciais.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.ParceirosComerciais.UseCases;
 using simple_erp.Testes.Compartilhado.Builders;
 
-namespace simple_erp.Testes.Modulos.ParceirosComerciais
+namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 {
-    public sealed class ReativarClienteUseCaseTests
+    public sealed class InativarFornecedorUseCaseTests
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IClienteRepository _clientesRepository;
+        private readonly IFornecedorRepository _fornecedoresRepository;
         private readonly ILogService _logService;
-        private readonly ReativarClienteUseCase _useCase;
+        private readonly InativarFornecedorUseCase _useCase;
 
-        public ReativarClienteUseCaseTests()
+        public InativarFornecedorUseCaseTests()
         {
             _unitOfWork = Substitute.For<IUnitOfWork>();
-            _clientesRepository = Substitute.For<IClienteRepository>();
+            _fornecedoresRepository = Substitute.For<IFornecedorRepository>();
             _logService = Substitute.For<ILogService>();
 
-            _unitOfWork.ClientesRepository.Returns(_clientesRepository);
+            _unitOfWork.FornecedoresRepository.Returns(_fornecedoresRepository);
 
             _logService
                 .IniciarEscopo(Arg.Any<Dictionary<string, object?>>())
                 .Returns(Substitute.For<IDisposable>());
 
-            _useCase = new ReativarClienteUseCase(_unitOfWork, _logService);
+            _useCase = new InativarFornecedorUseCase(_unitOfWork, _logService);
         }
 
         [Fact]
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoIdForInvalido()
         {
             // Arrange
-            var entrada = new ReativarClienteEntrada(0);
+            var entrada = new InativarFornecedorEntrada(0);
 
             // Act
             var resultado = await _useCase.ExecutarAsync(entrada);
@@ -45,13 +45,13 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais
             resultado.EhFalha.Should().BeTrue();
             resultado.Erros.Should().NotBeNullOrEmpty();
 
-            await _clientesRepository
+            await _fornecedoresRepository
                 .DidNotReceive()
                 .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>());
 
-            await _clientesRepository
+            await _fornecedoresRepository
                 .DidNotReceive()
-                .AtualizarAsync(Arg.Any<Cliente>(), Arg.Any<CancellationToken>());
+                .AtualizarAsync(Arg.Any<Fornecedor>(), Arg.Any<CancellationToken>());
 
             await _unitOfWork
                 .DidNotReceive()
@@ -59,25 +59,25 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais
         }
 
         [Fact]
-        public async Task ExecutarAsync_DeveRetornarFalha_QuandoOcorrerErroAoObterClientePorId()
+        public async Task ExecutarAsync_DeveRetornarFalha_QuandoOcorrerErroAoObterFornecedorPorId()
         {
             // Arrange
-            var entrada = new ReativarClienteEntrada(123456);
+            var entrada = new InativarFornecedorEntrada(123456);
 
-            _clientesRepository
+            _fornecedoresRepository
                 .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
-                .Returns(Resultado<Cliente>.Falha("ERRO_AO_OBTER_CLIENTE"));
+                .Returns(Resultado<Fornecedor?>.Falha("ERRO_AO_OBTER_FORNECEDOR"));
 
             // Act
             var resultado = await _useCase.ExecutarAsync(entrada);
 
             // Assert
             resultado.EhFalha.Should().BeTrue();
-            resultado.Erros.Should().Contain("ERRO_AO_OBTER_CLIENTE");
+            resultado.Erros.Should().Contain("ERRO_AO_OBTER_FORNECEDOR");
 
-            await _clientesRepository
+            await _fornecedoresRepository
                 .DidNotReceive()
-                .AtualizarAsync(Arg.Any<Cliente>(), Arg.Any<CancellationToken>());
+                .AtualizarAsync(Arg.Any<Fornecedor>(), Arg.Any<CancellationToken>());
 
             await _unitOfWork
                 .DidNotReceive()
@@ -85,25 +85,25 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais
         }
 
         [Fact]
-        public async Task ExecutarAsync_DeveRetornarFalha_QuandoClienteNaoForEncontrado()
+        public async Task ExecutarAsync_DeveRetornarFalha_QuandoFornecedorNaoForEncontrado()
         {
             // Arrange
-            var entrada = new ReativarClienteEntrada(123456);
+            var entrada = new InativarFornecedorEntrada(123456);
 
-            _clientesRepository
+            _fornecedoresRepository
                 .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
-                .Returns(Resultado<Cliente>.Falha("CLIENTE_NAO_ENCONTRADO"));
+                .Returns(Resultado<Fornecedor?>.Falha("FORNECEDOR_NAO_ENCONTRADO"));
 
             // Act
             var resultado = await _useCase.ExecutarAsync(entrada);
 
             // Assert
             resultado.EhFalha.Should().BeTrue();
-            resultado.Erros.Should().Contain("CLIENTE_NAO_ENCONTRADO");
+            resultado.Erros.Should().Contain("FORNECEDOR_NAO_ENCONTRADO");
 
-            await _clientesRepository
+            await _fornecedoresRepository
                 .DidNotReceive()
-                .AtualizarAsync(Arg.Any<Cliente>(), Arg.Any<CancellationToken>());
+                .AtualizarAsync(Arg.Any<Fornecedor>(), Arg.Any<CancellationToken>());
 
             await _unitOfWork
                 .DidNotReceive()
@@ -114,19 +114,18 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoAtualizarFalhar()
         {
             // Arrange
-            var cliente = ClienteBuilder.Novo()
+            var fornecedor = FornecedorBuilder.Novo()
                 .ComId(123456)
-                .Inativo()
                 .Criar();
 
-            var entrada = new ReativarClienteEntrada(cliente.Id.Valor);
+            var entrada = new InativarFornecedorEntrada(fornecedor.Id.Valor);
 
-            _clientesRepository
+            _fornecedoresRepository
                 .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
-                .Returns(Resultado<Cliente>.Sucesso(cliente));
+                .Returns(Resultado<Fornecedor?>.Sucesso(fornecedor));
 
-            _clientesRepository
-                .AtualizarAsync(Arg.Any<Cliente>(), Arg.Any<CancellationToken>())
+            _fornecedoresRepository
+                .AtualizarAsync(Arg.Any<Fornecedor>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Falha("ERRO_AO_ATUALIZAR"));
 
             // Act
@@ -145,19 +144,18 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoSaveChangesFalhar()
         {
             // Arrange
-            var cliente = ClienteBuilder.Novo()
+            var fornecedor = FornecedorBuilder.Novo()
                 .ComId(123456)
-                .Inativo()
                 .Criar();
 
-            var entrada = new ReativarClienteEntrada(cliente.Id.Valor);
+            var entrada = new InativarFornecedorEntrada(fornecedor.Id.Valor);
 
-            _clientesRepository
+            _fornecedoresRepository
                 .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
-                .Returns(Resultado<Cliente>.Sucesso(cliente));
+                .Returns(Resultado<Fornecedor?>.Sucesso(fornecedor));
 
-            _clientesRepository
-                .AtualizarAsync(Arg.Any<Cliente>(), Arg.Any<CancellationToken>())
+            _fornecedoresRepository
+                .AtualizarAsync(Arg.Any<Fornecedor>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(true));
 
             _unitOfWork
@@ -171,12 +169,12 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais
             resultado.EhFalha.Should().BeTrue();
             resultado.Erros.Should().Contain("ERRO_AO_SALVAR");
 
-            await _clientesRepository
+            await _fornecedoresRepository
                 .Received(1)
                 .AtualizarAsync(
-                    Arg.Is<Cliente>(c =>
-                        c.Id.Valor == cliente.Id.Valor &&
-                        c.Ativo == true),
+                    Arg.Is<Fornecedor>(f =>
+                        f.Id.Valor == fornecedor.Id.Valor &&
+                        f.Ativo == false),
                     Arg.Any<CancellationToken>());
 
             await _unitOfWork
@@ -185,22 +183,21 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais
         }
 
         [Fact]
-        public async Task ExecutarAsync_DeveReativarClienteComSucesso_QuandoDadosForemValidos()
+        public async Task ExecutarAsync_DeveInativarFornecedorComSucesso_QuandoDadosForemValidos()
         {
             // Arrange
-            var cliente = ClienteBuilder.Novo()
+            var fornecedor = FornecedorBuilder.Novo()
                 .ComId(123456)
-                .Inativo()
                 .Criar();
 
-            var entrada = new ReativarClienteEntrada(cliente.Id.Valor);
+            var entrada = new InativarFornecedorEntrada(fornecedor.Id.Valor);
 
-            _clientesRepository
+            _fornecedoresRepository
                 .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
-                .Returns(Resultado<Cliente>.Sucesso(cliente));
+                .Returns(Resultado<Fornecedor?>.Sucesso(fornecedor));
 
-            _clientesRepository
-                .AtualizarAsync(Arg.Any<Cliente>(), Arg.Any<CancellationToken>())
+            _fornecedoresRepository
+                .AtualizarAsync(Arg.Any<Fornecedor>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(true));
 
             _unitOfWork
@@ -212,21 +209,21 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais
 
             // Assert
             resultado.EhSucesso.Should().BeTrue();
-            resultado.Instancia.Id.Should().Be(cliente.Id.Valor);
-            resultado.Instancia.Ativo.Should().BeTrue();
+            resultado.Instancia.Id.Should().Be(fornecedor.Id.Valor);
+            resultado.Instancia.Ativo.Should().BeFalse();
 
-            await _clientesRepository
+            await _fornecedoresRepository
                 .Received(1)
                 .ObterPorIdAsync(
-                    Arg.Is<Id>(id => id.Valor == cliente.Id.Valor),
+                    Arg.Is<Id>(id => id.Valor == fornecedor.Id.Valor),
                     Arg.Any<CancellationToken>());
 
-            await _clientesRepository
+            await _fornecedoresRepository
                 .Received(1)
                 .AtualizarAsync(
-                    Arg.Is<Cliente>(c =>
-                        c.Id.Valor == cliente.Id.Valor &&
-                        c.Ativo == true),
+                    Arg.Is<Fornecedor>(f =>
+                        f.Id.Valor == fornecedor.Id.Valor &&
+                        f.Ativo == false),
                     Arg.Any<CancellationToken>());
 
             await _unitOfWork

@@ -10,6 +10,11 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.Entidades
 {
     public sealed class Fornecedor : ParceiroComercial
     {
+        /// <summary>Construtor de materialização do EF Core.</summary>
+        private Fornecedor()
+        {
+        }
+
         private Fornecedor(
             Nome nome,
             Documento documento,

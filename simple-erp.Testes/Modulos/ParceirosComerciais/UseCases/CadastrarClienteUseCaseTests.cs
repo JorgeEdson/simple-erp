@@ -8,7 +8,7 @@ using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.UseCases;
 
 
-namespace simple_erp.Testes.Modulos.ParceirosComerciais
+namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 {
     public sealed class CadastrarClienteUseCaseTests
     {

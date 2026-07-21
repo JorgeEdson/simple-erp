@@ -8,35 +8,35 @@ using simple_erp.Core.Modulos.ParceirosComerciais.UseCases;
 using simple_erp.Testes.Compartilhado.Builders;
 
 
-namespace simple_erp.Testes.Modulos.ParceirosComerciais
+namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 {
-    public sealed class ListarClientesPaginadoUseCaseTests
+    public sealed class ListarFornecedoresPaginadoUseCaseTests
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IClienteRepository _clientesRepository;
+        private readonly IFornecedorRepository _fornecedoresRepository;
         private readonly ILogService _logService;
-        private readonly ListarClientesPaginadoUseCase _useCase;
+        private readonly ListarFornecedoresPaginadoUseCase _useCase;
 
-        public ListarClientesPaginadoUseCaseTests()
+        public ListarFornecedoresPaginadoUseCaseTests()
         {
             _unitOfWork = Substitute.For<IUnitOfWork>();
-            _clientesRepository = Substitute.For<IClienteRepository>();
+            _fornecedoresRepository = Substitute.For<IFornecedorRepository>();
             _logService = Substitute.For<ILogService>();
 
-            _unitOfWork.ClientesRepository.Returns(_clientesRepository);
+            _unitOfWork.FornecedoresRepository.Returns(_fornecedoresRepository);
 
             _logService
                 .IniciarEscopo(Arg.Any<Dictionary<string, object?>>())
                 .Returns(Substitute.For<IDisposable>());
 
-            _useCase = new ListarClientesPaginadoUseCase(_unitOfWork, _logService);
+            _useCase = new ListarFornecedoresPaginadoUseCase(_unitOfWork, _logService);
         }
 
         [Fact]
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoNumeroPaginaForInvalido()
         {
             // Arrange
-            var entrada = new ListarClientesPaginadoEntrada(
+            var entrada = new ListarFornecedoresPaginadoEntrada(
                 NumeroPagina: 0,
                 TamanhoPagina: 10);
 
@@ -47,12 +47,12 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais
             resultado.EhFalha.Should().BeTrue();
             resultado.Erros.Should().Contain("NUMERO_PAGINA_INVALIDO");
 
-            await _clientesRepository
+            await _fornecedoresRepository
                 .DidNotReceive()
                 .ListarPaginadoAsync(
                     Arg.Any<int>(),
                     Arg.Any<int>(),
-                    Arg.Any<ListarClientesFiltros?>(),
+                    Arg.Any<ListarFornecedoresFiltros?>(),
                     Arg.Any<CancellationToken>());
         }
 
@@ -60,7 +60,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoTamanhoPaginaForInvalido()
         {
             // Arrange
-            var entrada = new ListarClientesPaginadoEntrada(
+            var entrada = new ListarFornecedoresPaginadoEntrada(
                 NumeroPagina: 1,
                 TamanhoPagina: 0);
 
@@ -71,12 +71,12 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais
             resultado.EhFalha.Should().BeTrue();
             resultado.Erros.Should().Contain("TAMANHO_PAGINA_INVALIDO");
 
-            await _clientesRepository
+            await _fornecedoresRepository
                 .DidNotReceive()
                 .ListarPaginadoAsync(
                     Arg.Any<int>(),
                     Arg.Any<int>(),
-                    Arg.Any<ListarClientesFiltros?>(),
+                    Arg.Any<ListarFornecedoresFiltros?>(),
                     Arg.Any<CancellationToken>());
         }
 
@@ -84,7 +84,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoTamanhoPaginaExcederOLimiteMaximo()
         {
             // Arrange
-            var entrada = new ListarClientesPaginadoEntrada(
+            var entrada = new ListarFornecedoresPaginadoEntrada(
                 NumeroPagina: 1,
                 TamanhoPagina: 101);
 
@@ -95,12 +95,12 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais
             resultado.EhFalha.Should().BeTrue();
             resultado.Erros.Should().Contain("TAMANHO_PAGINA_MAXIMO_EXCEDIDO");
 
-            await _clientesRepository
+            await _fornecedoresRepository
                 .DidNotReceive()
                 .ListarPaginadoAsync(
                     Arg.Any<int>(),
                     Arg.Any<int>(),
-                    Arg.Any<ListarClientesFiltros?>(),
+                    Arg.Any<ListarFornecedoresFiltros?>(),
                     Arg.Any<CancellationToken>());
         }
 
@@ -108,7 +108,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoHouverMultiplosErrosDeValidacao()
         {
             // Arrange
-            var entrada = new ListarClientesPaginadoEntrada(
+            var entrada = new ListarFornecedoresPaginadoEntrada(
                 NumeroPagina: 0,
                 TamanhoPagina: 0);
 
@@ -120,12 +120,12 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais
             resultado.Erros.Should().Contain("NUMERO_PAGINA_INVALIDO");
             resultado.Erros.Should().Contain("TAMANHO_PAGINA_INVALIDO");
 
-            await _clientesRepository
+            await _fornecedoresRepository
                 .DidNotReceive()
                 .ListarPaginadoAsync(
                     Arg.Any<int>(),
                     Arg.Any<int>(),
-                    Arg.Any<ListarClientesFiltros?>(),
+                    Arg.Any<ListarFornecedoresFiltros?>(),
                     Arg.Any<CancellationToken>());
         }
 
@@ -135,27 +135,27 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais
             // Arrange
             var entrada = CriarEntradaValida();
 
-            _clientesRepository
+            _fornecedoresRepository
                 .ListarPaginadoAsync(
                     Arg.Any<int>(),
                     Arg.Any<int>(),
-                    Arg.Any<ListarClientesFiltros?>(),
+                    Arg.Any<ListarFornecedoresFiltros?>(),
                     Arg.Any<CancellationToken>())
-                .Returns(Resultado<ResultadoPaginado<Cliente>>.Falha("ERRO_AO_LISTAR_CLIENTES"));
+                .Returns(Resultado<ResultadoPaginado<Fornecedor>>.Falha("ERRO_AO_LISTAR_FORNECEDORES"));
 
             // Act
             var resultado = await _useCase.ExecutarAsync(entrada);
 
             // Assert
             resultado.EhFalha.Should().BeTrue();
-            resultado.Erros.Should().Contain("ERRO_AO_LISTAR_CLIENTES");
+            resultado.Erros.Should().Contain("ERRO_AO_LISTAR_FORNECEDORES");
 
-            await _clientesRepository
+            await _fornecedoresRepository
                 .Received(1)
                 .ListarPaginadoAsync(
                     entrada.NumeroPagina,
                     entrada.TamanhoPagina,
-                    Arg.Any<ListarClientesFiltros?>(),
+                    Arg.Any<ListarFornecedoresFiltros?>(),
                     Arg.Any<CancellationToken>());
         }
 
@@ -165,19 +165,19 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais
             // Arrange
             var entrada = CriarEntradaValida();
 
-            var pagina = new ResultadoPaginado<Cliente>(
-                Itens: new List<Cliente>(),
+            var pagina = new ResultadoPaginado<Fornecedor>(
+                Itens: new List<Fornecedor>(),
                 NumeroPagina: 1,
                 TamanhoPagina: 10,
                 TotalRegistros: 0);
 
-            _clientesRepository
+            _fornecedoresRepository
                 .ListarPaginadoAsync(
                     Arg.Any<int>(),
                     Arg.Any<int>(),
-                    Arg.Any<ListarClientesFiltros?>(),
+                    Arg.Any<ListarFornecedoresFiltros?>(),
                     Arg.Any<CancellationToken>())
-                .Returns(Resultado<ResultadoPaginado<Cliente>>.Sucesso(pagina));
+                .Returns(Resultado<ResultadoPaginado<Fornecedor>>.Sucesso(pagina));
 
             // Act
             var resultado = await _useCase.ExecutarAsync(entrada);
@@ -197,27 +197,27 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais
             // Arrange
             var entrada = CriarEntradaValida();
 
-            var cliente1 = ClienteBuilder.Novo()
+            var fornecedor1 = FornecedorBuilder.Novo()
                 .ComId(1001)
                 .Criar();
 
-            var cliente2 = ClienteBuilder.Novo()
+            var fornecedor2 = FornecedorBuilder.Novo()
                 .ComId(1002)
                 .Criar();
 
-            var pagina = new ResultadoPaginado<Cliente>(
-                Itens: new List<Cliente> { cliente1, cliente2 },
+            var pagina = new ResultadoPaginado<Fornecedor>(
+                Itens: new List<Fornecedor> { fornecedor1, fornecedor2 },
                 NumeroPagina: 1,
                 TamanhoPagina: 10,
                 TotalRegistros: 2);
 
-            _clientesRepository
+            _fornecedoresRepository
                 .ListarPaginadoAsync(
                     Arg.Any<int>(),
                     Arg.Any<int>(),
-                    Arg.Any<ListarClientesFiltros?>(),
+                    Arg.Any<ListarFornecedoresFiltros?>(),
                     Arg.Any<CancellationToken>())
-                .Returns(Resultado<ResultadoPaginado<Cliente>>.Sucesso(pagina));
+                .Returns(Resultado<ResultadoPaginado<Fornecedor>>.Sucesso(pagina));
 
             // Act
             var resultado = await _useCase.ExecutarAsync(entrada);
@@ -231,51 +231,51 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais
             resultado.Instancia.Itens.Should().HaveCount(2);
 
             var item1 = resultado.Instancia.Itens.ElementAt(0);
-            item1.Id.Should().Be(cliente1.Id.Valor);
-            item1.Nome.Should().Be(cliente1.Nome.Valor);
-            item1.Documento.Should().Be(cliente1.Documento.Valor);
-            item1.Email.Should().Be(cliente1.Email.Valor);
-            item1.Ativo.Should().Be(cliente1.Ativo);
-            item1.Cidade.Should().Be(cliente1.Endereco.Cidade);
-            item1.Estado.Should().Be(cliente1.Endereco.Estado);
+            item1.Id.Should().Be(fornecedor1.Id.Valor);
+            item1.Nome.Should().Be(fornecedor1.Nome.Valor);
+            item1.Documento.Should().Be(fornecedor1.Documento.Valor);
+            item1.Email.Should().Be(fornecedor1.Email.Valor);
+            item1.Ativo.Should().Be(fornecedor1.Ativo);
+            item1.Cidade.Should().Be(fornecedor1.Endereco.Cidade);
+            item1.Estado.Should().Be(fornecedor1.Endereco.Estado);
 
             var item2 = resultado.Instancia.Itens.ElementAt(1);
-            item2.Id.Should().Be(cliente2.Id.Valor);
-            item2.Nome.Should().Be(cliente2.Nome.Valor);
-            item2.Documento.Should().Be(cliente2.Documento.Valor);
-            item2.Email.Should().Be(cliente2.Email.Valor);
-            item2.Ativo.Should().Be(cliente2.Ativo);
-            item2.Cidade.Should().Be(cliente2.Endereco.Cidade);
-            item2.Estado.Should().Be(cliente2.Endereco.Estado);
+            item2.Id.Should().Be(fornecedor2.Id.Valor);
+            item2.Nome.Should().Be(fornecedor2.Nome.Valor);
+            item2.Documento.Should().Be(fornecedor2.Documento.Valor);
+            item2.Email.Should().Be(fornecedor2.Email.Valor);
+            item2.Ativo.Should().Be(fornecedor2.Ativo);
+            item2.Cidade.Should().Be(fornecedor2.Endereco.Cidade);
+            item2.Estado.Should().Be(fornecedor2.Endereco.Estado);
         }
 
         [Fact]
         public async Task ExecutarAsync_DeveEnviarFiltrosCorretamenteParaORepositorio()
         {
             // Arrange
-            var entrada = new ListarClientesPaginadoEntrada(
+            var entrada = new ListarFornecedoresPaginadoEntrada(
                 NumeroPagina: 2,
                 TamanhoPagina: 20,
-                Nome: "Jorge",
+                Nome: "Fornecedor XPTO",
                 Documento: "12345678909",
-                Email: "jorge@teste.com",
+                Email: "fornecedor@teste.com",
                 Ativo: true,
                 Cidade: "Fortaleza",
                 Estado: "CE");
 
-            var pagina = new ResultadoPaginado<Cliente>(
-                Itens: new List<Cliente>(),
+            var pagina = new ResultadoPaginado<Fornecedor>(
+                Itens: new List<Fornecedor>(),
                 NumeroPagina: 2,
                 TamanhoPagina: 20,
                 TotalRegistros: 0);
 
-            _clientesRepository
+            _fornecedoresRepository
                 .ListarPaginadoAsync(
                     Arg.Any<int>(),
                     Arg.Any<int>(),
-                    Arg.Any<ListarClientesFiltros?>(),
+                    Arg.Any<ListarFornecedoresFiltros?>(),
                     Arg.Any<CancellationToken>())
-                .Returns(Resultado<ResultadoPaginado<Cliente>>.Sucesso(pagina));
+                .Returns(Resultado<ResultadoPaginado<Fornecedor>>.Sucesso(pagina));
 
             // Act
             var resultado = await _useCase.ExecutarAsync(entrada);
@@ -283,26 +283,26 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais
             // Assert
             resultado.EhSucesso.Should().BeTrue();
 
-            await _clientesRepository
+            await _fornecedoresRepository
                 .Received(1)
                 .ListarPaginadoAsync(
                     2,
                     20,
-                    Arg.Is<ListarClientesFiltros>(f =>
-                        f.Nome == "Jorge" &&
+                    Arg.Is<ListarFornecedoresFiltros>(f =>
+                        f.Nome == "Fornecedor XPTO" &&
                         f.Documento == "12345678909" &&
-                        f.Email == "jorge@teste.com" &&
+                        f.Email == "fornecedor@teste.com" &&
                         f.Ativo == true &&
                         f.Cidade == "Fortaleza" &&
                         f.Estado == "CE"),
                     Arg.Any<CancellationToken>());
         }
 
-        private static ListarClientesPaginadoEntrada CriarEntradaValida(
+        private static ListarFornecedoresPaginadoEntrada CriarEntradaValida(
             int numeroPagina = 1,
             int tamanhoPagina = 10)
         {
-            return new ListarClientesPaginadoEntrada(
+            return new ListarFornecedoresPaginadoEntrada(
                 NumeroPagina: numeroPagina,
                 TamanhoPagina: tamanhoPagina);
         }

@@ -89,12 +89,14 @@ namespace simple_erp.Core.Compartilhado.Base
                 if (EhFalha)
                     throw new InvalidOperationException("Não é possível acessar a instância de um resultado com falha.");
 
-                if (_instancia is null)
-                    throw new InvalidOperationException("A instância está nula.");
-
-                return _instancia;
+                // Sucesso com instância nula é um estado válido: é o contrato de
+                // "não encontrado" dos repositórios (ObterPorIdAsync retorna
+                // Sucesso(null) e o use case decide o erro de negócio, ex.:
+                // CLIENTE_NAO_ENCONTRADO). Os use cases fazem `if (x is null)`
+                // logo após o acesso — lançar aqui tornaria esse caminho inalcançável.
+                return _instancia!;
             }
-        }                
+        }
 
         public Resultado<object> ComFalha()
         {
