@@ -54,10 +54,10 @@ namespace simple_erp.Api.Controllers
         {
             // Os enums entram como texto para o contrato ficar legível e estável.
             // A conversão falha antes do use case, com o mesmo formato de erro do domínio.
-            if (!TentarConverter<TipoDeMovimentacao>(tipo, "TIPO_MOVIMENTACAO_INVALIDO", out var tipoConvertido, out var erroTipo))
+            if (!TentarConverterEnum<TipoDeMovimentacao>(tipo, "TIPO_MOVIMENTACAO_INVALIDO", out var tipoConvertido, out var erroTipo))
                 return BadRequest(erroTipo);
 
-            if (!TentarConverter<TipoOrigemMovimentacao>(origemTipo, "ORIGEM_TIPO_INVALIDO", out var origemConvertida, out var erroOrigem))
+            if (!TentarConverterEnum<TipoOrigemMovimentacao>(origemTipo, "ORIGEM_TIPO_INVALIDO", out var origemConvertida, out var erroOrigem))
                 return BadRequest(erroOrigem);
 
             var entrada = new ConsultarExtratoDeMovimentacoesPaginadoEntrada(
@@ -71,36 +71,6 @@ namespace simple_erp.Api.Controllers
 
             var resultado = await _dispatcher.EnviarAsync(entrada, cancellationToken);
             return Responder(resultado);
-        }
-
-        /// <summary>
-        /// Converte o filtro textual no enum correspondente. Ausente (null/vazio) é
-        /// filtro não informado, não erro. Valor numérico é recusado: aceitar "5" faria
-        /// o contrato depender da ordem de declaração do enum.
-        /// </summary>
-        private static bool TentarConverter<TEnum>(
-            string? valor,
-            string codigoDeErro,
-            out TEnum? convertido,
-            out RespostaDeErro? erro)
-            where TEnum : struct, Enum
-        {
-            convertido = null;
-            erro = null;
-
-            if (string.IsNullOrWhiteSpace(valor))
-                return true;
-
-            var ehNumero = long.TryParse(valor, out _);
-
-            if (!ehNumero && Enum.TryParse<TEnum>(valor, ignoreCase: true, out var resultado))
-            {
-                convertido = resultado;
-                return true;
-            }
-
-            erro = new RespostaDeErro(new[] { codigoDeErro });
-            return false;
         }
     }
 }
