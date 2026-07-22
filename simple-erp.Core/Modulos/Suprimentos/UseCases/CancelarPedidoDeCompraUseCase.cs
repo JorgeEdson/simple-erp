@@ -10,7 +10,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
     {
     }
 
-    public record CancelarPedidoDeCompraEntrada(long Id);
+    public record CancelarPedidoDeCompraEntrada(long Id) : IRequisicao<CancelarPedidoDeCompraSaida>;
 
     public record CancelarPedidoDeCompraSaida(
         long Id,

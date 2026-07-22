@@ -19,7 +19,7 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
 
     public record DefinirComposicaoDeProdutoEntrada(
         long IdProdutoFabricado,
-        IReadOnlyCollection<ItemDeComposicaoEntrada> Itens);
+        IReadOnlyCollection<ItemDeComposicaoEntrada> Itens) : IRequisicao<DefinirComposicaoDeProdutoSaida>;
 
     public record ItemDeComposicaoSaida(
         long IdInsumo,

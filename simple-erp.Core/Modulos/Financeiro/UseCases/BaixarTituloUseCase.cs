@@ -11,7 +11,7 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
     {
     }
 
-    public record BaixarTituloEntrada(long Id, decimal Valor);
+    public record BaixarTituloEntrada(long Id, decimal Valor) : IRequisicao<BaixarTituloSaida>;
 
     public record BaixarTituloSaida(
         long Id,

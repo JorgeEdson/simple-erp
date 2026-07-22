@@ -16,7 +16,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
         long? IdFornecedor = null,
         StatusPedidoDeCompra? Status = null,
         DateTime? DataInicio = null,
-        DateTime? DataFim = null);
+        DateTime? DataFim = null) : IRequisicao<ListarPedidosDeCompraPaginadoSaida>;
 
     public sealed record ListarPedidosDeCompraPaginadoSaida(
         int NumeroPagina,

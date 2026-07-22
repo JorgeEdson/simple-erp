@@ -21,7 +21,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
     public record CriarPedidoDeVendaEntrada(
         long IdCliente,
         IReadOnlyCollection<ItemPedidoDeVendaEntrada> Itens,
-        decimal DescontoDoPedido = 0m);
+        decimal DescontoDoPedido = 0m) : IRequisicao<CriarPedidoDeVendaSaida>;
 
     public record ItemPedidoDeVendaSaida(
         long IdProduto,

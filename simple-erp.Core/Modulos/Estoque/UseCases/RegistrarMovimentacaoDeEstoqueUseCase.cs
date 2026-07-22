@@ -18,7 +18,7 @@ namespace simple_erp.Core.Modulos.Estoque.UseCases
         decimal Quantidade,
         TipoOrigemMovimentacao OrigemTipo,
         long? OrigemIdReferencia = null,
-        bool PermitirSaldoNegativo = false);
+        bool PermitirSaldoNegativo = false) : IRequisicao<RegistrarMovimentacaoDeEstoqueSaida>;
 
     public record RegistrarMovimentacaoDeEstoqueSaida(
         long IdMovimentacao,

@@ -13,7 +13,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
 
     public record RemoverItemDoPedidoDeCompraEntrada(
         long IdPedidoDeCompra,
-        long IdProduto);
+        long IdProduto) : IRequisicao<RemoverItemDoPedidoDeCompraSaida>;
 
     public record RemoverItemDoPedidoDeCompraSaida(
         long Id,

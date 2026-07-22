@@ -16,7 +16,7 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
         long IdFornecedor,
         decimal Valor,
         DateTime DataVencimento,
-        long? IdPedidoDeCompra = null);
+        long? IdPedidoDeCompra = null) : IRequisicao<EmitirTituloAPagarSaida>;
 
     public record EmitirTituloAPagarSaida(
         long Id,

@@ -16,7 +16,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
         long? IdCliente = null,
         StatusPedidoDeVenda? Status = null,
         DateTime? DataInicio = null,
-        DateTime? DataFim = null);
+        DateTime? DataFim = null) : IRequisicao<ListarPedidosDeVendaPaginadoSaida>;
 
     public sealed record ListarPedidosDeVendaPaginadoSaida(
         int NumeroPagina,

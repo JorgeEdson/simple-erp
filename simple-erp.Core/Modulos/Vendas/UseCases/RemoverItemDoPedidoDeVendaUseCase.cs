@@ -13,7 +13,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
 
     public record RemoverItemDoPedidoDeVendaEntrada(
         long IdPedidoDeVenda,
-        long IdProduto);
+        long IdProduto) : IRequisicao<RemoverItemDoPedidoDeVendaSaida>;
 
     public record RemoverItemDoPedidoDeVendaSaida(
         long Id,

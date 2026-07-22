@@ -19,7 +19,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
 
     public record CriarPedidoDeCompraEntrada(
         long IdFornecedor,
-        IReadOnlyCollection<ItemPedidoDeCompraEntrada> Itens);
+        IReadOnlyCollection<ItemPedidoDeCompraEntrada> Itens) : IRequisicao<CriarPedidoDeCompraSaida>;
 
     public record ItemPedidoDeCompraSaida(
         long IdProduto,

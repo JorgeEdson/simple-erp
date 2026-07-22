@@ -10,7 +10,7 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
     {
     }
 
-    public record ObterTituloPorIdEntrada(long Id);
+    public record ObterTituloPorIdEntrada(long Id) : IRequisicao<ObterTituloPorIdSaida>;
 
     public record BaixaDoTituloSaida(
         decimal Montante,

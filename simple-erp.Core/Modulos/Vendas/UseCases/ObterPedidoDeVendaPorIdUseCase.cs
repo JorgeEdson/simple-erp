@@ -10,7 +10,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
     {
     }
 
-    public record ObterPedidoDeVendaPorIdEntrada(long Id);
+    public record ObterPedidoDeVendaPorIdEntrada(long Id) : IRequisicao<ObterPedidoDeVendaPorIdSaida>;
 
     public record ObterPedidoDeVendaPorIdItemSaida(
         long IdProduto,

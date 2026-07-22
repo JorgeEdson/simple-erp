@@ -17,7 +17,7 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
         StatusTitulo? Status = null,
         long? IdParceiro = null,
         DateTime? VencimentoInicio = null,
-        DateTime? VencimentoFim = null);
+        DateTime? VencimentoFim = null) : IRequisicao<ListarTitulosPaginadoSaida>;
 
     public sealed record ListarTitulosPaginadoSaida(
         int NumeroPagina,

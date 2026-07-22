@@ -10,7 +10,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
     {
     }
 
-    public record AprovarPedidoDeCompraEntrada(long Id);
+    public record AprovarPedidoDeCompraEntrada(long Id) : IRequisicao<AprovarPedidoDeCompraSaida>;
 
     public record AprovarPedidoDeCompraSaida(
         long Id,

@@ -17,7 +17,7 @@ namespace simple_erp.Core.Modulos.Estoque.UseCases
         TipoDeMovimentacao? Tipo = null,
         TipoOrigemMovimentacao? OrigemTipo = null,
         DateTime? DataInicio = null,
-        DateTime? DataFim = null);
+        DateTime? DataFim = null) : IRequisicao<ConsultarExtratoDeMovimentacoesPaginadoSaida>;
 
     public sealed record ConsultarExtratoDeMovimentacoesPaginadoSaida(
         int NumeroPagina,

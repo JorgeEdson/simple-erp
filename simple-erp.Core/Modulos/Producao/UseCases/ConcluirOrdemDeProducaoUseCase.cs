@@ -11,7 +11,7 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
     {
     }
 
-    public record ConcluirOrdemDeProducaoEntrada(long Id);
+    public record ConcluirOrdemDeProducaoEntrada(long Id) : IRequisicao<ConcluirOrdemDeProducaoSaida>;
 
     public record ConcluirOrdemDeProducaoSaida(
         long Id,

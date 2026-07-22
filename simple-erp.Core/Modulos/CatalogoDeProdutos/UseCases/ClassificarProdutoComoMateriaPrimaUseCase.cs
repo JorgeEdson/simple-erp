@@ -10,7 +10,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
     {
     }
 
-    public sealed record ClassificarProdutoComoMateriaPrimaEntrada(long Id);
+    public sealed record ClassificarProdutoComoMateriaPrimaEntrada(long Id) : IRequisicao<ClassificarProdutoComoMateriaPrimaSaida>;
 
     public sealed record ClassificarProdutoComoMateriaPrimaSaida(
         long Id,

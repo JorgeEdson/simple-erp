@@ -11,7 +11,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
     {
     }
 
-    public record CancelarPedidoDeVendaEntrada(long Id, string Motivo);
+    public record CancelarPedidoDeVendaEntrada(long Id, string Motivo) : IRequisicao<CancelarPedidoDeVendaSaida>;
 
     public record CancelarPedidoDeVendaSaida(
         long Id,

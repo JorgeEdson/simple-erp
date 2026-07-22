@@ -10,7 +10,7 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
     {
     }
 
-    public record ObterComposicaoAtivaDeProdutoEntrada(long IdProdutoFabricado);
+    public record ObterComposicaoAtivaDeProdutoEntrada(long IdProdutoFabricado) : IRequisicao<ObterComposicaoAtivaDeProdutoSaida>;
 
     public record ComposicaoAtivaItemSaida(
         long IdInsumo,

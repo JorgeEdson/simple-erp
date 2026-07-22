@@ -10,7 +10,7 @@ namespace simple_erp.Core.Modulos.Estoque.UseCases
     {
     }
 
-    public record ConsultarSaldoDeEstoqueEntrada(long IdProduto);
+    public record ConsultarSaldoDeEstoqueEntrada(long IdProduto) : IRequisicao<ConsultarSaldoDeEstoqueSaida>;
 
     public record ConsultarSaldoDeEstoqueSaida(
         long IdProduto,

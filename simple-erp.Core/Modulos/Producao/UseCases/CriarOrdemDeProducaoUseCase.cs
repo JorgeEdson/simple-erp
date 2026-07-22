@@ -15,7 +15,7 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
 
     public record CriarOrdemDeProducaoEntrada(
         long IdProdutoFabricado,
-        decimal QuantidadeAProduzir);
+        decimal QuantidadeAProduzir) : IRequisicao<CriarOrdemDeProducaoSaida>;
 
     public record NecessidadeDeMateriaPrimaSaida(
         long IdInsumo,

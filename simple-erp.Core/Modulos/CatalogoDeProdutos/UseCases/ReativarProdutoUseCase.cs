@@ -9,7 +9,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
     {
     }
 
-    public sealed record ReativarProdutoEntrada(long Id);
+    public sealed record ReativarProdutoEntrada(long Id) : IRequisicao<ReativarProdutoSaida>;
 
     public sealed record ReativarProdutoSaida(
        long Id,

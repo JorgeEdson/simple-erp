@@ -14,7 +14,7 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
         int NumeroPagina,
         int TamanhoPagina,
         long IdProdutoFabricado,
-        bool? ApenasAtivas = null);
+        bool? ApenasAtivas = null) : IRequisicao<ListarVersoesDeComposicaoPaginadoSaida>;
 
     public sealed record ListarVersoesDeComposicaoPaginadoSaida(
         int NumeroPagina,

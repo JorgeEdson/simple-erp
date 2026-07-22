@@ -11,7 +11,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
     {
     }
 
-    public record AprovarPedidoDeVendaEntrada(long Id);
+    public record AprovarPedidoDeVendaEntrada(long Id) : IRequisicao<AprovarPedidoDeVendaSaida>;
 
     public record AprovarPedidoDeVendaSaida(
         long Id,

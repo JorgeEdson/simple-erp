@@ -16,7 +16,7 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
         long? IdProdutoFabricado = null,
         StatusOrdemDeProducao? Status = null,
         DateTime? DataInicio = null,
-        DateTime? DataFim = null);
+        DateTime? DataFim = null) : IRequisicao<ListarOrdensDeProducaoPaginadoSaida>;
 
     public sealed record ListarOrdensDeProducaoPaginadoSaida(
         int NumeroPagina,

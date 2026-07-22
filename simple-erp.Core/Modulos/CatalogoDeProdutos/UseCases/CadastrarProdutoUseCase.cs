@@ -16,7 +16,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
         string Descricao,
         string UnidadeDeMedida,
         string? Classificacao = null
-    );
+    ) : IRequisicao<CadastrarProdutoSaida>;
 
     public record CadastrarProdutoSaida(
         long Id,

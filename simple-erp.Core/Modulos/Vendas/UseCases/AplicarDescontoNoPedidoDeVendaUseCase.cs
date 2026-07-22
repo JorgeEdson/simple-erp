@@ -14,7 +14,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
 
     public record AplicarDescontoNoPedidoDeVendaEntrada(
         long IdPedidoDeVenda,
-        decimal Desconto);
+        decimal Desconto) : IRequisicao<AplicarDescontoNoPedidoDeVendaSaida>;
 
     public record AplicarDescontoNoPedidoDeVendaSaida(
         long Id,

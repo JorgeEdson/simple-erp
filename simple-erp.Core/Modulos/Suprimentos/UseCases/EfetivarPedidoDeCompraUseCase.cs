@@ -10,7 +10,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
     {
     }
 
-    public record EfetivarPedidoDeCompraEntrada(long Id);
+    public record EfetivarPedidoDeCompraEntrada(long Id) : IRequisicao<EfetivarPedidoDeCompraSaida>;
 
     public record EfetivarPedidoDeCompraSaida(
         long Id,

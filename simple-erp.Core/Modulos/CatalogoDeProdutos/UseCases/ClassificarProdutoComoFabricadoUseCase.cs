@@ -10,7 +10,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
     {
     }
 
-    public sealed record ClassificarProdutoComoFabricadoEntrada(long Id);
+    public sealed record ClassificarProdutoComoFabricadoEntrada(long Id) : IRequisicao<ClassificarProdutoComoFabricadoSaida>;
 
     public sealed record ClassificarProdutoComoFabricadoSaida(
         long Id,

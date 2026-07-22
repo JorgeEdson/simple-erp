@@ -17,7 +17,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
         string? Descricao = null,
         string? UnidadeDeMedida = null,
         string? Classificacao = null,
-        bool? Ativo = null);
+        bool? Ativo = null) : IRequisicao<ListarProdutosPaginadoSaida>;
 
     public sealed record ListarProdutosPaginadoSaida(
        int NumeroPagina,

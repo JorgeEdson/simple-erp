@@ -15,7 +15,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
         long IdPedidoDeCompra,
         long IdProduto,
         decimal Quantidade,
-        decimal CustoUnitario);
+        decimal CustoUnitario) : IRequisicao<AdicionarItemAoPedidoDeCompraSaida>;
 
     public record AdicionarItemAoPedidoDeCompraSaida(
         long Id,

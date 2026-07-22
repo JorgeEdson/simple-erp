@@ -10,7 +10,7 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
     {
     }
 
-    public record CancelarOrdemDeProducaoEntrada(long Id);
+    public record CancelarOrdemDeProducaoEntrada(long Id) : IRequisicao<CancelarOrdemDeProducaoSaida>;
 
     public record CancelarOrdemDeProducaoSaida(
         long Id,

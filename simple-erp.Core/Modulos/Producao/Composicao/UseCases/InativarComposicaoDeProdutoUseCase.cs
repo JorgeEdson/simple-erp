@@ -10,7 +10,7 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
     {
     }
 
-    public record InativarComposicaoDeProdutoEntrada(long Id);
+    public record InativarComposicaoDeProdutoEntrada(long Id) : IRequisicao<InativarComposicaoDeProdutoSaida>;
 
     public record InativarComposicaoDeProdutoSaida(
         long Id,

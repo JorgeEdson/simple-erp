@@ -10,7 +10,7 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
     {
     }
 
-    public record CancelarTituloEntrada(long Id);
+    public record CancelarTituloEntrada(long Id) : IRequisicao<CancelarTituloSaida>;
 
     public record CancelarTituloSaida(
         long Id,

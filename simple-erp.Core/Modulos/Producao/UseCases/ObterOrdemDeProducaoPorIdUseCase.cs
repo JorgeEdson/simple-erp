@@ -10,7 +10,7 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
     {
     }
 
-    public record ObterOrdemDeProducaoPorIdEntrada(long Id);
+    public record ObterOrdemDeProducaoPorIdEntrada(long Id) : IRequisicao<ObterOrdemDeProducaoPorIdSaida>;
 
     public record OrdemDeProducaoNecessidadeSaida(
         long IdInsumo,

@@ -16,7 +16,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
         string Codigo,
         string Descricao,
         string UnidadeDeMedida
-    );
+    ) : IRequisicao<EditarProdutoSaida>;
 
     public record EditarProdutoSaida(
         long Id,
