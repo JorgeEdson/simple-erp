@@ -38,7 +38,7 @@ namespace simple_erp.Core.Compartilhado.Eventos
 
                 if (manipuladores.Count == 0)
                 {
-                    _logService.RegistrarLogDebug(new RegistroDeLog(
+                    _logService.RegistrarLogInformation(new RegistroDeLog(
                         Mensagem: "Evento de domínio sem handlers registrados.",
                         Propriedades: new Dictionary<string, object?>
                         {
