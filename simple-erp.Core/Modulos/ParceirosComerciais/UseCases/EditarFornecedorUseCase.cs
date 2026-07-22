@@ -24,7 +24,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
         string Estado,
         string Cep,
         string Pais
-    );
+    ) : IRequisicao<EditarFornecedorSaida>;
 
     public record EditarFornecedorSaida(
         long Id,

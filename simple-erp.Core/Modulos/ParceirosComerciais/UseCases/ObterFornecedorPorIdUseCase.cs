@@ -10,7 +10,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
     {
     }
 
-    public record ObterFornecedorPorIdEntrada(long Id);
+    public record ObterFornecedorPorIdEntrada(long Id) : IRequisicao<ObterFornecedorPorIdSaida>;
 
     public record ObterFornecedorPorIdSaida(
         long Id,

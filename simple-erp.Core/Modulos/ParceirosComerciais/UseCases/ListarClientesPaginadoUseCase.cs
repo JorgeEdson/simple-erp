@@ -19,7 +19,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
         string? Cidade = null,
         string? Estado = null,
         DateTime? DataCriacaoInicialUtc = null,
-        DateTime? DataCriacaoFinalUtc = null);
+        DateTime? DataCriacaoFinalUtc = null) : IRequisicao<ListarClientesPaginadoSaida>;
 
     public sealed record ListarClientesPaginadoSaida(
        int NumeroPagina,

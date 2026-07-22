@@ -9,7 +9,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
     {
     }
 
-    public sealed record ObterClientePorIdEntrada(long Id);
+    public sealed record ObterClientePorIdEntrada(long Id) : IRequisicao<ObterClientePorIdSaida>;
 
     public sealed record ObterClientePorIdSaida(
         long Id,

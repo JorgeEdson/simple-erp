@@ -24,7 +24,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
        string Estado,
        string Cep,
        string Pais
-   );
+   ) : IRequisicao<CadastrarClienteSaida>;
 
     public record CadastrarClienteSaida(
         long Id,

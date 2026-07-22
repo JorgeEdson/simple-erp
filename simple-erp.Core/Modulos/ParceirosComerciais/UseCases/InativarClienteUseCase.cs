@@ -9,7 +9,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
     {
     }
 
-    public record InativarClienteEntrada(long Id);
+    public record InativarClienteEntrada(long Id) : IRequisicao<InativarClienteSaida>;
 
     public record InativarClienteSaida(
        long Id,

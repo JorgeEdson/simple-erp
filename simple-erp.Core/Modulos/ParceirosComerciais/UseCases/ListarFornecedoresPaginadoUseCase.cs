@@ -17,7 +17,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
         string? Email = null,
         bool? Ativo = null,
         string? Cidade = null,
-        string? Estado = null);
+        string? Estado = null) : IRequisicao<ListarFornecedoresPaginadoSaida>;
 
     public sealed record ListarFornecedoresPaginadoSaida(
         int NumeroPagina,

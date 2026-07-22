@@ -1,7 +1,12 @@
-# Postgres local para desenvolvimento do Simple ERP.
-# Uso: docker compose up -d
-# Connection string padrão (igual à SimpleErpDbContextFactory):
-#   Host=localhost;Port=5432;Database=simple_erp;Username=simple_erp;Password=simple_erp
+# Simple ERP — ambiente local completo (API + Postgres).
+#
+# Uso:
+#   docker compose up -d --build      sobe tudo (build da API na primeira vez)
+#   docker compose logs -f api        acompanha o log da API (migrations, requisições)
+#   docker compose down               derruba os containers (mantém os dados)
+#   docker compose down -v            derruba e APAGA o volume do banco
+#
+# Depois de subir: http://localhost:8080/swagger
 services:
   postgres:
     image: postgres:17-alpine
@@ -11,6 +16,8 @@ services:
       POSTGRES_USER: simple_erp
       POSTGRES_PASSWORD: simple_erp
     ports:
+      # Exposto no host para você inspecionar o banco (DBeaver/pgAdmin) e para o
+      # 'dotnet ef' rodando fora do container.
       - "5432:5432"
     volumes:
       - simple-erp-pgdata:/var/lib/postgresql/data
@@ -19,6 +26,26 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  api:
+    build:
+      # O contexto é a raiz da solução: a API precisa enxergar Core e Infraestrutura.
+      context: .
+      dockerfile: simple-erp.Api/Dockerfile
+    container_name: simple-erp-api
+    depends_on:
+      postgres:
+        # Só inicia depois que o healthcheck do Postgres passar. Ainda assim a API
+        # tem retry ao aplicar as migrations, para cobrir a janela de corrida.
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      # Dentro da rede do compose, o banco é alcançado pelo NOME DO SERVIÇO
+      # ('postgres'), não por localhost. Esta variável sobrescreve o valor do
+      # appsettings.json (o '__' representa o ':' da configuração hierárquica).
+      ConnectionStrings__SimpleErp: "Host=postgres;Port=5432;Database=simple_erp;Username=simple_erp;Password=simple_erp"
+    ports:
+      - "8080:8080"
 
 volumes:
   simple-erp-pgdata:

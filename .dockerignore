@@ -1,0 +1,26 @@
+# Mantém o contexto de build enxuto e evita que artefatos locais (compilados na
+# sua máquina, com caminhos e runtime do Windows) vazem para dentro da imagem.
+**/bin/
+**/obj/
+**/out/
+
+# Ambiente de desenvolvimento / IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Controle de versão e CI
+.git/
+.gitignore
+.gitattributes
+.github/
+
+# Projeto de testes não faz parte da imagem da API
+simple-erp.Testes/
+
+# Arquivos de infraestrutura e documentação
+docker-compose*.yml
+**/Dockerfile
+*.md

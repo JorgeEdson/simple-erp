@@ -9,7 +9,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
     {
     }
 
-    public sealed record ReativarClienteEntrada(long Id);
+    public sealed record ReativarClienteEntrada(long Id) : IRequisicao<ReativarClienteSaida>;
 
     public sealed record ReativarClienteSaida(
        long Id,

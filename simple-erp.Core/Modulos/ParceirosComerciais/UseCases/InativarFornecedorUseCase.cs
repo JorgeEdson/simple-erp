@@ -10,7 +10,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
     {
     }
 
-    public record InativarFornecedorEntrada(long Id);
+    public record InativarFornecedorEntrada(long Id) : IRequisicao<InativarFornecedorSaida>;
 
     public record InativarFornecedorSaida(
         long Id,
