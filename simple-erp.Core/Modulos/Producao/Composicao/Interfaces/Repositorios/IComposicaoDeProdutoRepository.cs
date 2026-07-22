@@ -1,11 +1,12 @@
 using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Producao.Composicao.Entidades;
 using simple_erp.Core.Modulos.Producao.Composicao.UseCases;
 
 namespace simple_erp.Core.Modulos.Producao.Composicao.Interfaces.Repositorios
 {
-    public interface IComposicaoDeProdutoRepository
+    public interface IComposicaoDeProdutoRepository : IRepositorio
     {
         Task<Resultado<bool>> AdicionarAsync(ComposicaoDeProduto composicao, CancellationToken cancellationToken = default);
         Task<Resultado<bool>> AtualizarAsync(ComposicaoDeProduto composicao, CancellationToken cancellationToken = default);

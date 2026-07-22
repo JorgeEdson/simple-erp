@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -19,6 +20,9 @@ namespace simple_erp.Infraestrutura.Migrations
 
             migrationBuilder.EnsureSchema(
                 name: "estoque");
+
+            migrationBuilder.EnsureSchema(
+                name: "eventos");
 
             migrationBuilder.EnsureSchema(
                 name: "suprimentos");
@@ -126,6 +130,29 @@ namespace simple_erp.Infraestrutura.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_ordens_de_producao", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "outbox",
+                schema: "eventos",
+                columns: table => new
+                {
+                    id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    id_evento = table.Column<long>(type: "bigint", nullable: false),
+                    nome_do_evento = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    tipo_do_evento = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    id_agregado_origem = table.Column<long>(type: "bigint", nullable: false),
+                    conteudo = table.Column<string>(type: "jsonb", nullable: false),
+                    ocorrido_em_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    criado_em_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    processado_em_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    tentativas = table.Column<int>(type: "integer", nullable: false),
+                    ultimo_erro = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_outbox", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -255,6 +282,19 @@ namespace simple_erp.Infraestrutura.Migrations
                 columns: new[] { "id_produto_fabricado", "data_criacao_utc" });
 
             migrationBuilder.CreateIndex(
+                name: "ix_outbox_evento_agregado",
+                schema: "eventos",
+                table: "outbox",
+                columns: new[] { "nome_do_evento", "id_agregado_origem" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_outbox_pendentes",
+                schema: "eventos",
+                table: "outbox",
+                column: "criado_em_utc",
+                filter: "processado_em_utc IS NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_pedidos_de_compra_fornecedor_data",
                 schema: "suprimentos",
                 table: "pedidos_de_compra",
@@ -316,6 +356,10 @@ namespace simple_erp.Infraestrutura.Migrations
             migrationBuilder.DropTable(
                 name: "ordens_de_producao",
                 schema: "producao");
+
+            migrationBuilder.DropTable(
+                name: "outbox",
+                schema: "eventos");
 
             migrationBuilder.DropTable(
                 name: "pedidos_de_compra",

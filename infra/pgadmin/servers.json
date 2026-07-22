@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Simple ERP (Postgres)",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "simple_erp",
+      "Username": "simple_erp",
+      "SSLMode": "prefer",
+      "Comment": "Host 'postgres' e a porta 5432 sao os do container: o pgAdmin fala com o banco pela rede interna do compose, nao pela porta publicada no host."
+    }
+  }
+}

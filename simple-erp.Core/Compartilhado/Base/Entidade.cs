@@ -3,7 +3,7 @@ using simple_erp.Core.Compartilhado.ObjetosDeValor;
 
 namespace simple_erp.Core.Compartilhado.Base
 {
-    public abstract class Entidade<TEntidade>
+    public abstract class Entidade<TEntidade> : IPossuiEventosDeDominio
     {
         private readonly List<EventoDeDominio> _eventosDeDominio = new();
         protected Entidade(

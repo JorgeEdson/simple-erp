@@ -1,4 +1,5 @@
-﻿using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
 using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
@@ -6,7 +7,7 @@ using simple_erp.Core.Modulos.ParceirosComerciais.UseCases;
 
 namespace simple_erp.Core.Modulos.ParceirosComerciais.Interfaces.Repositorios
 {
-    public interface IFornecedorRepository
+    public interface IFornecedorRepository : IRepositorio
     {
         Task<Resultado<bool>> AdicionarAsync(Fornecedor fornecedor, CancellationToken cancellationToken = default);
         Task<Resultado<bool>> AtualizarAsync(Fornecedor fornecedor, CancellationToken cancellationToken = default);

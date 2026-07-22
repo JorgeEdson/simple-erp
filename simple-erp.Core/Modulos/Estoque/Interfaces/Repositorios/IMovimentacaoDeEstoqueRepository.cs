@@ -1,10 +1,11 @@
 using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Modulos.Estoque.Entidades;
 using simple_erp.Core.Modulos.Estoque.UseCases;
 
 namespace simple_erp.Core.Modulos.Estoque.Interfaces.Repositorios
 {
-    public interface IMovimentacaoDeEstoqueRepository
+    public interface IMovimentacaoDeEstoqueRepository : IRepositorio
     {
         Task<Resultado<bool>> AdicionarAsync(MovimentacaoDeEstoque movimentacao, CancellationToken cancellationToken = default);
 

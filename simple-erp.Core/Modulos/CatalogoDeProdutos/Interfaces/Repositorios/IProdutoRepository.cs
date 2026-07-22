@@ -1,4 +1,5 @@
 using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Entidades;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.ObjetosDeValor;
@@ -6,7 +7,7 @@ using simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases;
 
 namespace simple_erp.Core.Modulos.CatalogoDeProdutos.Interfaces.Repositorios
 {
-    public interface IProdutoRepository
+    public interface IProdutoRepository : IRepositorio
     {
         Task<Resultado<bool>> AdicionarAsync(Produto produto, CancellationToken cancellationToken = default);
         Task<Resultado<bool>> AtualizarAsync(Produto produto, CancellationToken cancellationToken = default);

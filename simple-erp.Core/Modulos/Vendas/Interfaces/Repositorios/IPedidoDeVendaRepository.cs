@@ -1,11 +1,12 @@
 using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Vendas.Entidades;
 using simple_erp.Core.Modulos.Vendas.UseCases;
 
 namespace simple_erp.Core.Modulos.Vendas.Interfaces.Repositorios
 {
-    public interface IPedidoDeVendaRepository
+    public interface IPedidoDeVendaRepository : IRepositorio
     {
         Task<Resultado<bool>> AdicionarAsync(PedidoDeVenda pedidoDeVenda, CancellationToken cancellationToken = default);
         Task<Resultado<bool>> AtualizarAsync(PedidoDeVenda pedidoDeVenda, CancellationToken cancellationToken = default);

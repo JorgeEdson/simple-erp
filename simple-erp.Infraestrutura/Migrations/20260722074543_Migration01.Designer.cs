@@ -12,7 +12,7 @@ using simple_erp.Infraestrutura.Persistencia.Contexto;
 namespace simple_erp.Infraestrutura.Migrations
 {
     [DbContext(typeof(SimpleErpDbContext))]
-    [Migration("20260722051407_Migration01")]
+    [Migration("20260722074543_Migration01")]
     partial class Migration01
     {
         /// <inheritdoc />
@@ -486,6 +486,74 @@ namespace simple_erp.Infraestrutura.Migrations
                         .HasDatabaseName("ix_pedidos_de_venda_cliente_data");
 
                     b.ToTable("pedidos_de_venda", "vendas");
+                });
+
+            modelBuilder.Entity("simple_erp.Infraestrutura.Persistencia.Outbox.EventoNoOutbox", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Conteudo")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("conteudo");
+
+                    b.Property<DateTime>("CriadoEmUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criado_em_utc");
+
+                    b.Property<long>("IdAgregadoOrigem")
+                        .HasColumnType("bigint")
+                        .HasColumnName("id_agregado_origem");
+
+                    b.Property<long>("IdEvento")
+                        .HasColumnType("bigint")
+                        .HasColumnName("id_evento");
+
+                    b.Property<string>("NomeDoEvento")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("nome_do_evento");
+
+                    b.Property<DateTime>("OcorridoEmUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ocorrido_em_utc");
+
+                    b.Property<DateTime?>("ProcessadoEmUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("processado_em_utc");
+
+                    b.Property<int>("Tentativas")
+                        .HasColumnType("integer")
+                        .HasColumnName("tentativas");
+
+                    b.Property<string>("TipoDoEvento")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("tipo_do_evento");
+
+                    b.Property<string>("UltimoErro")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("ultimo_erro");
+
+                    b.HasKey("Id")
+                        .HasName("pk_outbox");
+
+                    b.HasIndex("CriadoEmUtc")
+                        .HasDatabaseName("ix_outbox_pendentes")
+                        .HasFilter("processado_em_utc IS NULL");
+
+                    b.HasIndex("NomeDoEvento", "IdAgregadoOrigem")
+                        .HasDatabaseName("ix_outbox_evento_agregado");
+
+                    b.ToTable("outbox", "eventos");
                 });
 #pragma warning restore 612, 618
         }

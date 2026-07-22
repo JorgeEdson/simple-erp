@@ -9,5 +9,8 @@ namespace simple_erp.Infraestrutura.Persistencia
         public const string Producao = "producao";
         public const string Vendas = "vendas";
         public const string Financeiro = "financeiro";
+
+        
+        public const string Eventos = "eventos";
     }
 }

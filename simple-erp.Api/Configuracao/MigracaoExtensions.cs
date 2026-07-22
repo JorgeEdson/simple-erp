@@ -2,15 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using simple_erp.Infraestrutura.Persistencia.Contexto;
 
 namespace simple_erp.Api.Configuracao
-{
-    /// <summary>
-    /// Aplicação das migrations no startup da API.
-    ///
-    /// Rodando em containers, a API pode subir antes de o Postgres aceitar conexões —
-    /// mesmo com o healthcheck do compose há uma janela de corrida. Por isso a aplicação
-    /// das migrations tenta algumas vezes antes de desistir, em vez de derrubar o
-    /// processo na primeira falha de conexão.
-    /// </summary>
+{   
     public static class MigracaoExtensions
     {
         public static async Task AplicarMigracoesAsync(

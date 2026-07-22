@@ -24,16 +24,13 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogService _logService;
-        private readonly IDispatcherDeEventos _dispatcher;
 
         public ConcluirOrdemDeProducaoUseCase(
             IUnitOfWork unitOfWork,
-            ILogService logService,
-            IDispatcherDeEventos dispatcher)
+            ILogService logService)
         {
             _unitOfWork = unitOfWork;
             _logService = logService;
-            _dispatcher = dispatcher;
         }
 
         public async Task<Resultado<ConcluirOrdemDeProducaoSaida>> ExecutarAsync(ConcluirOrdemDeProducaoEntrada dados, CancellationToken cancellationToken = default)
@@ -154,28 +151,14 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
 
             #endregion
 
-            #region Publicação dos eventos de domínio
-
-            // O evento OrdemDeProducaoConcluida é despachado após a persistência: o
-            // Estoque reage com a SAÍDA por produção das matérias-primas e a ENTRADA
-            // por produção do produto acabado (◆), com referência à ordem (seção 5.3).
-            var eventos = ordem.EventosDeDominio.ToList();
-            ordem.LimparEventosDeDominio();
-
-            var resultadoDespacho = await _dispatcher.DespacharAsync(eventos, cancellationToken);
-
-            if (resultadoDespacho.EhFalha)
-            {
-                _logService.RegistrarLogWarning(new RegistroDeLog(
-                    Mensagem: "Conclusão persistida, mas um ou mais handlers de evento falharam (consistência eventual).",
-                    Propriedades: new Dictionary<string, object?>
-                    {
-                        ["OrdemDeProducaoId"] = ordem.Id.Valor,
-                        ["Erros"] = resultadoDespacho.Erros?.ToArray()
-                    }));
-            }
-
-            #endregion
+            // Os eventos de domínio produzidos por este agregado NÃO são despachados
+            // aqui. O interceptor de persistência os gravou na caixa de saída dentro da
+            // mesma transação do SaveChanges acima, e o worker que consome o outbox os
+            // entrega aos manipuladores fora desta requisição.
+            //
+            // Duas consequências que valem ser ditas em voz alta: a resposta ao usuário
+            // não espera pelos efeitos em outros contextos delimitados, e nenhum efeito
+            // se perde caso a aplicação caia logo após a confirmação.
 
             #region Finalização
 

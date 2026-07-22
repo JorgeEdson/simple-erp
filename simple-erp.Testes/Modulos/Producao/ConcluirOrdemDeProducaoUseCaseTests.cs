@@ -20,7 +20,6 @@ namespace simple_erp.Testes.Modulos.Producao
         private readonly IUnitOfWork _unitOfWork;
         private readonly IOrdemDeProducaoRepository _ordensRepository;
         private readonly ILogService _logService;
-        private readonly IDispatcherDeEventos _dispatcher;
         private readonly ConcluirOrdemDeProducaoUseCase _useCase;
 
         public ConcluirOrdemDeProducaoUseCaseTests()
@@ -28,14 +27,10 @@ namespace simple_erp.Testes.Modulos.Producao
             _unitOfWork = Substitute.For<IUnitOfWork>();
             _ordensRepository = Substitute.For<IOrdemDeProducaoRepository>();
             _logService = Substitute.For<ILogService>();
-            _dispatcher = Substitute.For<IDispatcherDeEventos>();
 
             _unitOfWork.OrdensDeProducaoRepository.Returns(_ordensRepository);
-            _dispatcher
-                .DespacharAsync(Arg.Any<IEnumerable<EventoDeDominio>>(), Arg.Any<CancellationToken>())
-                .Returns(Resultado<bool>.Sucesso(true));
 
-            _useCase = new ConcluirOrdemDeProducaoUseCase(_unitOfWork, _logService, _dispatcher);
+            _useCase = new ConcluirOrdemDeProducaoUseCase(_unitOfWork, _logService);
         }
 
         private void RetornarOrdem(OrdemDeProducao ordem) =>
@@ -56,20 +51,19 @@ namespace simple_erp.Testes.Modulos.Producao
         [Fact]
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoOrdemNaoEstiverConfirmada()
         {
-            RetornarOrdem(OrdemDeProducaoBuilder.Novo().ComId(IdOrdem).Criada().Criar());
+            var ordem = OrdemDeProducaoBuilder.Novo().ComId(IdOrdem).Criada().Criar();
+            RetornarOrdem(ordem);
 
             var resultado = await _useCase.ExecutarAsync(new ConcluirOrdemDeProducaoEntrada(IdOrdem));
 
             resultado.EhFalha.Should().BeTrue();
             resultado.Erros.Should().Contain("ORDEM_DE_PRODUCAO_NAO_CONFIRMADA_NAO_PODE_SER_CONCLUIDA");
 
-            await _dispatcher
-                .DidNotReceive()
-                .DespacharAsync(Arg.Any<IEnumerable<EventoDeDominio>>(), Arg.Any<CancellationToken>());
+            ordem.EventosDeDominio.OfType<OrdemDeProducaoConcluida>().Should().BeEmpty();
         }
 
         [Fact]
-        public async Task ExecutarAsync_DeveConcluirEDespacharEvento_QuandoConfirmada()
+        public async Task ExecutarAsync_DeveConcluirERegistrarEvento_QuandoConfirmada()
         {
             var ordem = OrdemDeProducaoBuilder.Novo()
                 .ComId(IdOrdem)
@@ -91,36 +85,16 @@ namespace simple_erp.Testes.Modulos.Producao
                 .Received(1)
                 .AtualizarAsync(Arg.Is<OrdemDeProducao>(o => o.EstaConcluida), Arg.Any<CancellationToken>());
 
-            // O evento OrdemDeProducaoConcluida é despachado após a persistência,
-            // carregando os insumos consumidos para as movimentações do Estoque.
-            await _dispatcher
-                .Received(1)
-                .DespacharAsync(
-                    Arg.Is<IEnumerable<EventoDeDominio>>(eventos =>
-                        eventos.OfType<OrdemDeProducaoConcluida>()
-                            .Any(e => e.InsumosConsumidos.Count == 2)),
-                    Arg.Any<CancellationToken>());
+            // O evento carrega os insumos consumidos, que o Estoque usará para gerar as
+            // movimentações. Ele fica no agregado até o interceptor gravá-lo na caixa de
+            // saída — o use case não o entrega a ninguém.
+            ordem.EventosDeDominio
+                .OfType<OrdemDeProducaoConcluida>()
+                .Should().ContainSingle(evento => evento.InsumosConsumidos.Count == 2);
         }
 
         [Fact]
-        public async Task ExecutarAsync_DeveRetornarSucesso_MesmoQuandoHandlerFalhar()
-        {
-            // Consistência eventual: falha de handler não desfaz a conclusão persistida.
-            RetornarOrdem(OrdemDeProducaoBuilder.Novo().ComId(IdOrdem).Confirmada().Criar());
-            ConfigurarPersistenciaOk();
-
-            _dispatcher
-                .DespacharAsync(Arg.Any<IEnumerable<EventoDeDominio>>(), Arg.Any<CancellationToken>())
-                .Returns(Resultado<bool>.Falha("FALHA_EM_HANDLER"));
-
-            var resultado = await _useCase.ExecutarAsync(new ConcluirOrdemDeProducaoEntrada(IdOrdem));
-
-            resultado.EhSucesso.Should().BeTrue();
-            resultado.Instancia.Status.Should().Be("Concluida");
-        }
-
-        [Fact]
-        public async Task ExecutarAsync_NaoDeveDespachar_QuandoSaveChangesFalhar()
+        public async Task ExecutarAsync_DeveRetornarFalha_QuandoSaveChangesFalhar()
         {
             RetornarOrdem(OrdemDeProducaoBuilder.Novo().ComId(IdOrdem).Confirmada().Criar());
 
@@ -134,10 +108,7 @@ namespace simple_erp.Testes.Modulos.Producao
             var resultado = await _useCase.ExecutarAsync(new ConcluirOrdemDeProducaoEntrada(IdOrdem));
 
             resultado.EhFalha.Should().BeTrue();
-
-            await _dispatcher
-                .DidNotReceive()
-                .DespacharAsync(Arg.Any<IEnumerable<EventoDeDominio>>(), Arg.Any<CancellationToken>());
+            resultado.Erros.Should().Contain("ERRO_AO_SALVAR");
         }
     }
 }

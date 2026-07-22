@@ -6,8 +6,7 @@ using simple_erp.Core.Modulos.Suprimentos.Eventos;
 
 namespace simple_erp.Core.Modulos.Estoque.Handlers
 {   
-    public sealed class EntradaPorCompraHandler
-        : IManipuladorDeEventoDeDominio<PedidoDeCompraEfetivado>
+    public sealed class EntradaPorCompraHandler : IManipuladorDeEventoDeDominio<PedidoDeCompraEfetivado>
     {
         private readonly IRegistrarMovimentacaoDeEstoqueUseCase _registrarMovimentacao;
         private readonly ILogService _logService;

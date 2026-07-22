@@ -1,4 +1,5 @@
 using simple_erp.Api.Configuracao;
+using simple_erp.Api.Configuracao.Seed;
 using simple_erp.Infraestrutura.Extensoes;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -35,6 +36,11 @@ await app.AplicarMigracoesAsync();
 
 if (app.Environment.IsDevelopment())
 {
+    // Carga de demonstração: só em desenvolvimento, e idempotente. Roda antes do
+    // app.Run(), então o worker do outbox já encontra os eventos da carga enfileirados
+    // assim que sobe.
+    await app.AplicarCargaInicialAsync();
+
     app.UseSwagger();
     app.UseSwaggerUI();
 }

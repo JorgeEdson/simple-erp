@@ -22,16 +22,13 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogService _logService;
-        private readonly IDispatcherDeEventos _dispatcher;
 
         public EfetivarPedidoDeCompraUseCase(
             IUnitOfWork unitOfWork,
-            ILogService logService,
-            IDispatcherDeEventos dispatcher)
+            ILogService logService)
         {
             _unitOfWork = unitOfWork;
             _logService = logService;
-            _dispatcher = dispatcher;
         }
 
         public async Task<Resultado<EfetivarPedidoDeCompraSaida>> ExecutarAsync(EfetivarPedidoDeCompraEntrada dados, CancellationToken cancellationToken = default)
@@ -218,25 +215,14 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
 
             #endregion
 
-            #region Publicação dos eventos de domínio
-
-            var eventos = pedido.EventosDeDominio.ToList();
-            pedido.LimparEventosDeDominio();
-
-            var resultadoDespacho = await _dispatcher.DespacharAsync(eventos, cancellationToken);
-
-            if (resultadoDespacho.EhFalha)
-            {
-                _logService.RegistrarLogWarning(new RegistroDeLog(
-                    Mensagem: "Efetivação persistida, mas um ou mais handlers de evento falharam (consistência eventual).",
-                    Propriedades: new Dictionary<string, object?>
-                    {
-                        ["PedidoDeCompraId"] = pedido.Id.Valor,
-                        ["Erros"] = resultadoDespacho.Erros?.ToArray()
-                    }));
-            }
-
-            #endregion
+            // Os eventos de domínio produzidos por este agregado NÃO são despachados
+            // aqui. O interceptor de persistência os gravou na caixa de saída dentro da
+            // mesma transação do SaveChanges acima, e o worker que consome o outbox os
+            // entrega aos manipuladores fora desta requisição.
+            //
+            // Duas consequências que valem ser ditas em voz alta: a resposta ao usuário
+            // não espera pelos efeitos em outros contextos delimitados, e nenhum efeito
+            // se perde caso a aplicação caia logo após a confirmação.
 
             #region Finalização
 

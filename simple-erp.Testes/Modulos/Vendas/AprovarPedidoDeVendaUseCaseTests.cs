@@ -24,7 +24,6 @@ namespace simple_erp.Testes.Modulos.Vendas
         private readonly IPedidoDeVendaRepository _pedidosRepository;
         private readonly ISaldoDeEstoqueRepository _saldosRepository;
         private readonly ILogService _logService;
-        private readonly IDispatcherDeEventos _dispatcher;
         private readonly AprovarPedidoDeVendaUseCase _useCase;
 
         public AprovarPedidoDeVendaUseCaseTests()
@@ -33,22 +32,21 @@ namespace simple_erp.Testes.Modulos.Vendas
             _pedidosRepository = Substitute.For<IPedidoDeVendaRepository>();
             _saldosRepository = Substitute.For<ISaldoDeEstoqueRepository>();
             _logService = Substitute.For<ILogService>();
-            _dispatcher = Substitute.For<IDispatcherDeEventos>();
 
             _unitOfWork.PedidosDeVendaRepository.Returns(_pedidosRepository);
             _unitOfWork.SaldosDeEstoqueRepository.Returns(_saldosRepository);
-            _dispatcher
-                .DespacharAsync(Arg.Any<IEnumerable<EventoDeDominio>>(), Arg.Any<CancellationToken>())
-                .Returns(Resultado<bool>.Sucesso(true));
 
-            _useCase = new AprovarPedidoDeVendaUseCase(_unitOfWork, _logService, _dispatcher);
+            _useCase = new AprovarPedidoDeVendaUseCase(_unitOfWork, _logService);
         }
 
-        private void RetornarPedidoEmEdicao()
+        /// <summary>Devolve o agregado para que o teste possa inspecionar seus eventos.</summary>
+        private PedidoDeVenda RetornarPedidoEmEdicao()
         {
             var pedido = PedidoDeVendaBuilder.Novo().ComId(IdPedido).EmEdicao().Criar();
             _pedidosRepository.ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<PedidoDeVenda?>.Sucesso(pedido));
+
+            return pedido;
         }
 
         private void ConfigurarSaldo(decimal saldo)
@@ -71,7 +69,7 @@ namespace simple_erp.Testes.Modulos.Vendas
         [Fact]
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoEstoqueForInsuficiente()
         {
-            RetornarPedidoEmEdicao();
+            var pedido = RetornarPedidoEmEdicao();
             ConfigurarSaldo(1m); // precisa de 2
 
             var resultado = await _useCase.ExecutarAsync(new AprovarPedidoDeVendaEntrada(IdPedido));
@@ -82,15 +80,14 @@ namespace simple_erp.Testes.Modulos.Vendas
             await _pedidosRepository
                 .DidNotReceive()
                 .AtualizarAsync(Arg.Any<PedidoDeVenda>(), Arg.Any<CancellationToken>());
-            await _dispatcher
-                .DidNotReceive()
-                .DespacharAsync(Arg.Any<IEnumerable<EventoDeDominio>>(), Arg.Any<CancellationToken>());
+
+            pedido.EventosDeDominio.OfType<PedidoDeVendaAprovado>().Should().BeEmpty();
         }
 
         [Fact]
-        public async Task ExecutarAsync_DeveAprovarEDespacharEvento_QuandoHouverSaldo()
+        public async Task ExecutarAsync_DeveAprovarERegistrarEvento_QuandoHouverSaldo()
         {
-            RetornarPedidoEmEdicao();
+            var pedido = RetornarPedidoEmEdicao();
             ConfigurarSaldo(10m);
             ConfigurarPersistenciaOk();
 
@@ -103,37 +100,17 @@ namespace simple_erp.Testes.Modulos.Vendas
                 .Received(1)
                 .AtualizarAsync(Arg.Is<PedidoDeVenda>(p => p.EstaAprovado), Arg.Any<CancellationToken>());
 
-            // O evento PedidoDeVendaAprovado é despachado após a persistência: o Estoque
-            // reage com a saída por venda e o Financeiro com o título a receber.
-            await _dispatcher
-                .Received(1)
-                .DespacharAsync(
-                    Arg.Is<IEnumerable<EventoDeDominio>>(eventos =>
-                        eventos.OfType<PedidoDeVendaAprovado>()
-                            .Any(e => e.IdPedidoDeVenda.Valor == IdPedido && e.Itens.Count > 0)),
-                    Arg.Any<CancellationToken>());
+            // O evento carrega os itens que o Estoque usará para a saída por venda e o
+            // Financeiro para o título a receber. Ele fica no agregado; o transporte até
+            // a caixa de saída é responsabilidade do interceptor de persistência.
+            pedido.EventosDeDominio
+                .OfType<PedidoDeVendaAprovado>()
+                .Should().ContainSingle(evento =>
+                    evento.IdPedidoDeVenda.Valor == IdPedido && evento.Itens.Count > 0);
         }
 
         [Fact]
-        public async Task ExecutarAsync_DeveRetornarSucesso_MesmoQuandoHandlerFalhar()
-        {
-            // Consistência eventual: falha de handler não desfaz a aprovação persistida.
-            RetornarPedidoEmEdicao();
-            ConfigurarSaldo(10m);
-            ConfigurarPersistenciaOk();
-
-            _dispatcher
-                .DespacharAsync(Arg.Any<IEnumerable<EventoDeDominio>>(), Arg.Any<CancellationToken>())
-                .Returns(Resultado<bool>.Falha("FALHA_EM_HANDLER"));
-
-            var resultado = await _useCase.ExecutarAsync(new AprovarPedidoDeVendaEntrada(IdPedido));
-
-            resultado.EhSucesso.Should().BeTrue();
-            resultado.Instancia.Status.Should().Be("Aprovado");
-        }
-
-        [Fact]
-        public async Task ExecutarAsync_NaoDeveDespachar_QuandoSaveChangesFalhar()
+        public async Task ExecutarAsync_DeveRetornarFalha_QuandoSaveChangesFalhar()
         {
             RetornarPedidoEmEdicao();
             ConfigurarSaldo(10m);
@@ -146,10 +123,7 @@ namespace simple_erp.Testes.Modulos.Vendas
             var resultado = await _useCase.ExecutarAsync(new AprovarPedidoDeVendaEntrada(IdPedido));
 
             resultado.EhFalha.Should().BeTrue();
-
-            await _dispatcher
-                .DidNotReceive()
-                .DespacharAsync(Arg.Any<IEnumerable<EventoDeDominio>>(), Arg.Any<CancellationToken>());
+            resultado.Erros.Should().Contain("ERRO_AO_SALVAR");
         }
     }
 }

@@ -18,7 +18,6 @@ namespace simple_erp.Testes.Modulos.Suprimentos
         private readonly IUnitOfWork _unitOfWork;
         private readonly IPedidoDeCompraRepository _pedidosRepository;
         private readonly ILogService _logService;
-        private readonly IDispatcherDeEventos _dispatcher;
         private readonly EfetivarPedidoDeCompraUseCase _useCase;
 
         public EfetivarPedidoDeCompraUseCaseTests()
@@ -26,14 +25,10 @@ namespace simple_erp.Testes.Modulos.Suprimentos
             _unitOfWork = Substitute.For<IUnitOfWork>();
             _pedidosRepository = Substitute.For<IPedidoDeCompraRepository>();
             _logService = Substitute.For<ILogService>();
-            _dispatcher = Substitute.For<IDispatcherDeEventos>();
 
             _unitOfWork.PedidosDeCompraRepository.Returns(_pedidosRepository);
-            _dispatcher
-                .DespacharAsync(Arg.Any<IEnumerable<EventoDeDominio>>(), Arg.Any<CancellationToken>())
-                .Returns(Resultado<bool>.Sucesso(true));
 
-            _useCase = new EfetivarPedidoDeCompraUseCase(_unitOfWork, _logService, _dispatcher);
+            _useCase = new EfetivarPedidoDeCompraUseCase(_unitOfWork, _logService);
         }
 
         [Fact]
@@ -53,13 +48,12 @@ namespace simple_erp.Testes.Modulos.Suprimentos
             await _pedidosRepository
                 .DidNotReceive()
                 .AtualizarAsync(Arg.Any<PedidoDeCompra>(), Arg.Any<CancellationToken>());
-            await _dispatcher
-                .DidNotReceive()
-                .DespacharAsync(Arg.Any<IEnumerable<EventoDeDominio>>(), Arg.Any<CancellationToken>());
+
+            pedido.EventosDeDominio.OfType<PedidoDeCompraEfetivado>().Should().BeEmpty();
         }
 
         [Fact]
-        public async Task ExecutarAsync_DeveEfetivarEDespacharEvento_QuandoPedidoEstiverAprovado()
+        public async Task ExecutarAsync_DeveEfetivarERegistrarEvento_QuandoPedidoEstiverAprovado()
         {
             var pedido = PedidoDeCompraBuilder.Novo().Aprovado().Criar();
 
@@ -80,38 +74,13 @@ namespace simple_erp.Testes.Modulos.Suprimentos
             resultado.EhSucesso.Should().BeTrue();
             resultado.Instancia.Status.Should().Be("Concluida");
 
-            // O evento PedidoDeCompraEfetivado é despachado após a persistência.
-            await _dispatcher
-                .Received(1)
-                .DespacharAsync(
-                    Arg.Is<IEnumerable<EventoDeDominio>>(eventos =>
-                        eventos.OfType<PedidoDeCompraEfetivado>().Any()),
-                    Arg.Any<CancellationToken>());
-        }
-
-        [Fact]
-        public async Task ExecutarAsync_DeveRetornarSucesso_MesmoQuandoHandlerFalhar()
-        {
-            // Consistência eventual: falha de handler não desfaz a efetivação já persistida.
-            var pedido = PedidoDeCompraBuilder.Novo().Aprovado().Criar();
-
-            _pedidosRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
-                .Returns(Resultado<PedidoDeCompra?>.Sucesso(pedido));
-            _pedidosRepository
-                .AtualizarAsync(Arg.Any<PedidoDeCompra>(), Arg.Any<CancellationToken>())
-                .Returns(Resultado<bool>.Sucesso(true));
-            _unitOfWork
-                .SaveChangesAsync(Arg.Any<CancellationToken>())
-                .Returns(Resultado<int>.Sucesso(1));
-            _dispatcher
-                .DespacharAsync(Arg.Any<IEnumerable<EventoDeDominio>>(), Arg.Any<CancellationToken>())
-                .Returns(Resultado<bool>.Falha("FALHA_EM_HANDLER"));
-
-            var resultado = await _useCase.ExecutarAsync(new EfetivarPedidoDeCompraEntrada(pedido.Id.Valor));
-
-            resultado.EhSucesso.Should().BeTrue();
-            resultado.Instancia.Status.Should().Be("Concluida");
+            // O use case não despacha mais nada: ele produz o evento e o deixa no
+            // agregado. Quem o transporta para a caixa de saída é o interceptor de
+            // persistência, dentro da mesma transação do SaveChanges — e é justamente
+            // por ser infraestrutura que ele não participa deste teste de unidade.
+            pedido.EventosDeDominio
+                .OfType<PedidoDeCompraEfetivado>()
+                .Should().ContainSingle();
         }
 
         [Fact]
@@ -135,10 +104,6 @@ namespace simple_erp.Testes.Modulos.Suprimentos
 
             resultado.EhFalha.Should().BeTrue();
             resultado.Erros.Should().Contain("ERRO_AO_SALVAR");
-
-            await _dispatcher
-                .DidNotReceive()
-                .DespacharAsync(Arg.Any<IEnumerable<EventoDeDominio>>(), Arg.Any<CancellationToken>());
         }
     }
 }

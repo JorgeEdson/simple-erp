@@ -9,25 +9,17 @@ using System.Linq;
 
 namespace simple_erp.Core.Modulos.Producao.Composicao.Entidades
 {
-    /// <summary>
-    /// Raiz do subdomínio Composição (BOM): a receita de um produto Fabricado. Cada
-    /// instância é uma versão da receita — alterar a composição significa criar uma
-    /// nova versão (mantendo o histórico), nunca mutar os itens de uma versão existente.
-    /// Apenas uma versão fica ativa por produto (invariante garantida na orquestração).
-    /// </summary>
+   
     public sealed class ComposicaoDeProduto : Entidade<ComposicaoDeProduto>
     {
-        // Não é readonly para que o provider de persistência (EF Core) possa
-        // materializar a coleção a partir da coluna jsonb pelo campo de apoio.
+        
         private List<ItemDeComposicao> _itens;
 
-#pragma warning disable CS8618 // Construtor de materialização do EF Core: as propriedades são preenchidas pelo provider.
-        /// <summary>Construtor de materialização do EF Core.</summary>
         private ComposicaoDeProduto()
         {
             _itens = new List<ItemDeComposicao>();
         }
-#pragma warning restore CS8618
+
 
         private ComposicaoDeProduto(
             Id idProdutoFabricado,
