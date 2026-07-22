@@ -5,13 +5,7 @@ using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Modulos.ParceirosComerciais.UseCases;
 
 namespace simple_erp.Api.Controllers
-{
-    /// <summary>
-    /// Endpoints do agregado Cliente (módulo Parceiros Comerciais). O controller depende
-    /// apenas do <see cref="IDispatcher"/>: monta a entrada do use case (a partir do
-    /// request ou da rota) e a envia; o dispatcher encontra e executa o use case certo.
-    /// A tradução Resultado → HTTP fica na base.
-    /// </summary>
+{   
     [Route("api/clientes")]
     public sealed class ClientesController : ControllerBaseDaApi
     {

@@ -23,4 +23,6 @@ simple-erp.Testes/
 # Arquivos de infraestrutura e documentação
 docker-compose*.yml
 **/Dockerfile
+infra/
+insomnia/
 *.md
