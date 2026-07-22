@@ -85,7 +85,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                 return Resultado<CadastrarProdutoSaida>.Falha(validacaoCampos.Erros!);
             }
 
-            var classificacao = ClassificacaoProduto.SemClassificacao;
+            var classificacao = ClassificacaoProduto.Revenda;
 
             if (!string.IsNullOrWhiteSpace(dados.Classificacao))
             {

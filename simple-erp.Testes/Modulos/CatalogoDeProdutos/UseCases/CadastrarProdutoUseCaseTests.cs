@@ -196,7 +196,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
             resultado.Instancia.Codigo.Should().Be(entrada.Codigo);
             resultado.Instancia.Descricao.Should().Be(entrada.Descricao);
             resultado.Instancia.UnidadeDeMedida.Should().Be(entrada.UnidadeDeMedida);
-            resultado.Instancia.Classificacao.Should().Be(ClassificacaoProduto.SemClassificacao.ToString());
+            resultado.Instancia.Classificacao.Should().Be(ClassificacaoProduto.Revenda.ToString());
             resultado.Instancia.Ativo.Should().BeTrue();
             resultado.Instancia.Id.Should().BeGreaterThan(0);
 

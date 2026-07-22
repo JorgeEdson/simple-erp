@@ -41,13 +41,13 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.Entidades
 
         public bool EhFabricado => Classificacao == ClassificacaoProduto.Fabricado;
         public bool EhMateriaPrima => Classificacao == ClassificacaoProduto.MateriaPrima;
-        public bool PossuiClassificacao => Classificacao != ClassificacaoProduto.SemClassificacao;
+        public bool PossuiClassificacao => Classificacao != ClassificacaoProduto.Revenda;
 
         public static Resultado<Produto> Criar(
             CodigoProduto codigo,
             DescricaoProduto descricao,
             UnidadeDeMedida unidadeDeMedida,
-            ClassificacaoProduto classificacao = ClassificacaoProduto.SemClassificacao,
+            ClassificacaoProduto classificacao = ClassificacaoProduto.Revenda,
             long? id = null)
         {
             var erros = new List<string>();

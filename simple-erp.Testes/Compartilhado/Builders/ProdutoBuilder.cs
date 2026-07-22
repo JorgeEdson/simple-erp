@@ -12,7 +12,7 @@ namespace simple_erp.Testes.Compartilhado.Builders
         private string _codigo = "PROD-001";
         private string _descricao = "Produto Teste";
         private string _unidadeDeMedida = "UN";
-        private ClassificacaoProduto _classificacao = ClassificacaoProduto.SemClassificacao;
+        private ClassificacaoProduto _classificacao = ClassificacaoProduto.Revenda;
         private bool _ativo = true;
 
         public static ProdutoBuilder Novo() => new();
@@ -67,7 +67,7 @@ namespace simple_erp.Testes.Compartilhado.Builders
 
         public ProdutoBuilder SemClassificacao()
         {
-            _classificacao = ClassificacaoProduto.SemClassificacao;
+            _classificacao = ClassificacaoProduto.Revenda;
             return this;
         }
 
