@@ -1,0 +1,1445 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-07-22T00:00:00.000Z",
+  "__export_source": "simple-erp",
+  "resources": [
+    {
+      "_id": "wrk_simple_erp_fluxo",
+      "_type": "workspace",
+      "parentId": null,
+      "name": "Simple ERP — Fluxo completo e eventos",
+      "scope": "collection",
+      "description": "Exercita o fluxo TRANSACIONAL do ERP de ponta a ponta e prova que os eventos de domínio foram processados pelos handlers.\n\nCOMPLEMENTAR à collection 'simple-erp-parceiros', que cobre Clientes e Fornecedores. Cadastro de cliente, fornecedor e produto NÃO se repete aqui: a carga inicial (seed) já insere 15 clientes (1001-1015), 6 fornecedores (2001-2006) e 50 produtos (3001-3050) com ids fixos, usados como insumo.\n\nPRÉ-REQUISITOS\n1. 'docker compose up -d --build' na raiz (API em http://localhost:8080).\n2. Ambiente de Development — a carga inicial só roda em Development.\n3. Banco limpo. As quantidades esperadas assumem estoque zerado no início; rodar duas vezes sem recriar o banco faz os saldos acumularem e as conferências não baterem.\n\nCOMO OS EVENTOS SÃO VERIFICADOS\nO despacho é assíncrono, pela caixa de saída (outbox), com worker a cada 5s. Toda requisição marcada 'EVENTO' publica; as marcadas 'PROVA' leem o efeito. AGUARDE ~6s entre a que publica e a que lê — se a prova vier zerada, o worker provavelmente ainda não rodou; repita antes de concluir que quebrou.\n\nORDEM\nRode as pastas 00 a 08 em sequência. Cada pasta depende do estado deixada pela anterior. Onde a resposta traz um id novo, a descrição diz em qual variável de ambiente colá-lo."
+    },
+    {
+      "_id": "env_fluxo_base",
+      "_type": "environment",
+      "parentId": "wrk_simple_erp_fluxo",
+      "name": "Local (docker compose)",
+      "data": {
+        "base_url": "http://localhost:8080",
+        "id_cliente": "1001",
+        "id_fornecedor": "2001",
+        "id_farinha": "3031",
+        "id_fermento": "3034",
+        "id_sal": "3037",
+        "id_leite": "3040",
+        "id_pao_frances": "3045",
+        "id_produto_ativacao": "3030",
+        "id_produto_classificacao": "3029",
+        "id_revenda_sem_saldo": "3001",
+        "id_composicao_v1": "0",
+        "id_composicao_v2": "0",
+        "id_pedido_compra": "0",
+        "id_ordem_producao": "0",
+        "id_pedido_venda": "0",
+        "id_pedido_venda_sem_saldo": "0",
+        "id_titulo_pagar": "0",
+        "id_titulo_receber": "0",
+        "id_pedido_compra_cancelar": "0",
+        "id_ordem_cancelar": "0",
+        "id_inexistente": "999999999999"
+      },
+      "dataPropertyOrder": {
+        "&": [
+          "base_url",
+          "id_cliente",
+          "id_fornecedor",
+          "id_farinha",
+          "id_fermento",
+          "id_sal",
+          "id_leite",
+          "id_pao_frances",
+          "id_produto_ativacao",
+          "id_produto_classificacao",
+          "id_revenda_sem_saldo",
+          "id_composicao_v1",
+          "id_composicao_v2",
+          "id_pedido_compra",
+          "id_ordem_producao",
+          "id_pedido_venda",
+          "id_pedido_venda_sem_saldo",
+          "id_titulo_pagar",
+          "id_titulo_receber",
+          "id_pedido_compra_cancelar",
+          "id_ordem_cancelar",
+          "id_inexistente"
+        ]
+      },
+      "metaSortKey": 1
+    },
+    {
+      "_id": "fld_00",
+      "_type": "request_group",
+      "parentId": "wrk_simple_erp_fluxo",
+      "name": "00 — Diagnóstico e estado inicial",
+      "description": "Confirma que a API subiu e que o estoque começa zerado. Se o saldo já vier preenchido, o banco não está limpo e as conferências das próximas pastas não vão bater.",
+      "metaSortKey": 10
+    },
+    {
+      "_id": "rq_00_01",
+      "_type": "request",
+      "parentId": "fld_00",
+      "name": "01 — API no ar (swagger.json)",
+      "description": "Sanity check. Falhou? 'docker compose logs -f api'.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/swagger/v1/swagger.json",
+      "headers": [],
+      "metaSortKey": 20
+    },
+    {
+      "_id": "rq_00_02",
+      "_type": "request",
+      "parentId": "fld_00",
+      "name": "02 — Seed aplicado: produto 3045 existe (200)",
+      "description": "Confirma que a carga inicial rodou. Esperado: Pão Francês, classificação Fabricado.\n404 aqui significa que a API não subiu em Development.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/produtos/{{ _.id_pao_frances }}",
+      "headers": [],
+      "metaSortKey": 30
+    },
+    {
+      "_id": "rq_00_03",
+      "_type": "request",
+      "parentId": "fld_00",
+      "name": "03 — PROVA: estoque da farinha começa zerado (200)",
+      "description": "Esperado: quantidadeAtual = 0 e possuiRegistroDeSaldo = false.\nNote que NÃO é 404: produto que nunca movimentou é resposta válida sobre o estoque, não recurso ausente.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/estoque/produtos/{{ _.id_farinha }}/saldo",
+      "headers": [],
+      "metaSortKey": 40
+    },
+    {
+      "_id": "rq_00_04",
+      "_type": "request",
+      "parentId": "fld_00",
+      "name": "04 — PROVA: nenhum título emitido ainda (200)",
+      "description": "Esperado: totalRegistros = 0. O seed não cria nada transacional.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/financeiro/titulos?numeroPagina=1&tamanhoPagina=10",
+      "headers": [],
+      "metaSortKey": 50
+    },
+    {
+      "_id": "fld_01",
+      "_type": "request_group",
+      "parentId": "wrk_simple_erp_fluxo",
+      "name": "01 — Catálogo: o que o seed não exercita",
+      "description": "O seed insere os produtos, mas nunca chama editar, inativar, reativar, classificar nem os filtros de listagem. Usa produtos fora do fluxo principal (3029, 3030) para não sujar as contas das pastas seguintes.",
+      "metaSortKey": 60
+    },
+    {
+      "_id": "rq_01_01",
+      "_type": "request",
+      "parentId": "fld_01",
+      "name": "01 — Listar filtrando por classificação Fabricado (200)",
+      "description": "Esperado: 6 produtos (3045-3050). Exercita o filtro por enum textual.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/produtos?numeroPagina=1&tamanhoPagina=20&classificacao=Fabricado",
+      "headers": [],
+      "metaSortKey": 70
+    },
+    {
+      "_id": "rq_01_02",
+      "_type": "request",
+      "parentId": "fld_01",
+      "name": "02 — Listar filtrando por descrição + ativo (200)",
+      "description": "Filtro combinado. Esperado: os produtos de farinha, todos ativos.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/produtos?numeroPagina=1&tamanhoPagina=10&descricao=Farinha&ativo=true",
+      "headers": [],
+      "metaSortKey": 80
+    },
+    {
+      "_id": "rq_01_03",
+      "_type": "request",
+      "parentId": "fld_01",
+      "name": "03 — Editar produto (200)",
+      "description": "Ajusta a descrição do Cartão de Aniversário mantendo código e unidade.\nEsperado: 200 com a descrição nova.",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/api/produtos/{{ _.id_produto_ativacao }}",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 90,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"codigo\": \"REV-030\",\n  \"descricao\": \"Cartão de Aniversário Premium\",\n  \"unidadeDeMedida\": \"UN\"\n}"
+      }
+    },
+    {
+      "_id": "rq_01_04",
+      "_type": "request",
+      "parentId": "fld_01",
+      "name": "04 — Inativar produto (200)",
+      "description": "Esperado: 200 com ativo = false.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/produtos/{{ _.id_produto_ativacao }}/inativar",
+      "headers": [],
+      "metaSortKey": 100
+    },
+    {
+      "_id": "rq_01_05",
+      "_type": "request",
+      "parentId": "fld_01",
+      "name": "05 — PROVA: listar inativos confirma (200)",
+      "description": "Esperado: o 3030 aparece com ativo = false.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/produtos?numeroPagina=1&tamanhoPagina=10&ativo=false",
+      "headers": [],
+      "metaSortKey": 110
+    },
+    {
+      "_id": "rq_01_06",
+      "_type": "request",
+      "parentId": "fld_01",
+      "name": "06 — Reativar produto (200)",
+      "description": "Esperado: 200 com ativo = true. Devolve o 3030 ao estado do seed.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/produtos/{{ _.id_produto_ativacao }}/reativar",
+      "headers": [],
+      "metaSortKey": 120
+    },
+    {
+      "_id": "rq_01_07",
+      "_type": "request",
+      "parentId": "fld_01",
+      "name": "07 — Classificar como matéria-prima (200)",
+      "description": "Usa a Vela de Aniversário (3029), que não participa de nenhum fluxo.\nATENÇÃO — mudança sem volta: o módulo tem 'classificar como fabricado' e 'como matéria-prima', mas NÃO tem 'classificar como revenda'. Depois desta requisição o 3029 não retorna ao estado do seed sem recriar o banco.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/produtos/{{ _.id_produto_classificacao }}/classificar/materia-prima",
+      "headers": [],
+      "metaSortKey": 130
+    },
+    {
+      "_id": "rq_01_08",
+      "_type": "request",
+      "parentId": "fld_01",
+      "name": "08 — Classificar como fabricado (200)",
+      "description": "Mesma entidade, agora Fabricado. Confirma que a reclassificação é livre entre os dois destinos disponíveis.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/produtos/{{ _.id_produto_classificacao }}/classificar/fabricado",
+      "headers": [],
+      "metaSortKey": 140
+    },
+    {
+      "_id": "fld_02",
+      "_type": "request_group",
+      "parentId": "wrk_simple_erp_fluxo",
+      "name": "02 — Composição do Pão Francês (evento intra-contexto)",
+      "description": "Define a receita do 3045 e demonstra o versionamento. A ativação publica ComposicaoDeProdutoAtivada, consumido pelo ManipuladorUnicidadeDeReceitaAtiva — o único handler intra-contexto do sistema, que desativa a versão anterior.",
+      "metaSortKey": 150
+    },
+    {
+      "_id": "rq_02_01",
+      "_type": "request",
+      "parentId": "fld_02",
+      "name": "01 — PROVA: produto ainda não tem receita ativa (200)",
+      "description": "Esperado: possuiReceitaAtiva = false. Não é 404, pelo mesmo critério do saldo.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/produtos/{{ _.id_pao_frances }}/composicoes/ativa",
+      "headers": [],
+      "metaSortKey": 160
+    },
+    {
+      "_id": "rq_02_02",
+      "_type": "request",
+      "parentId": "fld_02",
+      "name": "02 — Definir receita v1 (200)",
+      "description": "Consumo por 1 KG de pão: 0,6 KG de farinha + 0,01 KG de fermento + 0,01 KG de sal.\nCOPIE o 'id' da resposta para a variável 'id_composicao_v1'.\nResponde 200 e não 201 porque o módulo não tem 'obter composição por id' — não há Location honesto para apontar.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/produtos/{{ _.id_pao_frances }}/composicoes",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 170,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"itens\": [\n    {\n      \"idInsumo\": 3031,\n      \"quantidadePorUnidade\": 0.6\n    },\n    {\n      \"idInsumo\": 3034,\n      \"quantidadePorUnidade\": 0.01\n    },\n    {\n      \"idInsumo\": 3037,\n      \"quantidadePorUnidade\": 0.01\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "rq_02_03",
+      "_type": "request",
+      "parentId": "fld_02",
+      "name": "03 — EVENTO: ativar receita v1 (200)",
+      "description": "Publica ComposicaoDeProdutoAtivada. Esperado: 200 com ativa = true.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/composicoes/{{ _.id_composicao_v1 }}/ativar",
+      "headers": [],
+      "metaSortKey": 180
+    },
+    {
+      "_id": "rq_02_04",
+      "_type": "request",
+      "parentId": "fld_02",
+      "name": "04 — PROVA: receita ativa agora responde (200)",
+      "description": "Esperado: possuiReceitaAtiva = true, versao = 1, 3 itens.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/produtos/{{ _.id_pao_frances }}/composicoes/ativa",
+      "headers": [],
+      "metaSortKey": 190
+    },
+    {
+      "_id": "rq_02_05",
+      "_type": "request",
+      "parentId": "fld_02",
+      "name": "05 — Definir receita v2 (200)",
+      "description": "Receita ajustada: mais farinha e mais fermento. Cada POST cria uma versão nova — a v1 é preservada, porque ordens antigas precisam continuar explicáveis pela receita que valia quando foram criadas.\nCOPIE o 'id' para 'id_composicao_v2'. Esperado: versao = 2, ativa = false.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/produtos/{{ _.id_pao_frances }}/composicoes",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 200,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"itens\": [\n    {\n      \"idInsumo\": 3031,\n      \"quantidadePorUnidade\": 0.62\n    },\n    {\n      \"idInsumo\": 3034,\n      \"quantidadePorUnidade\": 0.012\n    },\n    {\n      \"idInsumo\": 3037,\n      \"quantidadePorUnidade\": 0.01\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "rq_02_06",
+      "_type": "request",
+      "parentId": "fld_02",
+      "name": "06 — EVENTO: ativar receita v2 (200)",
+      "description": "Publica ComposicaoDeProdutoAtivada de novo. O handler de unicidade deve desativar a v1.\nAGUARDE ~6s antes da próxima requisição.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/composicoes/{{ _.id_composicao_v2 }}/ativar",
+      "headers": [],
+      "metaSortKey": 210
+    },
+    {
+      "_id": "rq_02_07",
+      "_type": "request",
+      "parentId": "fld_02",
+      "name": "07 — PROVA: o handler desativou a v1 (200)",
+      "description": "Esperado: v2 com ativa = true e v1 com ativa = false.\nSe AS DUAS aparecerem ativas, o outbox ainda não processou — espere e repita. Essa janela é real: a unicidade é garantida por handler assíncrono, não na mesma transação.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/produtos/{{ _.id_pao_frances }}/composicoes?numeroPagina=1&tamanhoPagina=10",
+      "headers": [],
+      "metaSortKey": 220
+    },
+    {
+      "_id": "rq_02_08",
+      "_type": "request",
+      "parentId": "fld_02",
+      "name": "08 — Listar apenas versões ativas (200)",
+      "description": "Esperado: só a v2.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/produtos/{{ _.id_pao_frances }}/composicoes?numeroPagina=1&tamanhoPagina=10&apenasAtivas=true",
+      "headers": [],
+      "metaSortKey": 230
+    },
+    {
+      "_id": "rq_02_09",
+      "_type": "request",
+      "parentId": "fld_02",
+      "name": "09 — Inativar receita v2 e reativar (200)",
+      "description": "Exercita o inativar. Rode em seguida a requisição 03 ou 06 para deixar uma receita ativa antes da pasta de Produção — ordem de produção exige receita ativa.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/composicoes/{{ _.id_composicao_v2 }}/inativar",
+      "headers": [],
+      "metaSortKey": 240
+    },
+    {
+      "_id": "rq_02_10",
+      "_type": "request",
+      "parentId": "fld_02",
+      "name": "10 — EVENTO: reativar v2 (200)",
+      "description": "Devolve o estado necessário para a pasta 04. Esperado: ativa = true.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/composicoes/{{ _.id_composicao_v2 }}/ativar",
+      "headers": [],
+      "metaSortKey": 250
+    },
+    {
+      "_id": "fld_03",
+      "_type": "request_group",
+      "parentId": "wrk_simple_erp_fluxo",
+      "name": "03 — Compra → EVENTO: entrada de estoque + título a pagar",
+      "description": "Fluxo do pedido de compra até 'efetivar', a transição que publica PedidoDeCompraEfetivado. Dois handlers reagem: EntradaPorCompraHandler (Estoque) e GeracaoDeTituloAPagarHandler (Financeiro).\n\nCompra: 100 KG farinha @ 4,20 + 5 KG fermento @ 32,00 + 10 KG sal @ 2,10 = R$ 601,00.",
+      "metaSortKey": 260
+    },
+    {
+      "_id": "rq_03_01",
+      "_type": "request",
+      "parentId": "fld_03",
+      "name": "01 — Criar pedido de compra (201)",
+      "description": "Nasce EmEdicao, com farinha, fermento e leite. O leite entra só para ser removido na requisição 04 — a remoção fica provada quando o saldo dele continuar zerado no fim.\nCOPIE o 'id' para 'id_pedido_compra'. Esperado: 201 + header Location.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/pedidos-de-compra",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 270,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"idFornecedor\": 2001,\n  \"itens\": [\n    {\n      \"idProduto\": 3031,\n      \"quantidade\": 100,\n      \"custoUnitario\": 4.2\n    },\n    {\n      \"idProduto\": 3034,\n      \"quantidade\": 5,\n      \"custoUnitario\": 32.0\n    },\n    {\n      \"idProduto\": 3040,\n      \"quantidade\": 20,\n      \"custoUnitario\": 5.5\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "rq_03_02",
+      "_type": "request",
+      "parentId": "fld_03",
+      "name": "02 — Obter pedido por id (200)",
+      "description": "Esperado: status EmEdicao, 3 itens, valorTotal = 420 + 160 + 110 = R$ 690,00.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/pedidos-de-compra/{{ _.id_pedido_compra }}",
+      "headers": [],
+      "metaSortKey": 280
+    },
+    {
+      "_id": "rq_03_03",
+      "_type": "request",
+      "parentId": "fld_03",
+      "name": "03 — Adicionar item: sal (200)",
+      "description": "Esperado: 4 itens, valorTotal = R$ 711,00.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/pedidos-de-compra/{{ _.id_pedido_compra }}/itens",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 290,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"idProduto\": 3037,\n  \"quantidade\": 10,\n  \"custoUnitario\": 2.1\n}"
+      }
+    },
+    {
+      "_id": "rq_03_04",
+      "_type": "request",
+      "parentId": "fld_03",
+      "name": "04 — Remover item: leite (200)",
+      "description": "O item é endereçado pelo produto, não por id próprio — é assim que o domínio o identifica dentro do pedido.\nEsperado: 3 itens, valorTotal = R$ 601,00.",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/api/pedidos-de-compra/{{ _.id_pedido_compra }}/itens/{{ _.id_leite }}",
+      "headers": [],
+      "metaSortKey": 300
+    },
+    {
+      "_id": "rq_03_05",
+      "_type": "request",
+      "parentId": "fld_03",
+      "name": "05 — Aprovar pedido (200)",
+      "description": "Esperado: status Aprovada. Aqui ainda NÃO há efeito em estoque nem financeiro — na compra o efeito externo está em 'efetivar', ao contrário da venda.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/pedidos-de-compra/{{ _.id_pedido_compra }}/aprovar",
+      "headers": [],
+      "metaSortKey": 310
+    },
+    {
+      "_id": "rq_03_06",
+      "_type": "request",
+      "parentId": "fld_03",
+      "name": "06 — PROVA: estoque ainda zerado após aprovar (200)",
+      "description": "Esperado: quantidadeAtual = 0. Confirma que aprovar não movimenta estoque na compra.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/estoque/produtos/{{ _.id_farinha }}/saldo",
+      "headers": [],
+      "metaSortKey": 320
+    },
+    {
+      "_id": "rq_03_07",
+      "_type": "request",
+      "parentId": "fld_03",
+      "name": "07 — EVENTO: efetivar pedido (200)",
+      "description": "Publica PedidoDeCompraEfetivado. Esperado: status Concluida.\nO 200 confirma o PEDIDO concluído, não os efeitos aplicados — eles vêm pelo outbox.\nAGUARDE ~6s antes das provas seguintes.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/pedidos-de-compra/{{ _.id_pedido_compra }}/efetivar",
+      "headers": [],
+      "metaSortKey": 330
+    },
+    {
+      "_id": "rq_03_08",
+      "_type": "request",
+      "parentId": "fld_03",
+      "name": "08 — PROVA: farinha entrou no estoque (200)",
+      "description": "Esperado: quantidadeAtual = 100, possuiRegistroDeSaldo = true.\nAinda 0? O worker roda a cada 5s — espere e repita.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/estoque/produtos/{{ _.id_farinha }}/saldo",
+      "headers": [],
+      "metaSortKey": 340
+    },
+    {
+      "_id": "rq_03_09",
+      "_type": "request",
+      "parentId": "fld_03",
+      "name": "09 — PROVA: fermento entrou (200)",
+      "description": "Esperado: quantidadeAtual = 5.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/estoque/produtos/{{ _.id_fermento }}/saldo",
+      "headers": [],
+      "metaSortKey": 350
+    },
+    {
+      "_id": "rq_03_09b",
+      "_type": "request",
+      "parentId": "fld_03",
+      "name": "09b — PROVA: sal entrou (200)",
+      "description": "Esperado: quantidadeAtual = 10. Fecha os 3 itens que sobraram no pedido.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/estoque/produtos/{{ _.id_sal }}/saldo",
+      "headers": [],
+      "metaSortKey": 360
+    },
+    {
+      "_id": "rq_03_10",
+      "_type": "request",
+      "parentId": "fld_03",
+      "name": "10 — PROVA: o item removido NÃO entrou (200)",
+      "description": "Leite (3040). Esperado: quantidadeAtual = 0 e possuiRegistroDeSaldo = false.\nÉ a prova de que a remoção da requisição 04 valeu.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/estoque/produtos/{{ _.id_leite }}/saldo",
+      "headers": [],
+      "metaSortKey": 370
+    },
+    {
+      "_id": "rq_03_11",
+      "_type": "request",
+      "parentId": "fld_03",
+      "name": "11 — PROVA: extrato registra entrada por compra (200)",
+      "description": "Esperado: 1 movimentação, tipo EntradaPorCompra, sentido Entrada, origemTipo Compra, origemIdReferencia = id do pedido, saldoResultante = 100.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/estoque/movimentacoes?numeroPagina=1&tamanhoPagina=10&idProduto={{ _.id_farinha }}&tipo=EntradaPorCompra",
+      "headers": [],
+      "metaSortKey": 380
+    },
+    {
+      "_id": "rq_03_12",
+      "_type": "request",
+      "parentId": "fld_03",
+      "name": "12 — PROVA: título a pagar foi emitido (200)",
+      "description": "O outro handler do mesmo evento. Esperado: 1 título, tipo APagar, idParceiro = 2001, valorOriginal = 601.00, status EmAberto.\nCOPIE o 'id' para 'id_titulo_pagar'.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/financeiro/titulos?numeroPagina=1&tamanhoPagina=10&tipo=APagar&idParceiro={{ _.id_fornecedor }}",
+      "headers": [],
+      "metaSortKey": 390
+    },
+    {
+      "_id": "fld_04",
+      "_type": "request_group",
+      "parentId": "wrk_simple_erp_fluxo",
+      "name": "04 — Produção → EVENTO: saída de insumos + entrada do acabado",
+      "description": "Ordem de 50 KG de Pão Francês pela receita v2 (0,62 farinha / 0,012 fermento / 0,01 sal por KG). Concluir publica OrdemDeProducaoConcluida, e o MovimentacoesPorProducaoHandler gera DUAS movimentações: saída das matérias-primas e entrada do produto acabado.\n\nConsumo esperado: 31 KG farinha, 0,6 KG fermento, 0,5 KG sal.",
+      "metaSortKey": 400
+    },
+    {
+      "_id": "rq_04_01",
+      "_type": "request",
+      "parentId": "fld_04",
+      "name": "01 — Criar ordem de produção (201)",
+      "description": "As necessidades não vão no corpo: são calculadas da receita ativa pelo domínio.\nCOPIE o 'id' para 'id_ordem_producao'. Esperado: 201, status Criada, idComposicao = id_composicao_v2, e necessidades 31 / 0,6 / 0,5.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/ordens-de-producao",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 410,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"idProdutoFabricado\": 3045,\n  \"quantidadeAProduzir\": 50\n}"
+      }
+    },
+    {
+      "_id": "rq_04_02",
+      "_type": "request",
+      "parentId": "fld_04",
+      "name": "02 — Obter ordem por id (200)",
+      "description": "Esperado: as 3 necessidades calculadas e status Criada.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/ordens-de-producao/{{ _.id_ordem_producao }}",
+      "headers": [],
+      "metaSortKey": 420
+    },
+    {
+      "_id": "rq_04_03",
+      "_type": "request",
+      "parentId": "fld_04",
+      "name": "03 — Confirmar ordem (200)",
+      "description": "Esperado: status Confirmada. Sem efeito fora do módulo ainda.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/ordens-de-producao/{{ _.id_ordem_producao }}/confirmar",
+      "headers": [],
+      "metaSortKey": 430
+    },
+    {
+      "_id": "rq_04_04",
+      "_type": "request",
+      "parentId": "fld_04",
+      "name": "04 — EVENTO: concluir ordem (200)",
+      "description": "Publica OrdemDeProducaoConcluida. Esperado: status Concluida, quantidadeProduzida = 50, quantidadeInsumosConsumidos = 3.\nAGUARDE ~6s antes das provas.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/ordens-de-producao/{{ _.id_ordem_producao }}/concluir",
+      "headers": [],
+      "metaSortKey": 440
+    },
+    {
+      "_id": "rq_04_05",
+      "_type": "request",
+      "parentId": "fld_04",
+      "name": "05 — PROVA: farinha foi consumida (200)",
+      "description": "Esperado: 100 − 31 = 69 KG.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/estoque/produtos/{{ _.id_farinha }}/saldo",
+      "headers": [],
+      "metaSortKey": 450
+    },
+    {
+      "_id": "rq_04_06",
+      "_type": "request",
+      "parentId": "fld_04",
+      "name": "06 — PROVA: fermento consumido (200)",
+      "description": "Esperado: 5 − (50 × 0,012) = 4,4 KG.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/estoque/produtos/{{ _.id_fermento }}/saldo",
+      "headers": [],
+      "metaSortKey": 460
+    },
+    {
+      "_id": "rq_04_06b",
+      "_type": "request",
+      "parentId": "fld_04",
+      "name": "06b — PROVA: sal consumido (200)",
+      "description": "Esperado: 10 − (50 × 0,01) = 9,5 KG.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/estoque/produtos/{{ _.id_sal }}/saldo",
+      "headers": [],
+      "metaSortKey": 470
+    },
+    {
+      "_id": "rq_04_07",
+      "_type": "request",
+      "parentId": "fld_04",
+      "name": "07 — PROVA: produto acabado entrou (200)",
+      "description": "Esperado: 50 KG de Pão Francês. É a segunda movimentação do MESMO evento.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/estoque/produtos/{{ _.id_pao_frances }}/saldo",
+      "headers": [],
+      "metaSortKey": 480
+    },
+    {
+      "_id": "rq_04_08",
+      "_type": "request",
+      "parentId": "fld_04",
+      "name": "08 — PROVA: extrato mostra os dois sentidos (200)",
+      "description": "Sem filtro de produto, só por origem. Esperado: 4 movimentações de origem Producao — 3 SaidaPorProducao (insumos) + 1 EntradaPorProducao (acabado).",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/estoque/movimentacoes?numeroPagina=1&tamanhoPagina=20&origemTipo=Producao",
+      "headers": [],
+      "metaSortKey": 490
+    },
+    {
+      "_id": "fld_05",
+      "_type": "request_group",
+      "parentId": "wrk_simple_erp_fluxo",
+      "name": "05 — Venda → EVENTO: saída de estoque + título a receber",
+      "description": "ATENÇÃO à assimetria com a compra: aqui o efeito externo está em 'aprovar', a PRIMEIRA transição, não na última. Aprovar já baixa o estoque e emite o título a receber; concluir apenas fecha o pedido.\n\nVenda: 20 KG de Pão Francês @ 18,00 = 360,00, menos 15,00 de desconto = R$ 345,00.",
+      "metaSortKey": 500
+    },
+    {
+      "_id": "rq_05_01",
+      "_type": "request",
+      "parentId": "fld_05",
+      "name": "01 — Criar pedido de venda (201)",
+      "description": "COPIE o 'id' para 'id_pedido_venda'. Esperado: 201, status EmEdicao, numero sequencial atribuído pelo domínio (não vem do cliente).",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/pedidos-de-venda",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 510,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"idCliente\": 1001,\n  \"itens\": [\n    {\n      \"idProduto\": 3045,\n      \"quantidade\": 20,\n      \"precoUnitario\": 18.0,\n      \"desconto\": 0\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "rq_05_02",
+      "_type": "request",
+      "parentId": "fld_05",
+      "name": "02 — Adicionar item de revenda (200)",
+      "description": "Leite UHT (3001), que NÃO tem saldo. Entra para ser removido na requisição 04 — e para a pasta 08 poder testar a recusa por falta de estoque.\nEsperado: 2 itens.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/pedidos-de-venda/{{ _.id_pedido_venda }}/itens",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 520,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"idProduto\": 3001,\n  \"quantidade\": 10,\n  \"precoUnitario\": 7.5,\n  \"desconto\": 0\n}"
+      }
+    },
+    {
+      "_id": "rq_05_03",
+      "_type": "request",
+      "parentId": "fld_05",
+      "name": "03 — Aplicar desconto no pedido (200)",
+      "description": "PUT, não POST: o domínio faz 'DescontoDoPedido = desconto', substituindo o valor anterior. Repetir com o mesmo corpo dá o mesmo resultado.\nEsperado: descontoDoPedido = 15.",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/api/pedidos-de-venda/{{ _.id_pedido_venda }}/desconto",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 530,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"desconto\": 15.0\n}"
+      }
+    },
+    {
+      "_id": "rq_05_04",
+      "_type": "request",
+      "parentId": "fld_05",
+      "name": "04 — Remover o item sem saldo (200)",
+      "description": "Esperado: 1 item, valorTotal = 360 − 15 = R$ 345,00.",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/api/pedidos-de-venda/{{ _.id_pedido_venda }}/itens/{{ _.id_revenda_sem_saldo }}",
+      "headers": [],
+      "metaSortKey": 540
+    },
+    {
+      "_id": "rq_05_05",
+      "_type": "request",
+      "parentId": "fld_05",
+      "name": "05 — EVENTO: aprovar pedido (200)",
+      "description": "Publica PedidoDeVendaAprovado e congela os valores — o pedido deixa de ser editável.\nDois handlers reagem: SaidaPorVendaHandler (Estoque) e GeracaoDeTituloAReceberHandler (Financeiro).\nAGUARDE ~6s antes das provas.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/pedidos-de-venda/{{ _.id_pedido_venda }}/aprovar",
+      "headers": [],
+      "metaSortKey": 550
+    },
+    {
+      "_id": "rq_05_06",
+      "_type": "request",
+      "parentId": "fld_05",
+      "name": "06 — PROVA: estoque do pão baixou (200)",
+      "description": "Esperado: 50 − 20 = 30 KG.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/estoque/produtos/{{ _.id_pao_frances }}/saldo",
+      "headers": [],
+      "metaSortKey": 560
+    },
+    {
+      "_id": "rq_05_07",
+      "_type": "request",
+      "parentId": "fld_05",
+      "name": "07 — PROVA: extrato registra saída por venda (200)",
+      "description": "Esperado: 1 movimentação SaidaPorVenda, sentido Saida, origemTipo Venda, saldoResultante = 30.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/estoque/movimentacoes?numeroPagina=1&tamanhoPagina=10&idProduto={{ _.id_pao_frances }}&tipo=SaidaPorVenda",
+      "headers": [],
+      "metaSortKey": 570
+    },
+    {
+      "_id": "rq_05_08",
+      "_type": "request",
+      "parentId": "fld_05",
+      "name": "08 — PROVA: título a receber foi emitido (200)",
+      "description": "Esperado: 1 título, tipo AReceber, idParceiro = 1001, valorOriginal = 345.00.\nCOPIE o 'id' para 'id_titulo_receber'.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/financeiro/titulos?numeroPagina=1&tamanhoPagina=10&tipo=AReceber&idParceiro={{ _.id_cliente }}",
+      "headers": [],
+      "metaSortKey": 580
+    },
+    {
+      "_id": "rq_05_09",
+      "_type": "request",
+      "parentId": "fld_05",
+      "name": "09 — Concluir pedido (200)",
+      "description": "Esperado: status Concluido. Sem novo efeito em estoque ou financeiro — isso já aconteceu no aprovar.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/pedidos-de-venda/{{ _.id_pedido_venda }}/concluir",
+      "headers": [],
+      "metaSortKey": 590
+    },
+    {
+      "_id": "rq_05_10",
+      "_type": "request",
+      "parentId": "fld_05",
+      "name": "10 — Listar pedidos por cliente e status (200)",
+      "description": "Exercita os filtros. Esperado: o pedido acima, status Concluido.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/pedidos-de-venda?numeroPagina=1&tamanhoPagina=10&idCliente={{ _.id_cliente }}&status=Concluido",
+      "headers": [],
+      "metaSortKey": 600
+    },
+    {
+      "_id": "fld_06",
+      "_type": "request_group",
+      "parentId": "wrk_simple_erp_fluxo",
+      "name": "06 — Financeiro: baixas e cancelamento",
+      "description": "Os títulos aqui NÃO foram criados por HTTP — nasceram dos eventos das pastas 03 e 05. O módulo não expõe emissão de propósito: os use cases de emissão fixam a origem como Compra/Venda e são consumidos só pelos handlers.\n\nA pagar: R$ 601,00. A receber: R$ 345,00.",
+      "metaSortKey": 610
+    },
+    {
+      "_id": "rq_06_01",
+      "_type": "request",
+      "parentId": "fld_06",
+      "name": "01 — Listar todos os títulos (200)",
+      "description": "Esperado: 2 títulos, ambos EmAberto.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/financeiro/titulos?numeroPagina=1&tamanhoPagina=10",
+      "headers": [],
+      "metaSortKey": 620
+    },
+    {
+      "_id": "rq_06_02",
+      "_type": "request",
+      "parentId": "fld_06",
+      "name": "02 — Obter título a pagar por id (200)",
+      "description": "Esperado: origemTipo Compra, origemIdReferencia = id do pedido de compra, saldoDevedor = 601.00, lista de baixas vazia.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/financeiro/titulos/{{ _.id_titulo_pagar }}",
+      "headers": [],
+      "metaSortKey": 630
+    },
+    {
+      "_id": "rq_06_03",
+      "_type": "request",
+      "parentId": "fld_06",
+      "name": "03 — Baixa parcial de R$ 200,00 (200)",
+      "description": "A rota é uma coleção porque cada POST ACRESCENTA uma baixa, não substitui a anterior.\nEsperado: status ParcialmenteBaixado, saldoDevedor = 401.00.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/financeiro/titulos/{{ _.id_titulo_pagar }}/baixas",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 640,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"valor\": 200.0\n}"
+      }
+    },
+    {
+      "_id": "rq_06_04",
+      "_type": "request",
+      "parentId": "fld_06",
+      "name": "04 — Baixa acima do saldo devedor (400)",
+      "description": "Esperado: 400 — o domínio recusa baixar mais do que se deve.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/financeiro/titulos/{{ _.id_titulo_pagar }}/baixas",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 650,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"valor\": 9999.0\n}"
+      }
+    },
+    {
+      "_id": "rq_06_05",
+      "_type": "request",
+      "parentId": "fld_06",
+      "name": "05 — Baixa final de R$ 401,00 (200)",
+      "description": "Esperado: status Liquidado, saldoDevedor = 0. Publica TituloBaixado e TituloLiquidado — sem handler hoje, o que o dispatcher registra em log como no-op, sem falhar.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/financeiro/titulos/{{ _.id_titulo_pagar }}/baixas",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 660,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"valor\": 401.0\n}"
+      }
+    },
+    {
+      "_id": "rq_06_06",
+      "_type": "request",
+      "parentId": "fld_06",
+      "name": "06 — PROVA: título liquidado com as 2 baixas (200)",
+      "description": "Esperado: status Liquidado, valorBaixado = 601.00, array 'baixas' com 2 entradas.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/financeiro/titulos/{{ _.id_titulo_pagar }}",
+      "headers": [],
+      "metaSortKey": 670
+    },
+    {
+      "_id": "rq_06_07",
+      "_type": "request",
+      "parentId": "fld_06",
+      "name": "07 — Baixar título já liquidado (400)",
+      "description": "Esperado: 400 — não há saldo a baixar.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/financeiro/titulos/{{ _.id_titulo_pagar }}/baixas",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 680,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"valor\": 10.0\n}"
+      }
+    },
+    {
+      "_id": "rq_06_08",
+      "_type": "request",
+      "parentId": "fld_06",
+      "name": "08 — Cancelar título a receber (200)",
+      "description": "Esperado: status Cancelado.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/financeiro/titulos/{{ _.id_titulo_receber }}/cancelar",
+      "headers": [],
+      "metaSortKey": 690
+    },
+    {
+      "_id": "rq_06_09",
+      "_type": "request",
+      "parentId": "fld_06",
+      "name": "09 — Baixar título cancelado (400)",
+      "description": "Esperado: 400 — título cancelado não aceita baixa.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/financeiro/titulos/{{ _.id_titulo_receber }}/baixas",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 700,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"valor\": 50.0\n}"
+      }
+    },
+    {
+      "_id": "rq_06_10",
+      "_type": "request",
+      "parentId": "fld_06",
+      "name": "10 — Listar por status Liquidado (200)",
+      "description": "Esperado: só o título a pagar.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/financeiro/titulos?numeroPagina=1&tamanhoPagina=10&status=Liquidado",
+      "headers": [],
+      "metaSortKey": 710
+    },
+    {
+      "_id": "rq_06_11",
+      "_type": "request",
+      "parentId": "fld_06",
+      "name": "11 — Listar por vencimento (200)",
+      "description": "Filtro por faixa de datas. Ajuste as datas se rodar muito depois da carga.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/financeiro/titulos?numeroPagina=1&tamanhoPagina=10&vencimentoInicio=2020-01-01&vencimentoFim=2099-12-31",
+      "headers": [],
+      "metaSortKey": 720
+    },
+    {
+      "_id": "fld_07",
+      "_type": "request_group",
+      "parentId": "wrk_simple_erp_fluxo",
+      "name": "07 — Estoque: extrato consolidado",
+      "description": "O módulo é só de leitura de propósito: não há POST de movimentação. Tudo que aparece aqui nasceu dos eventos das pastas 03, 04 e 05.",
+      "metaSortKey": 730
+    },
+    {
+      "_id": "rq_07_01",
+      "_type": "request",
+      "parentId": "fld_07",
+      "name": "01 — Extrato completo (200)",
+      "description": "Esperado: totalRegistros = 8 — 3 da compra (farinha, fermento, sal), 4 da produção (3 saídas de insumo + 1 entrada de acabado) e 1 da venda.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/estoque/movimentacoes?numeroPagina=1&tamanhoPagina=50",
+      "headers": [],
+      "metaSortKey": 740
+    },
+    {
+      "_id": "rq_07_02",
+      "_type": "request",
+      "parentId": "fld_07",
+      "name": "02 — Extrato da farinha: história completa (200)",
+      "description": "Esperado: 2 movimentações — EntradaPorCompra (saldo 100) e SaidaPorProducao (saldo 69). O campo saldoResultante conta a história em ordem.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/estoque/movimentacoes?numeroPagina=1&tamanhoPagina=10&idProduto={{ _.id_farinha }}",
+      "headers": [],
+      "metaSortKey": 750
+    },
+    {
+      "_id": "rq_07_03",
+      "_type": "request",
+      "parentId": "fld_07",
+      "name": "03 — Filtrar por período (200)",
+      "description": "Ajuste as datas conforme o dia da execução.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/estoque/movimentacoes?numeroPagina=1&tamanhoPagina=20&dataInicio=2020-01-01&dataFim=2099-12-31",
+      "headers": [],
+      "metaSortKey": 760
+    },
+    {
+      "_id": "rq_07_04",
+      "_type": "request",
+      "parentId": "fld_07",
+      "name": "04 — Paginação: página 2 com tamanho 3 (200)",
+      "description": "Esperado: numeroPagina = 2, até 3 itens, totalPaginas coerente com o total.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/estoque/movimentacoes?numeroPagina=2&tamanhoPagina=3",
+      "headers": [],
+      "metaSortKey": 770
+    },
+    {
+      "_id": "fld_08",
+      "_type": "request_group",
+      "parentId": "wrk_simple_erp_fluxo",
+      "name": "08 — Erros de domínio e de contrato",
+      "description": "Confirma que o erro chega no formato { \"erros\": [\"CODIGO_ESTAVEL\"] } e com o status certo. O ControllerBaseDaApi mapeia código contendo NAO_ENCONTRADO para 404 e o resto para 400 — por isso alguns casos abaixo são 400 mesmo parecendo 'não existe'.",
+      "metaSortKey": 780
+    },
+    {
+      "_id": "rq_08_01",
+      "_type": "request",
+      "parentId": "fld_08",
+      "name": "01 — Pedido de compra inexistente (404)",
+      "description": "Esperado: 404 com código *_NAO_ENCONTRADO.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/pedidos-de-compra/{{ _.id_inexistente }}",
+      "headers": [],
+      "metaSortKey": 790
+    },
+    {
+      "_id": "rq_08_02",
+      "_type": "request",
+      "parentId": "fld_08",
+      "name": "02 — Enum inválido no filtro de estoque (400)",
+      "description": "tipo=Voando. Esperado: 400 { \"erros\": [\"TIPO_MOVIMENTACAO_INVALIDO\"] }.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/estoque/movimentacoes?numeroPagina=1&tamanhoPagina=10&tipo=Voando",
+      "headers": [],
+      "metaSortKey": 800
+    },
+    {
+      "_id": "rq_08_03",
+      "_type": "request",
+      "parentId": "fld_08",
+      "name": "03 — Enum numérico é recusado (400)",
+      "description": "tipo=1. Aceitar número amarraria o contrato à ordem de declaração do enum, então a conversão recusa de propósito.\nEsperado: 400 TIPO_MOVIMENTACAO_INVALIDO.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/estoque/movimentacoes?numeroPagina=1&tamanhoPagina=10&tipo=1",
+      "headers": [],
+      "metaSortKey": 810
+    },
+    {
+      "_id": "rq_08_04",
+      "_type": "request",
+      "parentId": "fld_08",
+      "name": "04 — Enum aceita variação de caixa (200)",
+      "description": "tipo=entradaporcompra. A conversão é case-insensitive.\nEsperado: 200, não 400.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/estoque/movimentacoes?numeroPagina=1&tamanhoPagina=10&tipo=entradaporcompra",
+      "headers": [],
+      "metaSortKey": 820
+    },
+    {
+      "_id": "rq_08_05",
+      "_type": "request",
+      "parentId": "fld_08",
+      "name": "05 — Status de título inválido (400)",
+      "description": "Esperado: 400 STATUS_TITULO_INVALIDO.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/financeiro/titulos?numeroPagina=1&tamanhoPagina=10&status=Pago",
+      "headers": [],
+      "metaSortKey": 830
+    },
+    {
+      "_id": "rq_08_06",
+      "_type": "request",
+      "parentId": "fld_08",
+      "name": "06 — Pedido de compra sem itens (400)",
+      "description": "Lista vazia. O controller repassa ao domínio em vez de estourar — quem recusa é o agregado, com o código dele.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/pedidos-de-compra",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 840,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"idFornecedor\": 2001,\n  \"itens\": []\n}"
+      }
+    },
+    {
+      "_id": "rq_08_07",
+      "_type": "request",
+      "parentId": "fld_08",
+      "name": "07 — Pedido de compra sem o campo 'itens' (400)",
+      "description": "Campo ausente, não lista vazia. Mesmo tratamento: null vira lista vazia no controller e o domínio decide.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/pedidos-de-compra",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 850,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"idFornecedor\": 2001\n}"
+      }
+    },
+    {
+      "_id": "rq_08_08",
+      "_type": "request",
+      "parentId": "fld_08",
+      "name": "08 — Ordem de produção para produto SEM receita ativa (400)",
+      "description": "Usa o Pão de Queijo (3046), que não teve composição definida.\nEsperado: 400 — não há receita para calcular as necessidades.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/ordens-de-producao",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 860,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"idProdutoFabricado\": 3046,\n  \"quantidadeAProduzir\": 10\n}"
+      }
+    },
+    {
+      "_id": "rq_08_09",
+      "_type": "request",
+      "parentId": "fld_08",
+      "name": "09 — Venda de produto SEM saldo em estoque (201 + 400)",
+      "description": "Cria um pedido só com Leite UHT (3001), que nunca entrou no estoque.\nCOPIE o 'id' para 'id_pedido_venda_sem_saldo'. Esperado aqui: 201 — a criação é válida.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/pedidos-de-venda",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 870,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"idCliente\": 1001,\n  \"itens\": [\n    {\n      \"idProduto\": 3001,\n      \"quantidade\": 10,\n      \"precoUnitario\": 7.5,\n      \"desconto\": 0\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "rq_08_10",
+      "_type": "request",
+      "parentId": "fld_08",
+      "name": "10 — Aprovar a venda sem saldo (400)",
+      "description": "Esperado: 400. A disponibilidade de estoque é pré-condição SÍNCRONA da aprovação — a baixa é que é assíncrona. Sem isso, a venda seria aprovada e o handler falharia depois, deixando pedido aprovado sem estoque.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/pedidos-de-venda/{{ _.id_pedido_venda_sem_saldo }}/aprovar",
+      "headers": [],
+      "metaSortKey": 880
+    },
+    {
+      "_id": "rq_08_11",
+      "_type": "request",
+      "parentId": "fld_08",
+      "name": "11 — Cancelar venda sem informar motivo (400)",
+      "description": "Motivo vazio. É o único cancelamento do sistema que exige corpo — o motivo viaja no evento PedidoDeVendaCancelado.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/pedidos-de-venda/{{ _.id_pedido_venda_sem_saldo }}/cancelar",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 890,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"motivo\": \"\"\n}"
+      }
+    },
+    {
+      "_id": "rq_08_12",
+      "_type": "request",
+      "parentId": "fld_08",
+      "name": "12 — Cancelar venda com motivo (200)",
+      "description": "Esperado: 200, status Cancelado, motivo ecoado na resposta.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/pedidos-de-venda/{{ _.id_pedido_venda_sem_saldo }}/cancelar",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 900,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"motivo\": \"Cliente desistiu da compra\"\n}"
+      }
+    },
+    {
+      "_id": "rq_08_13",
+      "_type": "request",
+      "parentId": "fld_08",
+      "name": "13 — Editar pedido de venda já aprovado (400)",
+      "description": "Aprovar congela os valores. Esperado: 400 PEDIDO_DE_VENDA_NAO_EDITAVEL.",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/api/pedidos-de-venda/{{ _.id_pedido_venda }}/desconto",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 910,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"desconto\": 50.0\n}"
+      }
+    },
+    {
+      "_id": "rq_08_14",
+      "_type": "request",
+      "parentId": "fld_08",
+      "name": "14 — Efetivar pedido de compra já efetivado (400)",
+      "description": "Transição inválida no estado atual. Esperado: 400.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/pedidos-de-compra/{{ _.id_pedido_compra }}/efetivar",
+      "headers": [],
+      "metaSortKey": 920
+    },
+    {
+      "_id": "rq_08_15",
+      "_type": "request",
+      "parentId": "fld_08",
+      "name": "15 — Concluir ordem já concluída (400)",
+      "description": "Esperado: 400. Garante que o evento de produção não é publicado duas vezes — o que duplicaria as movimentações de estoque.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/ordens-de-producao/{{ _.id_ordem_producao }}/concluir",
+      "headers": [],
+      "metaSortKey": 930
+    },
+    {
+      "_id": "rq_08_16",
+      "_type": "request",
+      "parentId": "fld_08",
+      "name": "16 — Saldo de produto inexistente (400)",
+      "description": "Id inválido é recusado na criação do value object, antes de consultar.\nEsperado: 400, não 404 — o critério do ControllerBaseDaApi é o código do erro.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/estoque/produtos/{{ _.id_inexistente }}/saldo",
+      "headers": [],
+      "metaSortKey": 940
+    },
+    {
+      "_id": "fld_09",
+      "_type": "request_group",
+      "parentId": "wrk_simple_erp_fluxo",
+      "name": "09 — Rotas restantes: listagens e cancelamentos",
+      "description": "Fecha a cobertura das rotas que o fluxo principal não passa. Os cancelamentos precisam de documentos novos, porque os das pastas anteriores já terminaram o ciclo e não aceitam mais essa transição.",
+      "metaSortKey": 950
+    },
+    {
+      "_id": "rq_09_01",
+      "_type": "request",
+      "parentId": "fld_09",
+      "name": "01 — Listar pedidos de compra com filtros (200)",
+      "description": "Esperado: o pedido da pasta 03, status Concluida.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/pedidos-de-compra?numeroPagina=1&tamanhoPagina=10&idFornecedor={{ _.id_fornecedor }}&status=Concluida",
+      "headers": [],
+      "metaSortKey": 960
+    },
+    {
+      "_id": "rq_09_02",
+      "_type": "request",
+      "parentId": "fld_09",
+      "name": "02 — Listar pedidos de compra: status inválido (400)",
+      "description": "Esperado: 400 STATUS_PEDIDO_DE_COMPRA_INVALIDO.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/pedidos-de-compra?numeroPagina=1&tamanhoPagina=10&status=Faturada",
+      "headers": [],
+      "metaSortKey": 970
+    },
+    {
+      "_id": "rq_09_03",
+      "_type": "request",
+      "parentId": "fld_09",
+      "name": "03 — Obter pedido de venda por id (200)",
+      "description": "Esperado: status Concluido, 1 item, descontoDoPedido = 15, motivoCancelamento nulo.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/pedidos-de-venda/{{ _.id_pedido_venda }}",
+      "headers": [],
+      "metaSortKey": 980
+    },
+    {
+      "_id": "rq_09_04",
+      "_type": "request",
+      "parentId": "fld_09",
+      "name": "04 — Listar ordens de produção com filtros (200)",
+      "description": "Esperado: a ordem da pasta 04, status Concluida.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/ordens-de-producao?numeroPagina=1&tamanhoPagina=10&idProdutoFabricado={{ _.id_pao_frances }}&status=Concluida",
+      "headers": [],
+      "metaSortKey": 990
+    },
+    {
+      "_id": "rq_09_05",
+      "_type": "request",
+      "parentId": "fld_09",
+      "name": "05 — Criar pedido de compra para cancelar (201)",
+      "description": "Documento novo, só para exercitar o cancelamento.\nCOPIE o 'id' para 'id_pedido_compra_cancelar'.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/pedidos-de-compra",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 1000,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"idFornecedor\": 2002,\n  \"itens\": [\n    {\n      \"idProduto\": 3035,\n      \"quantidade\": 25,\n      \"custoUnitario\": 3.8\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "rq_09_06",
+      "_type": "request",
+      "parentId": "fld_09",
+      "name": "06 — Cancelar pedido de compra (200)",
+      "description": "Esperado: status Cancelada. Publica PedidoDeCompraCancelado — evento sem handler hoje (o estorno é evolução documentada), então o dispatcher registra no-op em log.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/pedidos-de-compra/{{ _.id_pedido_compra_cancelar }}/cancelar",
+      "headers": [],
+      "metaSortKey": 1010
+    },
+    {
+      "_id": "rq_09_07",
+      "_type": "request",
+      "parentId": "fld_09",
+      "name": "07 — PROVA: cancelar não movimentou estoque (200)",
+      "description": "Açúcar Refinado (3035), do pedido cancelado. Esperado: quantidadeAtual = 0 e possuiRegistroDeSaldo = false — só efetivar movimenta.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/estoque/produtos/3035/saldo",
+      "headers": [],
+      "metaSortKey": 1020
+    },
+    {
+      "_id": "rq_09_08",
+      "_type": "request",
+      "parentId": "fld_09",
+      "name": "08 — Criar ordem de produção para cancelar (201)",
+      "description": "COPIE o 'id' para 'id_ordem_cancelar'. Usa a receita ativa do Pão Francês.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/ordens-de-producao",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 1030,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"idProdutoFabricado\": 3045,\n  \"quantidadeAProduzir\": 5\n}"
+      }
+    },
+    {
+      "_id": "rq_09_09",
+      "_type": "request",
+      "parentId": "fld_09",
+      "name": "09 — Cancelar ordem de produção (200)",
+      "description": "Esperado: status Cancelada, sem consumo de insumos.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/ordens-de-producao/{{ _.id_ordem_cancelar }}/cancelar",
+      "headers": [],
+      "metaSortKey": 1040
+    },
+    {
+      "_id": "rq_09_10",
+      "_type": "request",
+      "parentId": "fld_09",
+      "name": "10 — PROVA: farinha intacta após cancelar (200)",
+      "description": "Esperado: 69 KG, o mesmo valor da pasta 04. Cancelar não consome insumo.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/estoque/produtos/{{ _.id_farinha }}/saldo",
+      "headers": [],
+      "metaSortKey": 1050
+    },
+    {
+      "_id": "rq_09_11",
+      "_type": "request",
+      "parentId": "fld_09",
+      "name": "11 — Cadastrar produto novo (201)",
+      "description": "Única rota de cadastro exercitada aqui: o seed insere produtos pela entidade, não pelo endpoint, então o POST não tinha cobertura.\nEsperado: 201 + Location.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/produtos",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 1060,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"codigo\": \"FAB-007\",\n  \"descricao\": \"Broa de Milho\",\n  \"unidadeDeMedida\": \"UN\",\n  \"classificacao\": \"Fabricado\"\n}"
+      }
+    },
+    {
+      "_id": "rq_09_12",
+      "_type": "request",
+      "parentId": "fld_09",
+      "name": "12 — Cadastrar produto com código duplicado (400)",
+      "description": "Mesmo código da requisição anterior. Esperado: 400 com código de erro de duplicidade.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/produtos",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "metaSortKey": 1070,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"codigo\": \"FAB-007\",\n  \"descricao\": \"Broa de Milho Grande\",\n  \"unidadeDeMedida\": \"UN\",\n  \"classificacao\": \"Fabricado\"\n}"
+      }
+    }
+  ]
+}
