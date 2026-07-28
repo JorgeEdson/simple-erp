@@ -5,6 +5,7 @@ using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Estoque.Entidades;
 using simple_erp.Core.Modulos.Estoque.Interfaces.Repositorios;
+using simple_erp.Core.Modulos.Estoque.Servicos;
 using simple_erp.Core.Modulos.Vendas.Entidades;
 using simple_erp.Core.Modulos.Vendas.Eventos;
 using simple_erp.Core.Modulos.Vendas.Interfaces.Repositorios;
@@ -36,7 +37,11 @@ namespace simple_erp.Testes.Modulos.Vendas
             _unitOfWork.PedidosDeVendaRepository.Returns(_pedidosRepository);
             _unitOfWork.SaldosDeEstoqueRepository.Returns(_saldosRepository);
 
-            _useCase = new AprovarPedidoDeVendaUseCase(_unitOfWork, _logService);
+            // Mesmo serviço de domínio da Produção, reaproveitado aqui, construído sobre o
+            // repositório de saldos mockado.
+            var servicoDeDisponibilidade = new ServicoDeDisponibilidadeDeEstoque(_saldosRepository);
+
+            _useCase = new AprovarPedidoDeVendaUseCase(_unitOfWork, servicoDeDisponibilidade, _logService);
         }
 
         /// <summary>Devolve o agregado para que o teste possa inspecionar seus eventos.</summary>

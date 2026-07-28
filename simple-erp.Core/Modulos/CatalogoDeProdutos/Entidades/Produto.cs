@@ -8,7 +8,7 @@ using System.Text;
 
 namespace simple_erp.Core.Modulos.CatalogoDeProdutos.Entidades
 {
-    public sealed class Produto : Entidade<Produto>
+    public sealed class Produto : Entidade<Produto>, IAggregateRoot
     {
         private Produto()
         {

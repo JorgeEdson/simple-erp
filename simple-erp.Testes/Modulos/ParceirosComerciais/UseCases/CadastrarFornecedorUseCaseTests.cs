@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Especificacoes;
 using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
 using simple_erp.Core.Modulos.ParceirosComerciais.Interfaces.Repositorios;
@@ -55,7 +56,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 
             await _fornecedoresRepository
                 .DidNotReceive()
-                .ExistePorDocumentoAsync(Arg.Any<Documento>(), Arg.Any<CancellationToken>());
+                .ExisteAsync(Arg.Any<ISpecification<Fornecedor>>(), Arg.Any<CancellationToken>());
 
             await _fornecedoresRepository
                 .DidNotReceive()
@@ -73,7 +74,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
             var entrada = CriarEntradaValida();
 
             _fornecedoresRepository
-                .ExistePorDocumentoAsync(Arg.Any<Documento>(), Arg.Any<CancellationToken>())
+                .ExisteAsync(Arg.Any<ISpecification<Fornecedor>>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Falha("ERRO_AO_CONSULTAR_FORNECEDOR"));
 
             // Act
@@ -99,7 +100,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
             var entrada = CriarEntradaValida();
 
             _fornecedoresRepository
-                .ExistePorDocumentoAsync(Arg.Any<Documento>(), Arg.Any<CancellationToken>())
+                .ExisteAsync(Arg.Any<ISpecification<Fornecedor>>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(true));
 
             // Act
@@ -125,7 +126,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
             var entrada = CriarEntradaValida();
 
             _fornecedoresRepository
-                .ExistePorDocumentoAsync(Arg.Any<Documento>(), Arg.Any<CancellationToken>())
+                .ExisteAsync(Arg.Any<ISpecification<Fornecedor>>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(false));
 
             _fornecedoresRepository
@@ -173,7 +174,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
             var entrada = CriarEntradaValida();
 
             _fornecedoresRepository
-                .ExistePorDocumentoAsync(Arg.Any<Documento>(), Arg.Any<CancellationToken>())
+                .ExisteAsync(Arg.Any<ISpecification<Fornecedor>>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(false));
 
             _fornecedoresRepository
@@ -198,9 +199,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 
             await _fornecedoresRepository
                 .Received(1)
-                .ExistePorDocumentoAsync(
-                    Arg.Is<Documento>(d => d.Valor == entrada.Documento),
-                    Arg.Any<CancellationToken>());
+                .ExisteAsync(Arg.Any<ISpecification<Fornecedor>>(), Arg.Any<CancellationToken>());
 
             await _fornecedoresRepository
                 .Received(1)

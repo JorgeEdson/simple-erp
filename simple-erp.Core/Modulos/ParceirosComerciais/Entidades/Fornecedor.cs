@@ -8,7 +8,7 @@ using System.Text;
 
 namespace simple_erp.Core.Modulos.ParceirosComerciais.Entidades
 {
-    public sealed class Fornecedor : ParceiroComercial
+    public sealed class Fornecedor : ParceiroComercial, IAggregateRoot
     {
         /// <summary>Construtor de materialização do EF Core.</summary>
         private Fornecedor()

@@ -13,7 +13,7 @@ namespace simple_erp.Core.Modulos.Estoque.Entidades
     /// configuração. Cada operação produz uma MovimentacaoDeEstoque consistente com
     /// o saldo resultante.
     /// </summary>
-    public sealed class SaldoDeEstoque : Entidade<SaldoDeEstoque>
+    public sealed class SaldoDeEstoque : Entidade<SaldoDeEstoque>, IAggregateRoot
     {
 #pragma warning disable CS8618 // Construtor de materialização do EF Core: as propriedades são preenchidas pelo provider.
         /// <summary>Construtor de materialização do EF Core.</summary>

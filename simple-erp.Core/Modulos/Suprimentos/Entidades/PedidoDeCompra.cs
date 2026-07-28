@@ -9,7 +9,7 @@ using System.Text;
 
 namespace simple_erp.Core.Modulos.Suprimentos.Entidades
 {
-    public sealed class PedidoDeCompra : Entidade<PedidoDeCompra>
+    public sealed class PedidoDeCompra : Entidade<PedidoDeCompra>, IAggregateRoot
     {   
         private List<ItemDePedidoDeCompra> _itens;
 

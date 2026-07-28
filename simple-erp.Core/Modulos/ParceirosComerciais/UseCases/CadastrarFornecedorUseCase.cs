@@ -2,6 +2,7 @@ using simple_erp.Core.Compartilhado.Base;
 using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
+using simple_erp.Core.Modulos.ParceirosComerciais.Especificacoes;
 using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
 using System.Diagnostics;
 
@@ -108,8 +109,11 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
             var stopwatchExisteDocumento = Stopwatch.StartNew();
 
-            var jaExiste = await _unitOfWork.FornecedoresRepository.ExistePorDocumentoAsync(
-                resultadoDocumento.Instancia,
+            var especificacaoDocumento = new ParceiroComDocumentoSpecification<Fornecedor>(
+                resultadoDocumento.Instancia);
+
+            var jaExiste = await _unitOfWork.FornecedoresRepository.ExisteAsync(
+                especificacaoDocumento,
                 cancellationToken);
 
             stopwatchExisteDocumento.Stop();
@@ -118,7 +122,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 Mensagem: "Verificação de existência de fornecedor por documento concluída.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["OperacaoRepositorio"] = "ExistePorDocumentoAsync",
+                    ["OperacaoRepositorio"] = "ExisteAsync(ParceiroComDocumentoSpecification)",
                     ["DuracaoMs"] = stopwatchExisteDocumento.ElapsedMilliseconds
                 }));
 

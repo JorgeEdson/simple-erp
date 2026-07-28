@@ -1,8 +1,10 @@
 using simple_erp.Core.Compartilhado.Base;
 using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
+using simple_erp.Core.Modulos.Estoque.Servicos;
 using simple_erp.Core.Modulos.Vendas.Entidades;
 using System.Diagnostics;
+using System.Linq;
 
 namespace simple_erp.Core.Modulos.Vendas.UseCases
 {
@@ -21,13 +23,16 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
     public sealed class AprovarPedidoDeVendaUseCase : IAprovarPedidoDeVendaUseCase
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IServicoDeDisponibilidadeDeEstoque _servicoDeDisponibilidade;
         private readonly ILogService _logService;
 
         public AprovarPedidoDeVendaUseCase(
             IUnitOfWork unitOfWork,
+            IServicoDeDisponibilidadeDeEstoque servicoDeDisponibilidade,
             ILogService logService)
         {
             _unitOfWork = unitOfWork;
+            _servicoDeDisponibilidade = servicoDeDisponibilidade;
             _logService = logService;
         }
 
@@ -114,53 +119,18 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
 
             #region Validação de disponibilidade de estoque
 
-            var insuficientes = new List<string>();
-            var errosDisponibilidade = new List<string>();
+            // Mesma DECISÃO cross-agregado da Produção, reaproveitada aqui: o serviço de
+            // domínio apura a insuficiência; este caso de uso apenas veste o veredito com
+            // o vocabulário de Vendas (produto).
+            var requisicoes = pedido.Itens
+                .Select(item => new RequisicaoDeDisponibilidade(
+                    IdProduto: item.IdProduto,
+                    QuantidadeRequerida: item.Quantidade));
 
-            foreach (var item in pedido.Itens)
-            {
-                var resultadoIdProduto = Id.TentarCriar(item.IdProduto);
+            var verificacao = await _servicoDeDisponibilidade
+                .VerificarDisponibilidadeAsync(requisicoes, cancellationToken);
 
-                if (resultadoIdProduto.EhFalha)
-                {
-                    errosDisponibilidade.AddRange(resultadoIdProduto.Erros!);
-                    break;
-                }
-
-                var disponivel = 0m;
-
-                var existeSaldo = await _unitOfWork.SaldosDeEstoqueRepository
-                    .ExistePorProdutoAsync(resultadoIdProduto.Instancia, cancellationToken);
-
-                if (existeSaldo.EhFalha)
-                {
-                    errosDisponibilidade.AddRange(existeSaldo.Erros!);
-                    break;
-                }
-
-                if (existeSaldo.Instancia)
-                {
-                    var resultadoSaldo = await _unitOfWork.SaldosDeEstoqueRepository
-                        .ObterPorProdutoAsync(resultadoIdProduto.Instancia, cancellationToken);
-
-                    if (resultadoSaldo.EhFalha)
-                    {
-                        errosDisponibilidade.AddRange(resultadoSaldo.Erros!);
-                        break;
-                    }
-
-                    disponivel = resultadoSaldo.Instancia!.QuantidadeAtual;
-                }
-
-                if (disponivel < item.Quantidade)
-                {
-                    insuficientes.Add(
-                        $"PRODUTO_INSUFICIENTE|IdProduto={item.IdProduto}" +
-                        $"|Necessario={item.Quantidade}|Disponivel={disponivel}");
-                }
-            }
-
-            if (errosDisponibilidade.Count > 0)
+            if (verificacao.EhFalha)
             {
                 stopwatchUseCase.Stop();
                 _logService.RegistrarLogWarning(new RegistroDeLog(
@@ -168,16 +138,19 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
                     Propriedades: new Dictionary<string, object?>
                     {
                         ["PedidoDeVendaId"] = pedido.Id.Valor,
-                        ["Erros"] = errosDisponibilidade.ToArray(),
+                        ["Erros"] = verificacao.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
-                return Resultado<AprovarPedidoDeVendaSaida>.Falha(errosDisponibilidade);
+                return Resultado<AprovarPedidoDeVendaSaida>.Falha(verificacao.Erros!);
             }
 
-            if (insuficientes.Count > 0)
+            if (!verificacao.Instancia.HaDisponibilidade)
             {
                 var errosFinal = new List<string> { "ESTOQUE_INSUFICIENTE" };
-                errosFinal.AddRange(insuficientes);
+                errosFinal.AddRange(verificacao.Instancia.Insuficiencias
+                    .Select(insuficiencia =>
+                        $"PRODUTO_INSUFICIENTE|IdProduto={insuficiencia.IdProduto}" +
+                        $"|Necessario={insuficiencia.QuantidadeRequerida}|Disponivel={insuficiencia.QuantidadeDisponivel}"));
 
                 stopwatchUseCase.Stop();
                 _logService.RegistrarLogWarning(new RegistroDeLog(

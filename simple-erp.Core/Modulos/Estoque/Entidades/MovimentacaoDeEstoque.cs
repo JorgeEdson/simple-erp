@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace simple_erp.Core.Modulos.Estoque.Entidades
 { 
-    public sealed class MovimentacaoDeEstoque : Entidade<MovimentacaoDeEstoque>
+    public sealed class MovimentacaoDeEstoque : Entidade<MovimentacaoDeEstoque>, IAggregateRoot
     {
 #pragma warning disable CS8618 // Construtor de materialização do EF Core: as propriedades são preenchidas pelo provider.
         /// <summary>Construtor de materialização do EF Core.</summary>

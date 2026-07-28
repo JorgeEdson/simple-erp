@@ -1,5 +1,7 @@
 using FluentAssertions;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
+using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
+using simple_erp.Core.Modulos.ParceirosComerciais.Especificacoes;
 using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.UseCases;
 using simple_erp.Infraestrutura.Repositorios.ParceirosComerciais;
@@ -95,7 +97,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
             var clientes = new ClienteRepository(contextoLeitura);
 
             var documento = Documento.TentarCriar(CnpjA).Instancia;
-            (await clientes.ExistePorDocumentoAsync(documento)).Instancia
+            (await clientes.ExisteAsync(new ParceiroComDocumentoSpecification<Cliente>(documento))).Instancia
                 .Should().BeFalse("o CNPJ do fornecedor não deve aparecer na tabela de clientes");
         }
     }

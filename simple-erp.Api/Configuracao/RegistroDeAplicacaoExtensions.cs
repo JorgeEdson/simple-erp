@@ -31,7 +31,28 @@ namespace simple_erp.Api.Configuracao
             RegistrarPorInterfaceGenerica(services, assemblyDoCore, typeof(IUseCase<,>));
             RegistrarPorInterfaceGenerica(services, assemblyDoCore, typeof(IManipuladorDeEventoDeDominio<>));
 
+            // Serviços de domínio: registrados por convenção via o marcador IServicoDeDominio,
+            // do mesmo modo que os repositórios usam IRepositorio.
+            RegistrarServicosDeDominio(services, assemblyDoCore);
+
             return services;
+        }
+
+        private static void RegistrarServicosDeDominio(
+            IServiceCollection services,
+            System.Reflection.Assembly assembly)
+        {
+            var registros =
+                from tipo in assembly.GetTypes()
+                where tipo is { IsClass: true, IsAbstract: false }
+                where typeof(IServicoDeDominio).IsAssignableFrom(tipo)
+                from contrato in tipo.GetInterfaces()
+                where contrato != typeof(IServicoDeDominio)
+                      && typeof(IServicoDeDominio).IsAssignableFrom(contrato)
+                select (Servico: contrato, Implementacao: tipo);
+
+            foreach (var (servico, implementacao) in registros)
+                services.AddScoped(servico, implementacao);
         }
         
         private static void RegistrarPorInterfaceGenerica(

@@ -10,7 +10,7 @@ using System.Linq;
 namespace simple_erp.Core.Modulos.Producao.Composicao.Entidades
 {
    
-    public sealed class ComposicaoDeProduto : Entidade<ComposicaoDeProduto>
+    public sealed class ComposicaoDeProduto : Entidade<ComposicaoDeProduto>, IAggregateRoot
     {
         
         private List<ItemDeComposicao> _itens;

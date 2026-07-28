@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Especificacoes;
 using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
@@ -58,9 +59,8 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 
             await _fornecedoresRepository
                 .DidNotReceive()
-                .ExisteOutroPorDocumentoAsync(
-                    Arg.Any<Id>(),
-                    Arg.Any<Documento>(),
+                .ExisteAsync(
+                    Arg.Any<ISpecification<Fornecedor>>(),
                     Arg.Any<CancellationToken>());
 
             await _fornecedoresRepository
@@ -142,9 +142,8 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
                 .Returns(Resultado<Fornecedor>.Sucesso(fornecedor));
 
             _fornecedoresRepository
-                .ExisteOutroPorDocumentoAsync(
-                    Arg.Any<Id>(),
-                    Arg.Any<Documento>(),
+                .ExisteAsync(
+                    Arg.Any<ISpecification<Fornecedor>>(),
                     Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Falha("ERRO_AO_VERIFICAR_DOCUMENTO"));
 
@@ -157,9 +156,8 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 
             await _fornecedoresRepository
                 .Received(1)
-                .ExisteOutroPorDocumentoAsync(
-                    Arg.Is<Id>(id => id.Valor == fornecedor.Id.Valor),
-                    Arg.Any<Documento>(),
+                .ExisteAsync(
+                    Arg.Any<ISpecification<Fornecedor>>(),
                     Arg.Any<CancellationToken>());
 
             await _fornecedoresRepository
@@ -185,9 +183,8 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
                 .Returns(Resultado<Fornecedor>.Sucesso(fornecedor));
 
             _fornecedoresRepository
-                .ExisteOutroPorDocumentoAsync(
-                    Arg.Any<Id>(),
-                    Arg.Any<Documento>(),
+                .ExisteAsync(
+                    Arg.Any<ISpecification<Fornecedor>>(),
                     Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(true));
 
@@ -200,9 +197,8 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 
             await _fornecedoresRepository
                 .Received(1)
-                .ExisteOutroPorDocumentoAsync(
-                    Arg.Is<Id>(id => id.Valor == fornecedor.Id.Valor),
-                    Arg.Any<Documento>(),
+                .ExisteAsync(
+                    Arg.Any<ISpecification<Fornecedor>>(),
                     Arg.Any<CancellationToken>());
 
             await _fornecedoresRepository
@@ -229,9 +225,8 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
                 .Returns(Resultado<Fornecedor>.Sucesso(fornecedor));
 
             _fornecedoresRepository
-                .ExisteOutroPorDocumentoAsync(
-                    Arg.Any<Id>(),
-                    Arg.Any<Documento>(),
+                .ExisteAsync(
+                    Arg.Any<ISpecification<Fornecedor>>(),
                     Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(false));
 
@@ -266,9 +261,8 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
                 .Returns(Resultado<Fornecedor>.Sucesso(fornecedor));
 
             _fornecedoresRepository
-                .ExisteOutroPorDocumentoAsync(
-                    Arg.Any<Id>(),
-                    Arg.Any<Documento>(),
+                .ExisteAsync(
+                    Arg.Any<ISpecification<Fornecedor>>(),
                     Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(false));
 
@@ -316,9 +310,8 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
                 .Returns(Resultado<Fornecedor>.Sucesso(fornecedor));
 
             _fornecedoresRepository
-                .ExisteOutroPorDocumentoAsync(
-                    Arg.Any<Id>(),
-                    Arg.Any<Documento>(),
+                .ExisteAsync(
+                    Arg.Any<ISpecification<Fornecedor>>(),
                     Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(false));
 
@@ -342,9 +335,8 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 
             await _fornecedoresRepository
                 .Received(1)
-                .ExisteOutroPorDocumentoAsync(
-                    Arg.Is<Id>(id => id.Valor == fornecedor.Id.Valor),
-                    Arg.Is<Documento>(d => d.Valor == entrada.Documento),
+                .ExisteAsync(
+                    Arg.Any<ISpecification<Fornecedor>>(),
                     Arg.Any<CancellationToken>());
 
             await _fornecedoresRepository

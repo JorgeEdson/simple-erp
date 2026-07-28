@@ -1,6 +1,7 @@
 using FluentAssertions;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
+using simple_erp.Core.Modulos.ParceirosComerciais.Especificacoes;
 using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.UseCases;
 using simple_erp.Infraestrutura.Repositorios.ParceirosComerciais;
@@ -106,8 +107,10 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
             resultado.Instancia.Should().NotBeNull();
             resultado.Instancia!.Id.Valor.Should().Be(202607210010);
 
-            (await repositorio.ExistePorDocumentoAsync(documento)).Instancia.Should().BeTrue();
-            (await repositorio.ExistePorDocumentoAsync(Documento.TentarCriar(CpfC).Instancia))
+            (await repositorio.ExisteAsync(new ParceiroComDocumentoSpecification<Cliente>(documento)))
+                .Instancia.Should().BeTrue();
+            (await repositorio.ExisteAsync(
+                new ParceiroComDocumentoSpecification<Cliente>(Documento.TentarCriar(CpfC).Instancia)))
                 .Instancia.Should().BeFalse();
         }
 
@@ -122,12 +125,17 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
             var repositorio = new ClienteRepository(contexto);
             var documento = Documento.TentarCriar(CpfA).Instancia;
 
-            // O dono do documento não conta como "outro" — regra usada na edição.
-            (await repositorio.ExisteOutroPorDocumentoAsync(
-                Id.TentarCriar(202607210020).Instancia, documento)).Instancia.Should().BeFalse();
+            // O dono do documento não conta como "outro" — regra usada na edição, agora
+            // expressa pela composição ComDocumento.And(DiferenteDe).
+            (await repositorio.ExisteAsync(
+                new ParceiroComDocumentoSpecification<Cliente>(documento)
+                    .And(new ParceiroDiferenteDeSpecification<Cliente>(Id.TentarCriar(202607210020).Instancia))))
+                .Instancia.Should().BeFalse();
 
-            (await repositorio.ExisteOutroPorDocumentoAsync(
-                Id.TentarCriar(202607210021).Instancia, documento)).Instancia.Should().BeTrue();
+            (await repositorio.ExisteAsync(
+                new ParceiroComDocumentoSpecification<Cliente>(documento)
+                    .And(new ParceiroDiferenteDeSpecification<Cliente>(Id.TentarCriar(202607210021).Instancia))))
+                .Instancia.Should().BeTrue();
         }
 
         [Fact]

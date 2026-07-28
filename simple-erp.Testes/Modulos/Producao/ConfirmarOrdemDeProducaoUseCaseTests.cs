@@ -5,6 +5,7 @@ using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Estoque.Entidades;
 using simple_erp.Core.Modulos.Estoque.Interfaces.Repositorios;
+using simple_erp.Core.Modulos.Estoque.Servicos;
 using simple_erp.Core.Modulos.Producao.Entidades;
 using simple_erp.Core.Modulos.Producao.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.Producao.UseCases;
@@ -34,7 +35,12 @@ namespace simple_erp.Testes.Modulos.Producao
             _unitOfWork.OrdensDeProducaoRepository.Returns(_ordensRepository);
             _unitOfWork.SaldosDeEstoqueRepository.Returns(_saldosRepository);
 
-            _useCase = new ConfirmarOrdemDeProducaoUseCase(_unitOfWork, _logService);
+            // Serviço de domínio real, construído sobre o repositório de saldos mockado:
+            // a regra de disponibilidade agora vive nele, e o teste passa a cobrir também
+            // a integração entre o caso de uso e o serviço de domínio.
+            var servicoDeDisponibilidade = new ServicoDeDisponibilidadeDeEstoque(_saldosRepository);
+
+            _useCase = new ConfirmarOrdemDeProducaoUseCase(_unitOfWork, servicoDeDisponibilidade, _logService);
         }
 
         private void RetornarOrdemCriada()

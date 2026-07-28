@@ -6,7 +6,7 @@ using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
 
 namespace simple_erp.Core.Modulos.ParceirosComerciais.Entidades
 {
-    public sealed class Cliente : ParceiroComercial
+    public sealed class Cliente : ParceiroComercial, IAggregateRoot
     {
         /// <summary>Construtor de materialização do EF Core.</summary>
         private Cliente()

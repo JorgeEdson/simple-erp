@@ -1,4 +1,5 @@
 using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Especificacoes;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
 using simple_erp.Core.Modulos.ParceirosComerciais.Interfaces.Repositorios;
@@ -38,13 +39,9 @@ namespace simple_erp.Infraestrutura.Repositorios.ParceirosComerciais
             Id id, CancellationToken cancellationToken = default) =>
             ExistePorIdInternoAsync(id, cancellationToken);
 
-        public Task<Resultado<bool>> ExistePorDocumentoAsync(
-            Documento documento, CancellationToken cancellationToken = default) =>
-            ExistePorDocumentoInternoAsync(documento, cancellationToken);
-
-        public Task<Resultado<bool>> ExisteOutroPorDocumentoAsync(
-            Id idFornecedor, Documento documento, CancellationToken cancellationToken = default) =>
-            ExisteOutroPorDocumentoInternoAsync(idFornecedor, documento, cancellationToken);
+        public Task<Resultado<bool>> ExisteAsync(
+            ISpecification<Fornecedor> especificacao, CancellationToken cancellationToken = default) =>
+            ExisteInternoAsync(especificacao, cancellationToken);
 
         public Task<Resultado<ResultadoPaginado<Fornecedor>>> ListarPaginadoAsync(
             int numeroPagina,

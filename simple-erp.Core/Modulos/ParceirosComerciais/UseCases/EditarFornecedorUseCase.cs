@@ -1,6 +1,8 @@
 using simple_erp.Core.Compartilhado.Base;
 using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
+using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
+using simple_erp.Core.Modulos.ParceirosComerciais.Especificacoes;
 using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
 using System.Diagnostics;
 
@@ -168,9 +170,15 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
             {
                 var stopwatchExisteOutroDocumento = Stopwatch.StartNew();
 
-                var resultadoExisteOutroDocumento = await _unitOfWork.FornecedoresRepository.ExisteOutroPorDocumentoAsync(
-                    fornecedor.Id,
-                    resultadoDocumento.Instancia,
+                // "Existe OUTRO fornecedor com este documento" = mesma regra de documento
+                // COMPOSTA com "id diferente do que estou editando". A composição substitui
+                // o antigo método dedicado ExisteOutroPorDocumento.
+                var especificacaoOutroComDocumento =
+                    new ParceiroComDocumentoSpecification<Fornecedor>(resultadoDocumento.Instancia)
+                        .And(new ParceiroDiferenteDeSpecification<Fornecedor>(fornecedor.Id));
+
+                var resultadoExisteOutroDocumento = await _unitOfWork.FornecedoresRepository.ExisteAsync(
+                    especificacaoOutroComDocumento,
                     cancellationToken);
 
                 stopwatchExisteOutroDocumento.Stop();
@@ -179,7 +187,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Mensagem: "Verificação de duplicidade de documento concluída.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["OperacaoRepositorio"] = "ExisteOutroPorDocumentoAsync",
+                        ["OperacaoRepositorio"] = "ExisteAsync(ComDocumento.And(DiferenteDe))",
                         ["DuracaoMs"] = stopwatchExisteOutroDocumento.ElapsedMilliseconds
                     }));
 

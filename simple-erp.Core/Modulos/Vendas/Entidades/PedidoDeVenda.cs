@@ -9,7 +9,7 @@ using System.Linq;
 namespace simple_erp.Core.Modulos.Vendas.Entidades
 {
   
-    public sealed class PedidoDeVenda : Entidade<PedidoDeVenda>
+    public sealed class PedidoDeVenda : Entidade<PedidoDeVenda>, IAggregateRoot
     {
         // Não é readonly para que o provider de persistência (EF Core) possa
         // materializar a coleção a partir da coluna jsonb pelo campo de apoio.

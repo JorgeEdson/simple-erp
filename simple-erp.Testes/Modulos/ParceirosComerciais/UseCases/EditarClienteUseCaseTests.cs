@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Especificacoes;
 using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
@@ -58,9 +59,8 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 
             await _clientesRepository
                 .DidNotReceive()
-                .ExisteOutroPorDocumentoAsync(
-                    Arg.Any<Id>(),
-                    Arg.Any<Documento>(),
+                .ExisteAsync(
+                    Arg.Any<ISpecification<Cliente>>(),
                     Arg.Any<CancellationToken>());
 
             await _clientesRepository
@@ -142,9 +142,8 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
                 .Returns(Resultado<Cliente?>.Sucesso(cliente));
 
             _clientesRepository
-                .ExisteOutroPorDocumentoAsync(
-                    Arg.Any<Id>(),
-                    Arg.Any<Documento>(),
+                .ExisteAsync(
+                    Arg.Any<ISpecification<Cliente>>(),
                     Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Falha("ERRO_AO_VERIFICAR_DOCUMENTO"));
 
@@ -157,9 +156,8 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 
             await _clientesRepository
                 .Received(1)
-                .ExisteOutroPorDocumentoAsync(
-                    Arg.Is<Id>(id => id.Valor == cliente.Id.Valor),
-                    Arg.Any<Documento>(),
+                .ExisteAsync(
+                    Arg.Any<ISpecification<Cliente>>(),
                     Arg.Any<CancellationToken>());
 
             await _clientesRepository
@@ -185,9 +183,8 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
                 .Returns(Resultado<Cliente?>.Sucesso(cliente));
 
             _clientesRepository
-                .ExisteOutroPorDocumentoAsync(
-                    Arg.Any<Id>(),
-                    Arg.Any<Documento>(),
+                .ExisteAsync(
+                    Arg.Any<ISpecification<Cliente>>(),
                     Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(true));
 
@@ -200,9 +197,8 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 
             await _clientesRepository
                 .Received(1)
-                .ExisteOutroPorDocumentoAsync(
-                    Arg.Is<Id>(id => id.Valor == cliente.Id.Valor),
-                    Arg.Any<Documento>(),
+                .ExisteAsync(
+                    Arg.Any<ISpecification<Cliente>>(),
                     Arg.Any<CancellationToken>());
 
             await _clientesRepository
@@ -251,9 +247,8 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 
             await _clientesRepository
                 .DidNotReceive()
-                .ExisteOutroPorDocumentoAsync(
-                    Arg.Any<Id>(),
-                    Arg.Any<Documento>(),
+                .ExisteAsync(
+                    Arg.Any<ISpecification<Cliente>>(),
                     Arg.Any<CancellationToken>());
 
             await _clientesRepository
@@ -286,9 +281,8 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
                 .Returns(Resultado<Cliente?>.Sucesso(cliente));
 
             _clientesRepository
-                .ExisteOutroPorDocumentoAsync(
-                    Arg.Any<Id>(),
-                    Arg.Any<Documento>(),
+                .ExisteAsync(
+                    Arg.Any<ISpecification<Cliente>>(),
                     Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(false));
 
@@ -323,9 +317,8 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
                 .Returns(Resultado<Cliente?>.Sucesso(cliente));
 
             _clientesRepository
-                .ExisteOutroPorDocumentoAsync(
-                    Arg.Any<Id>(),
-                    Arg.Any<Documento>(),
+                .ExisteAsync(
+                    Arg.Any<ISpecification<Cliente>>(),
                     Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(false));
 
@@ -373,9 +366,8 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
                 .Returns(Resultado<Cliente?>.Sucesso(cliente));
 
             _clientesRepository
-                .ExisteOutroPorDocumentoAsync(
-                    Arg.Any<Id>(),
-                    Arg.Any<Documento>(),
+                .ExisteAsync(
+                    Arg.Any<ISpecification<Cliente>>(),
                     Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(false));
 
@@ -399,9 +391,8 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 
             await _clientesRepository
                 .Received(1)
-                .ExisteOutroPorDocumentoAsync(
-                    Arg.Is<Id>(id => id.Valor == cliente.Id.Valor),
-                    Arg.Is<Documento>(d => d.Valor == entrada.Documento),
+                .ExisteAsync(
+                    Arg.Any<ISpecification<Cliente>>(),
                     Arg.Any<CancellationToken>());
 
             await _clientesRepository

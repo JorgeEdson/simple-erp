@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace simple_erp.Core.Modulos.Financeiro.Entidades
 {   
-    public sealed class Titulo : Entidade<Titulo>
+    public sealed class Titulo : Entidade<Titulo>, IAggregateRoot
     {
         // Não é readonly para que o provider de persistência (EF Core) possa
         // materializar a coleção a partir da coluna jsonb pelo campo de apoio.

@@ -1,8 +1,10 @@
 using simple_erp.Core.Compartilhado.Base;
 using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
+using simple_erp.Core.Modulos.Estoque.Servicos;
 using simple_erp.Core.Modulos.Producao.Entidades;
 using System.Diagnostics;
+using System.Linq;
 
 namespace simple_erp.Core.Modulos.Producao.UseCases
 {
@@ -20,13 +22,16 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
     public sealed class ConfirmarOrdemDeProducaoUseCase : IConfirmarOrdemDeProducaoUseCase
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IServicoDeDisponibilidadeDeEstoque _servicoDeDisponibilidade;
         private readonly ILogService _logService;
 
         public ConfirmarOrdemDeProducaoUseCase(
             IUnitOfWork unitOfWork,
+            IServicoDeDisponibilidadeDeEstoque servicoDeDisponibilidade,
             ILogService logService)
         {
             _unitOfWork = unitOfWork;
+            _servicoDeDisponibilidade = servicoDeDisponibilidade;
             _logService = logService;
         }
 
@@ -172,54 +177,36 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
             #endregion
         }
 
+        // A DECISÃO de negócio "há saldo suficiente de cada insumo?" cruza os agregados
+        // OrdemDeProducao e SaldoDeEstoque e, por isso, vive em um Serviço de Domínio.
+        // Ao caso de uso resta a ORQUESTRAÇÃO: traduzir as necessidades da ordem para a
+        // entrada neutra do serviço, delegar a verificação e vestir o veredito com o
+        // vocabulário deste contexto (insumo).
         private async Task<Resultado<bool>> ValidarDisponibilidadeDeEstoqueAsync(
             OrdemDeProducao ordem,
             CancellationToken cancellationToken)
         {
-            var insuficientes = new List<string>();
+            var requisicoes = ordem.Necessidades
+                .Select(necessidade => new RequisicaoDeDisponibilidade(
+                    IdProduto: necessidade.IdInsumo,
+                    QuantidadeRequerida: necessidade.QuantidadeNecessaria));
 
-            foreach (var necessidade in ordem.Necessidades)
-            {
-                var resultadoIdInsumo = Id.TentarCriar(necessidade.IdInsumo);
+            var verificacao = await _servicoDeDisponibilidade
+                .VerificarDisponibilidadeAsync(requisicoes, cancellationToken);
 
-                if (resultadoIdInsumo.EhFalha)
-                    return Resultado<bool>.Falha(resultadoIdInsumo.Erros!);
+            if (verificacao.EhFalha)
+                return Resultado<bool>.Falha(verificacao.Erros!);
 
-                var disponivel = 0m;
+            if (verificacao.Instancia.HaDisponibilidade)
+                return Resultado<bool>.Sucesso(true);
 
-                var existeSaldo = await _unitOfWork.SaldosDeEstoqueRepository
-                    .ExistePorProdutoAsync(resultadoIdInsumo.Instancia, cancellationToken);
+            var erros = new List<string> { "ESTOQUE_INSUFICIENTE" };
+            erros.AddRange(verificacao.Instancia.Insuficiencias
+                .Select(insuficiencia =>
+                    $"INSUMO_INSUFICIENTE|IdInsumo={insuficiencia.IdProduto}" +
+                    $"|Necessario={insuficiencia.QuantidadeRequerida}|Disponivel={insuficiencia.QuantidadeDisponivel}"));
 
-                if (existeSaldo.EhFalha)
-                    return Resultado<bool>.Falha(existeSaldo.Erros!);
-
-                if (existeSaldo.Instancia)
-                {
-                    var resultadoSaldo = await _unitOfWork.SaldosDeEstoqueRepository
-                        .ObterPorProdutoAsync(resultadoIdInsumo.Instancia, cancellationToken);
-
-                    if (resultadoSaldo.EhFalha)
-                        return Resultado<bool>.Falha(resultadoSaldo.Erros!);
-
-                    disponivel = resultadoSaldo.Instancia!.QuantidadeAtual;
-                }
-
-                if (disponivel < necessidade.QuantidadeNecessaria)
-                {
-                    insuficientes.Add(
-                        $"INSUMO_INSUFICIENTE|IdInsumo={necessidade.IdInsumo}" +
-                        $"|Necessario={necessidade.QuantidadeNecessaria}|Disponivel={disponivel}");
-                }
-            }
-
-            if (insuficientes.Count > 0)
-            {
-                var erros = new List<string> { "ESTOQUE_INSUFICIENTE" };
-                erros.AddRange(insuficientes);
-                return Resultado<bool>.Falha(erros);
-            }
-
-            return Resultado<bool>.Sucesso(true);
+            return Resultado<bool>.Falha(erros);
         }
     }
 }

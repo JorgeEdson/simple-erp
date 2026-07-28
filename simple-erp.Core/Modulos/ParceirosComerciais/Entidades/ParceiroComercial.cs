@@ -7,6 +7,14 @@ using System.Text;
 
 namespace simple_erp.Core.Modulos.ParceirosComerciais.Entidades
 {
+    /// <summary>
+    /// <b>Exemplo de Entity que NÃO é raiz de agregado.</b> É uma entidade (herda de
+    /// <see cref="Entidade{TEntidade}"/>, tem identidade e comportamento), mas é abstrata,
+    /// não possui repositório próprio e não é referenciada de fora do módulo. Por isso
+    /// <b>não</b> implementa <see cref="IAggregateRoot"/>. Quem carrega essa marcação são
+    /// as suas especializações concretas — <c>Cliente</c> e <c>Fornecedor</c> — que são as
+    /// verdadeiras raízes de agregado, cada uma com seu próprio repositório.
+    /// </summary>
     public abstract class ParceiroComercial : Entidade<ParceiroComercial>
     {
         protected ParceiroComercial()

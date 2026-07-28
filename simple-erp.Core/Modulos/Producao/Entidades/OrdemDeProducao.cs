@@ -6,7 +6,7 @@ using simple_erp.Core.Modulos.Producao.ObjetosDeValor;
 namespace simple_erp.Core.Modulos.Producao.Entidades
 {
   
-    public sealed class OrdemDeProducao : Entidade<OrdemDeProducao>
+    public sealed class OrdemDeProducao : Entidade<OrdemDeProducao>, IAggregateRoot
     {
         // Não é readonly para que o provider de persistência (EF Core) possa
         // materializar a coleção a partir da coluna jsonb pelo campo de apoio.

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Especificacoes;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
 using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
@@ -99,29 +100,19 @@ namespace simple_erp.Infraestrutura.Repositorios.ParceirosComerciais
             }
         }
 
-        protected async Task<Resultado<bool>> ExistePorDocumentoInternoAsync(Documento documento, CancellationToken cancellationToken)
+        // Um único ponto de checagem de existência dirigido por Specification. A regra
+        // (documento igual, id diferente, ou a composição das duas) vive na spec; aqui só
+        // traduzimos a expressão para SQL via EF Core. Substitui os antigos
+        // ExistePorDocumento/ExisteOutroPorDocumento.
+        protected async Task<Resultado<bool>> ExisteInternoAsync(
+            ISpecification<TParceiro> especificacao,
+            CancellationToken cancellationToken)
         {
             try
             {
                 var existe = await Contexto.Set<TParceiro>()
                     .AsNoTracking()
-                    .AnyAsync(p => p.Documento == documento, cancellationToken);
-
-                return Resultado<bool>.Sucesso(existe);
-            }
-            catch (Exception ex)
-            {
-                return Resultado<bool>.Falha(ex.Message);
-            }
-        }
-
-        protected async Task<Resultado<bool>> ExisteOutroPorDocumentoInternoAsync(Id id, Documento documento, CancellationToken cancellationToken)
-        {
-            try
-            {
-                var existe = await Contexto.Set<TParceiro>()
-                    .AsNoTracking()
-                    .AnyAsync(p => p.Documento == documento && p.Id != id, cancellationToken);
+                    .AnyAsync(especificacao.ParaExpressao(), cancellationToken);
 
                 return Resultado<bool>.Sucesso(existe);
             }
