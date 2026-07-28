@@ -1,4 +1,4 @@
-# Simple ERP — Monólito Modular com DDD, Casos de Uso e Transactional Outbox
+# Simple ERP — Aplicando o DDD na prática
 
 > ⚠️ **Projeto didático.** Este repositório é uma **prova de conceito**, criada para **ensinar como estruturar um sistema de negócio com modelagem de domínio rica, contextos delimitados e comunicação entre módulos por eventos de domínio** (Result pattern, Unit of Work, Domain Events, Transactional Outbox e entrega assíncrona *at-least-once*). Ele **não** é uma referência pronta para produção — várias simplificações foram feitas de propósito para manter o foco no aprendizado (ver [Limitações](#limitações-por-ser-didático)).
 
