@@ -66,7 +66,7 @@ Os documentos estratégicos que embasam o desenho — **mapa de contextos** e **
 | 1 | `simple-erp.Core` | Class library (.NET 10) | **Domínio + Aplicação.** Entidades, objetos de valor, eventos, handlers, interfaces de repositório e casos de uso, organizados por módulo. **Zero dependências externas.** |
 | 2 | `simple-erp.Infraestrutura` | Class library (.NET 10) | EF Core 10 + Npgsql: `DbContext`, configurações, conversores de VO, repositórios, Unit of Work, interceptor e processador do Outbox, migrations. |
 | 3 | `simple-erp.Api` | ASP.NET Core 10 (REST) | Controllers, Swagger, mediator, `LogService`, carga inicial e o `BackgroundService` que processa a caixa de saída. |
-| 4 | `simple-erp.Testes` | xUnit (.NET 10) | ~73 arquivos de teste: domínio, casos de uso e repositórios (estes com **Postgres real** via Testcontainers). |
+| 4 | `simple-erp.Testes` | xUnit (.NET 10) | ~93 arquivos de teste: domínio, casos de uso e repositórios (estes com **Postgres real** via Testcontainers). |
 | — | PostgreSQL 17 | Infra (container) | Banco `simple_erp`, com um schema por módulo. |
 | — | pgAdmin 4 | Infra (container) | Inspeção do banco, já com a conexão registrada. |
 
@@ -80,7 +80,7 @@ Os documentos estratégicos que embasam o desenho — **mapa de contextos** e **
 | **CatalogoDeProdutos** | Upstream (identidade) | `Produto` | 8 | 5 |
 | **Suprimentos** (Compras) | Transacional | `PedidoDeCompra` | 8 | 4 |
 | **Estoque** | **Hub** de integração | `SaldoDeEstoque`, `MovimentacaoDeEstoque` | 3 | 2 |
-| **Producao/Composicao** (BOM) | Engenharia / suporte | `ComposicaoDeProduto` | 5 | 3 |
+| **Producao/Composicao** | Engenharia / suporte | `ComposicaoDeProduto` | 5 | 3 |
 | **Producao** | Transacional (núcleo) | `OrdemDeProducao` | 6 | 4 |
 | **Vendas** | Transacional | `PedidoDeVenda` | 9 | 4 |
 | **Financeiro** | Downstream | `Titulo` (a pagar / a receber) | 6 | 4 |
@@ -106,13 +106,24 @@ Os documentos estratégicos que embasam o desenho — **mapa de contextos** e **
 - **RF02 — Catálogo de produtos.** Cadastrar, editar, listar, inativar/reativar produtos e **classificá-los** como *Fabricado* ou *Matéria-Prima*.
 - **RF03 — Compras.** Criar pedido de compra para um fornecedor, adicionar/remover itens, aprovar, efetivar e cancelar, com cálculo de total e máquina de estados.
 - **RF04 — Estoque.** Manter saldo por produto e registrar movimentações tipadas (entrada por compra, saída por venda, saída/entrada por produção, ajuste), consultar saldo e extrato paginado, **impedindo saída sem saldo**.
-- **RF05 — Composição de produto (BOM).** Definir a receita de um produto fabricado com **versionamento e histórico**, ativar/inativar versões e garantir **uma única receita ativa** por produto.
+- **RF05 — Composição de produto.** Definir a receita de um produto fabricado com **versionamento e histórico**, ativar/inativar versões e garantir **uma única receita ativa** por produto.
 - **RF06 — Produção.** Criar ordem de produção, calcular a necessidade de insumos a partir da composição ativa, confirmar, concluir e cancelar conforme o status.
 - **RF07 — Vendas.** Criar pedido de venda para um cliente, adicionar/remover itens, aplicar desconto, aprovar, concluir e cancelar (com motivo).
 - **RF08 — Financeiro.** Emitir títulos a pagar e a receber, registrar baixas (parciais/total), cancelar e consultar títulos.
 - **RF09 — Integração por eventos.** Toda reação entre módulos acontece por **evento de domínio persistido em Outbox** e despachado fora da requisição, com retentativa e teto de tentativas.
 
-> ℹ️ **Estado da API REST:** hoje só os endpoints de **Clientes** e **Fornecedores** estão expostos (`/api/clientes`, `/api/fornecedores`). Os demais módulos estão **completos no Core, na Infraestrutura e nos testes**, mas ainda sem controller — exercitá-los é feito pelos testes automatizados. Ver [Limitações](#limitações-por-ser-didático).
+> ℹ️ **Estado da API REST:** todos os 8 contextos têm controller e estão expostos no Swagger — o fan-out entre módulos pode ser exercitado **ponta a ponta pela API**, não só pelos testes:
+>
+> | Contexto | Rota base |
+> |---|---|
+> | Parceiros Comerciais | `api/clientes`, `api/fornecedores` |
+> | Catálogo de Produtos | `api/produtos` |
+> | Suprimentos (Compras) | `api/pedidos-de-compra` (+ `/aprovar`, `/efetivar`, `/cancelar`) |
+> | Estoque | `api/estoque` |
+> | Composição | `api/produtos/{id}/composicoes`, `api/composicoes/{id}` (+ `/ativar`, `/inativar`) |
+> | Produção | `api/ordens-de-producao` (+ `/confirmar`, `/concluir`, `/cancelar`) |
+> | Vendas | `api/pedidos-de-venda` (+ `/aprovar`, `/concluir`, `/cancelar`) |
+> | Financeiro | `api/financeiro/titulos` (+ baixas e cancelamento) |
 
 ---
 
@@ -163,25 +174,30 @@ dotnet test
 
 ## Testando com a collection do Insomnia
 
-O arquivo está em [`collection/simple-erp-parceiros.insomnia.json`](./collection/simple-erp-parceiros.insomnia.json).
+O arquivo está em [`collection/simple-erp-fluxo-completo.insomnia.json`](./collection/simple-erp-fluxo-completo.insomnia.json) — uma trilha guiada com **~97 requests em 10 pastas** que percorre o sistema inteiro pela API REST, com requests de **PROVA** que confirmam cada efeito gerado por evento.
 
 1. No Insomnia: **Import → From File** e selecione o arquivo.
 2. Use o environment **Local (docker compose)** (já traz `base_url` e os ids de apoio).
-3. Requests disponíveis:
+3. Rode as pastas na ordem — cada uma demonstra uma etapa do fluxo orientado a eventos:
 
-   **Clientes** — cadastro (201), documento inválido (400), e-mail inválido (400), documento duplicado (400), obter por id (200/404), listar paginado e com filtros (nome, ativo, cidade), editar (200/404), inativar e reativar.
-
-   **Fornecedores** — o ciclo equivalente, com validação de CNPJ, filtro por documento formatado e por estado.
-
-   **Casos de borda** — cliente com o **mesmo CNPJ** de um fornecedor (permitido: a unicidade é por tipo de parceiro) e paginação (página 1 e 2 com tamanho 1, tamanho acima do limite).
+   - **00 — Diagnóstico e estado inicial:** API no ar, seed aplicado, e a prova de que o estoque começa zerado e sem títulos.
+   - **01 — Catálogo:** listagens filtradas, edição, inativar/reativar, classificação Fabricado / Matéria-Prima.
+   - **02 — Composição (evento intra-contexto):** definir receita v1 e v2, ativar, e **provar que o handler desativou a versão anterior** (unicidade da receita ativa).
+   - **03 — Compra → evento:** aprovar e efetivar um pedido, e provar a **entrada de estoque + título a pagar** (o fan-out central).
+   - **04 — Produção → evento:** concluir uma ordem e provar a **saída dos insumos + entrada do acabado**.
+   - **05 — Venda → evento:** aprovar um pedido e provar a **saída de estoque + título a receber**.
+   - **06 — Financeiro:** baixas parciais/total, baixa acima do saldo (400) e cancelamento.
+   - **07 — Estoque:** extrato consolidado.
+   - **08 — Erros de domínio e de contrato:** casos negativos (400/404).
+   - **09 — Rotas restantes:** listagens e cancelamentos.
 
 ### Demonstração do Outbox (roteiro)
 
 1. Suba o ambiente e observe os logs da API: `Processamento da caixa de saída iniciado (lote de 20, intervalo de 5s).`
-2. Cadastre um cliente pela collection ou pelo Swagger.
-3. Consulte a tabela `eventos.outbox`: a linha do `ClienteCadastrado` aparece com `processado_em_utc` **nulo**.
+2. Efetive um pedido de compra pela collection (pasta **03**) ou pelo Swagger (`POST api/pedidos-de-compra/{id}/efetivar`).
+3. Consulte a tabela `eventos.outbox`: a linha do `PedidoDeCompraEfetivado` aparece com `processado_em_utc` **nulo**.
 4. Aguarde até 5 segundos e consulte de novo: `processado_em_utc` preenchido, e o log `Evento de domínio despachado a partir da caixa de saída.`
-5. Para ver o **fan-out completo** (compra → estoque + financeiro), rode os testes do módulo de Suprimentos — o caminho REST desses módulos ainda não existe.
+5. Confirme o **fan-out**: `estoque.movimentacoes` recebeu a entrada por compra **e** `financeiro.titulos` ganhou um título a pagar — dois módulos que Suprimentos não conhece, reagindo ao mesmo evento.
 
 ---
 
@@ -236,12 +252,12 @@ SELECT * FROM eventos.outbox WHERE processado_em_utc IS NULL AND tentativas >= 5
 
 | Documento | Conteúdo |
 |---|---|
-| `Requisitos Funcionais - Simple ERP.pdf` | Especificação de origem do domínio. |
-| `context-map.md` | **Mapa de contextos**: os 8 bounded contexts, o papel de cada um (upstream / downstream / hub) e as integrações. |
-| `mapa-eventos.md` | **Catálogo de eventos**: para cada evento, quem publica, quando, o payload e quem reage — mais a matriz publicador → assinante e os fluxos de Event Storming. |
-| `apresentacao-ddd-result-usecases.md` | Material de apresentação sobre DDD, Result pattern e casos de uso. |
+| [`anexos/requisitos-funcionais.md`](./anexos/requisitos-funcionais.md) | Especificação de origem do domínio (RF01–RF09). |
+| [`anexos/mapa-contexto.md`](./anexos/mapa-contexto.md) | **Mapa de contextos**: os 8 bounded contexts, o tipo de subdomínio (core / suporte / genérico), o papel de cada um (upstream / downstream / hub) e os padrões de integração. |
+| [`anexos/mapa-eventos.md`](./anexos/mapa-eventos.md) | **Catálogo de eventos**: para cada evento, quem publica, quando, o payload e quem reage — mais a matriz publicador → assinante e os fluxos de Event Storming. |
+| [`apresentação/Domain-Driven-Design.pdf`](./apresentação/Domain-Driven-Design.pdf) | Material de apresentação sobre DDD. |
 
-> Esses documentos são mantidos **fora do repositório de código**, junto ao material de estudo do projeto.
+> O mapa de contexto e o catálogo de eventos são **companheiros** e se referenciam entre si: o primeiro é estratégico (contextos e relações), o segundo é tático (a ficha de cada evento). Ambos ficam versionados junto ao código, em `anexos/`.
 
 ---
 
@@ -249,7 +265,6 @@ SELECT * FROM eventos.outbox WHERE processado_em_utc IS NULL AND tentativas >= 5
 
 Estas simplificações são **intencionais** para focar no aprendizado; em produção você trataria cada uma:
 
-- **API parcial:** só Parceiros Comerciais tem controller. Compras, Estoque, Produção, Vendas e Financeiro existem por completo no Core/Infra, mas só são exercitados por testes.
 - **Segredos em texto claro** no `docker-compose.yml` e no `appsettings.json` (use secrets / variáveis de ambiente seguras).
 - **API sem autenticação/autorização.**
 - **Outbox com polling e instância única:** o worker roda dentro do próprio processo da API, sem lock distribuído (`FOR UPDATE SKIP LOCKED`). Com mais de uma réplica, o mesmo evento pode ser processado em paralelo.
