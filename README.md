@@ -74,33 +74,24 @@ Os documentos estratégicos que embasam o desenho — **mapa de contextos** e **
 
 ## Módulos (bounded contexts)
 
-| Módulo | Papel no mapa | Agregado raiz | Casos de uso | Eventos |
-|---|---|---|---|---|
-| **ParceirosComerciais** | Upstream (identidade) | `Cliente`, `Fornecedor` | 12 | 6 |
-| **CatalogoDeProdutos** | Upstream (identidade) | `Produto` | 8 | 5 |
-| **Suprimentos** (Compras) | Transacional | `PedidoDeCompra` | 8 | 4 |
-| **Estoque** | **Hub** de integração | `SaldoDeEstoque`, `MovimentacaoDeEstoque` | 3 | 2 |
-| **Producao/Composicao** | Engenharia / suporte | `ComposicaoDeProduto` | 5 | 3 |
-| **Producao** | Transacional (núcleo) | `OrdemDeProducao` | 6 | 4 |
-| **Vendas** | Transacional | `PedidoDeVenda` | 9 | 4 |
-| **Financeiro** | Downstream | `Titulo` (a pagar / a receber) | 6 | 4 |
+São **8 bounded contexts**, cada um com agregados, eventos e casos de uso próprios e um **schema dedicado** no banco; referências entre eles só por **Id**, nunca por objeto de domínio. Panorama:
 
-**Reações entre módulos hoje implementadas** (todas via Outbox, nenhuma com referência direta entre módulos):
+| Contexto | Papel no mapa |
+|---|---|
+| ParceirosComerciais · CatalogoDeProdutos | Upstream de identidade |
+| Suprimentos · Vendas · Producao (+ Composicao) | Transacionais (núcleo do fluxo) |
+| Estoque | **Hub** de integração |
+| Financeiro | Downstream |
 
-| Evento publicado | Módulo que reage | Handler | Efeito |
-|---|---|---|---|
-| `PedidoDeCompraEfetivado` | Estoque | `EntradaPorCompraHandler` | Entrada por compra, uma movimentação por item |
-| `PedidoDeCompraEfetivado` | Financeiro | `GeracaoDeTituloAPagarHandler` | Título a pagar (vencimento padrão: 30 dias) |
-| `PedidoDeVendaAprovado` | Estoque | `SaidaPorVendaHandler` | Saída por venda (valida saldo e baixa) |
-| `PedidoDeVendaAprovado` | Financeiro | `GeracaoDeTituloAReceberHandler` | Título a receber (vencimento padrão: 30 dias) |
-| `OrdemDeProducaoConcluida` | Estoque | `MovimentacoesPorProducaoHandler` | Saída das matérias-primas **+** entrada do produto acabado |
-| `ComposicaoDeProdutoAtivada` | Produção (intra-contexto) | `ManipuladorUnicidadeDeReceitaAtiva` | Desativa a versão anterior da receita |
+O tratamento estratégico completo — tipo de subdomínio (core / suporte / genérico), agregado raiz, contagem de casos de uso e eventos, schema e os **padrões de context mapping** — está em **[`anexos/mapa-contexto.md`](./anexos/mapa-contexto.md)**.
 
-> Repare no **fan-out**: `PedidoDeCompraEfetivado` dispara reações em **dois módulos que Suprimentos não conhece**. É a demonstração central do projeto.
+Toda reação entre módulos acontece por **evento de domínio via Outbox**, nunca por referência direta. Hoje **4 eventos cruzam fronteira** (compra, venda, produção) mais 1 intra-contexto (unicidade da receita). O headline é o **fan-out**: `PedidoDeCompraEfetivado` dispara reações em **dois módulos que Suprimentos não conhece** — Estoque (entrada de saldo) e Financeiro (título a pagar). A ficha de cada evento — publicador, gatilho, payload e assinantes — está em **[`anexos/mapa-eventos.md`](./anexos/mapa-eventos.md)**.
 
 ---
 
 ## Requisitos funcionais (RF)
+
+> Especificação completa em [`anexos/requisitos-funcionais.md`](./anexos/requisitos-funcionais.md). Resumo abaixo.
 
 - **RF01 — Parceiros comerciais.** Cadastrar, editar, consultar (por id e paginado com filtros), inativar e reativar **clientes** e **fornecedores**, com CPF/CNPJ validado e único por tipo de parceiro.
 - **RF02 — Catálogo de produtos.** Cadastrar, editar, listar, inativar/reativar produtos e **classificá-los** como *Fabricado* ou *Matéria-Prima*.
