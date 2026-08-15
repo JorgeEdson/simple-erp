@@ -1,6 +1,8 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Modulos.Producao.Composicao.Eventos;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.EventosDeDominio;
 
 namespace simple_erp.Core.Modulos.Producao.Composicao.Handlers
 {
@@ -33,8 +35,8 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.Handlers
                 Propriedades: new Dictionary<string, object?>
                 {
                     ["Handler"] = nameof(ManipuladorUnicidadeDeReceitaAtiva),
-                    ["ComposicaoId"] = evento.IdComposicao.Valor,
-                    ["IdProdutoFabricado"] = evento.IdProdutoFabricado.Valor,
+                    ["ComposicaoId"] = evento.IdComposicao,
+                    ["IdProdutoFabricado"] = evento.IdProdutoFabricado,
                     ["Versao"] = evento.Versao
                 }));
 
@@ -56,7 +58,7 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.Handlers
             var ativaAtual = resultadoAtiva.Instancia;
 
             // Nada a fazer se a única ativa já é a própria versão recém-ativada.
-            if (ativaAtual is null || ativaAtual.Id.IgualA(evento.IdComposicao))
+            if (ativaAtual is null || ativaAtual.Id == evento.IdComposicao)
                 return Resultado<bool>.Sucesso(true);
 
             ativaAtual.Inativar();
@@ -76,7 +78,7 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.Handlers
                 Mensagem: "Versão anteriormente ativa da receita foi desativada.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["ComposicaoDesativadaId"] = ativaAtual.Id.Valor,
+                    ["ComposicaoDesativadaId"] = ativaAtual.Id,
                     ["VersaoDesativada"] = ativaAtual.Versao
                 }));
 

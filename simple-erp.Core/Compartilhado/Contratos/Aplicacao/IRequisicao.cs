@@ -1,4 +1,4 @@
-namespace simple_erp.Core.Compartilhado.Interfaces
+namespace simple_erp.Core.Compartilhado.Contratos.Aplicacao
 {   
     public interface IRequisicao<TResposta>
     {

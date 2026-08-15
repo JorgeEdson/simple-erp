@@ -9,34 +9,34 @@ namespace simple_erp.Testes.Compartilhado.Builders
 {
     public sealed class OrdemDeProducaoBuilder
     {
-        private long? _id = 202604020400;
-        private long _idProdutoFabricado = 202604020001;
-        private long _idComposicao = 202604020300;
+        private Guid? _id = new Guid("00000000-0000-0000-0000-202604020400");
+        private Guid _idProdutoFabricado = new Guid("00000000-0000-0000-0000-202604020001");
+        private Guid _idComposicao = new Guid("00000000-0000-0000-0000-202604020300");
         private decimal _quantidadeAProduzir = 5m;
 
-        private readonly List<(long IdInsumo, decimal Quantidade)> _necessidades = new()
+        private readonly List<(Guid IdInsumo, decimal Quantidade)> _necessidades = new()
         {
-            (202604020010, 10m),
-            (202604020011, 15m)
+            (new Guid("00000000-0000-0000-0000-202604020010"), 10m),
+            (new Guid("00000000-0000-0000-0000-202604020011"), 15m)
         };
 
         private StatusOrdemDeProducao _statusAlvo = StatusOrdemDeProducao.Criada;
 
         public static OrdemDeProducaoBuilder Novo() => new();
 
-        public OrdemDeProducaoBuilder ComId(long id)
+        public OrdemDeProducaoBuilder ComId(Guid id)
         {
             _id = id;
             return this;
         }
 
-        public OrdemDeProducaoBuilder ComIdProdutoFabricado(long id)
+        public OrdemDeProducaoBuilder ComIdProdutoFabricado(Guid id)
         {
             _idProdutoFabricado = id;
             return this;
         }
 
-        public OrdemDeProducaoBuilder ComIdComposicao(long id)
+        public OrdemDeProducaoBuilder ComIdComposicao(Guid id)
         {
             _idComposicao = id;
             return this;
@@ -54,7 +54,7 @@ namespace simple_erp.Testes.Compartilhado.Builders
             return this;
         }
 
-        public OrdemDeProducaoBuilder ComNecessidade(long idInsumo, decimal quantidade)
+        public OrdemDeProducaoBuilder ComNecessidade(Guid idInsumo, decimal quantidade)
         {
             _necessidades.Add((idInsumo, quantidade));
             return this;
@@ -86,13 +86,13 @@ namespace simple_erp.Testes.Compartilhado.Builders
 
         public OrdemDeProducao Criar()
         {
-            var idProduto = Id.TentarCriar(_idProdutoFabricado).Instancia;
-            var idComposicao = Id.TentarCriar(_idComposicao).Instancia;
+            var idProduto = _idProdutoFabricado;
+            var idComposicao = _idComposicao;
             var quantidade = Quantidade.TentarCriar(_quantidadeAProduzir).Instancia;
 
             var necessidades = _necessidades
                 .Select(necessidade => NecessidadeDeMateriaPrima.TentarCriar(
-                    Id.TentarCriar(necessidade.IdInsumo).Instancia,
+                    necessidade.IdInsumo,
                     Quantidade.TentarCriar(necessidade.Quantidade).Instancia).Instancia)
                 .ToList();
 

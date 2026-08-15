@@ -1,9 +1,10 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Estoque.Entidades;
 using simple_erp.Core.Modulos.Estoque.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Core.Modulos.Estoque.UseCases
 {
@@ -13,16 +14,16 @@ namespace simple_erp.Core.Modulos.Estoque.UseCases
     }
 
     public record RegistrarMovimentacaoDeEstoqueEntrada(
-        long IdProduto,
+        Guid IdProduto,
         TipoDeMovimentacao Tipo,
         decimal Quantidade,
         TipoOrigemMovimentacao OrigemTipo,
-        long? OrigemIdReferencia = null,
+        Guid? OrigemIdReferencia = null,
         bool PermitirSaldoNegativo = false) : IRequisicao<RegistrarMovimentacaoDeEstoqueSaida>;
 
     public record RegistrarMovimentacaoDeEstoqueSaida(
-        long IdMovimentacao,
-        long IdProduto,
+        Guid IdMovimentacao,
+        Guid IdProduto,
         string Tipo,
         string Sentido,
         decimal Quantidade,
@@ -61,15 +62,31 @@ namespace simple_erp.Core.Modulos.Estoque.UseCases
 
             #endregion
 
+            #region Validação do identificador
+
+            if (dados.IdProduto == Guid.Empty)
+            {
+                stopwatchUseCase.Stop();
+
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["IdProduto"] = dados.IdProduto,
+                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                    }));
+
+                return Resultado<RegistrarMovimentacaoDeEstoqueSaida>.Falha("ID_INVALIDO");
+            }
+
+            #endregion
+
             #region Validação da entrada
 
-            var resultadoIdProduto = Id.TentarCriar(dados.IdProduto);
             var resultadoQuantidade = Quantidade.TentarCriar(dados.Quantidade);
             var resultadoOrigem = OrigemDaMovimentacao.TentarCriar(dados.OrigemTipo, dados.OrigemIdReferencia);
 
-            var validacao = Resultado.Combinar(
-                resultadoIdProduto,
-                resultadoQuantidade,
+            var validacao = Resultado.Combinar(resultadoQuantidade,
                 resultadoOrigem);
 
             if (validacao.EhFalha)
@@ -94,7 +111,7 @@ namespace simple_erp.Core.Modulos.Estoque.UseCases
             var stopwatchExisteProduto = Stopwatch.StartNew();
 
             var produtoExiste = await _unitOfWork.ProdutosRepository.ExistePorIdAsync(
-                resultadoIdProduto.Instancia,
+                dados.IdProduto,
                 cancellationToken);
 
             stopwatchExisteProduto.Stop();
@@ -144,7 +161,7 @@ namespace simple_erp.Core.Modulos.Estoque.UseCases
             var stopwatchExisteSaldo = Stopwatch.StartNew();
 
             var saldoExiste = await _unitOfWork.SaldosDeEstoqueRepository.ExistePorProdutoAsync(
-                resultadoIdProduto.Instancia,
+                dados.IdProduto,
                 cancellationToken);
 
             stopwatchExisteSaldo.Stop();
@@ -178,7 +195,7 @@ namespace simple_erp.Core.Modulos.Estoque.UseCases
             if (saldoExiste.Instancia)
             {
                 var resultadoSaldoObtido = await _unitOfWork.SaldosDeEstoqueRepository.ObterPorProdutoAsync(
-                    resultadoIdProduto.Instancia,
+                    dados.IdProduto,
                     cancellationToken);
 
                 if (resultadoSaldoObtido.EhFalha)
@@ -200,7 +217,7 @@ namespace simple_erp.Core.Modulos.Estoque.UseCases
             }
             else
             {
-                var resultadoCriarSaldo = SaldoDeEstoque.Criar(resultadoIdProduto.Instancia);
+                var resultadoCriarSaldo = SaldoDeEstoque.Criar(dados.IdProduto);
 
                 if (resultadoCriarSaldo.EhFalha)
                 {
@@ -323,8 +340,8 @@ namespace simple_erp.Core.Modulos.Estoque.UseCases
                 Mensagem: "Movimentação de estoque registrada com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["IdProduto"] = saldo.IdProduto.Valor,
-                    ["MovimentacaoId"] = movimentacao.Id.Valor,
+                    ["IdProduto"] = saldo.IdProduto,
+                    ["MovimentacaoId"] = movimentacao.Id,
                     ["Tipo"] = movimentacao.Tipo.ToString(),
                     ["SaldoResultante"] = movimentacao.SaldoResultante,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -332,8 +349,8 @@ namespace simple_erp.Core.Modulos.Estoque.UseCases
 
             return Resultado<RegistrarMovimentacaoDeEstoqueSaida>.Sucesso(
                 new RegistrarMovimentacaoDeEstoqueSaida(
-                    IdMovimentacao: movimentacao.Id.Valor,
-                    IdProduto: saldo.IdProduto.Valor,
+                    IdMovimentacao: movimentacao.Id,
+                    IdProduto: saldo.IdProduto,
                     Tipo: movimentacao.Tipo.ToString(),
                     Sentido: movimentacao.Sentido.ToString(),
                     Quantidade: movimentacao.Quantidade,

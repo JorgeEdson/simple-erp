@@ -16,7 +16,7 @@ namespace simple_erp.Testes.Modulos.Vendas
         [Fact]
         public void Criar_DeveIniciarEmEdicaoEEmitirEvento()
         {
-            var idCliente = Id.TentarCriar(202604020002).Instancia;
+            var idCliente = new Guid("00000000-0000-0000-0000-202604020002");
 
             var resultado = PedidoDeVenda.Criar(1, idCliente);
 
@@ -31,8 +31,8 @@ namespace simple_erp.Testes.Modulos.Vendas
         {
             var pedido = PedidoDeVendaBuilder.Novo()
                 .SemItens()
-                .ComItem(202604020001, 2m, 10.00m, desconto: 2.00m) // bruto 20, subtotal 18
-                .ComItem(202604020002, 1m, 30.00m)                   // bruto 30, subtotal 30
+                .ComItem(new Guid("00000000-0000-0000-0000-202604020001"), 2m, 10.00m, desconto: 2.00m) // bruto 20, subtotal 18
+                .ComItem(new Guid("00000000-0000-0000-0000-202604020002"), 1m, 30.00m)                   // bruto 30, subtotal 30
                 .ComDescontoDoPedido(8.00m)                          // total 48 - 8 = 40
                 .Criar();
 
@@ -44,9 +44,9 @@ namespace simple_erp.Testes.Modulos.Vendas
         [Fact]
         public void Criar_DeveFalhar_QuandoDescontoDoPedidoExcederSubtotal()
         {
-            var idCliente = Id.TentarCriar(202604020002).Instancia;
+            var idCliente = new Guid("00000000-0000-0000-0000-202604020002");
             var item = ItemDePedidoDeVenda.TentarCriar(
-                Id.TentarCriar(202604020001).Instancia,
+                new Guid("00000000-0000-0000-0000-202604020001"),
                 Quantidade.TentarCriar(1m).Instancia,
                 Dinheiro.TentarCriar(10.00m).Instancia,
                 Dinheiro.TentarCriar(0m).Instancia).Instancia;
@@ -65,7 +65,7 @@ namespace simple_erp.Testes.Modulos.Vendas
             var pedido = PedidoDeVendaBuilder.Novo().Aprovado().Criar();
 
             var item = ItemDePedidoDeVenda.TentarCriar(
-                Id.TentarCriar(202604020099).Instancia,
+                new Guid("00000000-0000-0000-0000-202604020099"),
                 Quantidade.TentarCriar(1m).Instancia,
                 Dinheiro.TentarCriar(5.00m).Instancia,
                 Dinheiro.TentarCriar(0m).Instancia).Instancia;
@@ -81,7 +81,7 @@ namespace simple_erp.Testes.Modulos.Vendas
         {
             var pedido = PedidoDeVendaBuilder.Novo()
                 .SemItens()
-                .ComItem(202604020001, 2m, 10.00m)
+                .ComItem(new Guid("00000000-0000-0000-0000-202604020001"), 2m, 10.00m)
                 .Criar();
 
             var resultado = pedido.Aprovar();
@@ -90,7 +90,7 @@ namespace simple_erp.Testes.Modulos.Vendas
             pedido.EstaAprovado.Should().BeTrue();
 
             var evento = pedido.EventosDeDominio.OfType<PedidoDeVendaAprovado>().Should().ContainSingle().Subject;
-            evento.Itens.Should().ContainSingle(i => i.IdProduto == 202604020001 && i.Quantidade == 2m);
+            evento.Itens.Should().ContainSingle(i => i.IdProduto == new Guid("00000000-0000-0000-0000-202604020001") && i.Quantidade == 2m);
             evento.ValorTotal.Should().Be(20.00m);
         }
 

@@ -25,10 +25,10 @@ namespace simple_erp.Core.Modulos.Financeiro.ObjetosDeValor
 
         public static Resultado<OrigemDoTitulo> TentarCriar(
             TipoOrigemTitulo tipo,
-            long? idReferencia = null,
+            Guid? idReferencia = null,
             IConfiguracaoObjetoDeValor? configuracao = null)
         {
-            if (idReferencia.HasValue && idReferencia.Value <= 0)
+            if (idReferencia.HasValue && idReferencia.Value == Guid.Empty)
                 return Resultado<OrigemDoTitulo>.Falha("ORIGEM_REFERENCIA_INVALIDA");
 
             var propriedades = new PropriedadesOrigemDoTitulo(tipo, idReferencia);
@@ -37,7 +37,7 @@ namespace simple_erp.Core.Modulos.Financeiro.ObjetosDeValor
         }
 
         public TipoOrigemTitulo Tipo => Valor.Tipo;
-        public long? IdReferencia => Valor.IdReferencia;
+        public Guid? IdReferencia => Valor.IdReferencia;
 
         public override string ToString()
         {
@@ -47,5 +47,5 @@ namespace simple_erp.Core.Modulos.Financeiro.ObjetosDeValor
 
     public record PropriedadesOrigemDoTitulo(
         TipoOrigemTitulo Tipo,
-        long? IdReferencia);
+        Guid? IdReferencia);
 }

@@ -1,11 +1,12 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
 using simple_erp.Core.Modulos.ParceirosComerciais.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.ParceirosComerciais.UseCases;
 using simple_erp.Testes.Compartilhado.Builders;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 
 namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
@@ -198,11 +199,11 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
             var entrada = CriarEntradaValida();
 
             var fornecedor1 = FornecedorBuilder.Novo()
-                .ComId(1001)
+                .ComId(new Guid("00000000-0000-0000-0000-000000001001"))
                 .Criar();
 
             var fornecedor2 = FornecedorBuilder.Novo()
-                .ComId(1002)
+                .ComId(new Guid("00000000-0000-0000-0000-000000001002"))
                 .Criar();
 
             var pagina = new ResultadoPaginado<Fornecedor>(
@@ -231,7 +232,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
             resultado.Instancia.Itens.Should().HaveCount(2);
 
             var item1 = resultado.Instancia.Itens.ElementAt(0);
-            item1.Id.Should().Be(fornecedor1.Id.Valor);
+            item1.Id.Should().Be(fornecedor1.Id);
             item1.Nome.Should().Be(fornecedor1.Nome.Valor);
             item1.Documento.Should().Be(fornecedor1.Documento.Valor);
             item1.Email.Should().Be(fornecedor1.Email.Valor);
@@ -240,7 +241,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
             item1.Estado.Should().Be(fornecedor1.Endereco.Estado);
 
             var item2 = resultado.Instancia.Itens.ElementAt(1);
-            item2.Id.Should().Be(fornecedor2.Id.Valor);
+            item2.Id.Should().Be(fornecedor2.Id);
             item2.Nome.Should().Be(fornecedor2.Nome.Valor);
             item2.Documento.Should().Be(fornecedor2.Documento.Valor);
             item2.Email.Should().Be(fornecedor2.Email.Valor);

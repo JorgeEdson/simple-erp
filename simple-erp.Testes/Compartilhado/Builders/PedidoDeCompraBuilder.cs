@@ -9,19 +9,19 @@ namespace simple_erp.Testes.Compartilhado.Builders
 {
     public sealed class PedidoDeCompraBuilder
     {
-        private long? _id = 202604020003;
-        private long _idFornecedor = 202604020002;
+        private Guid? _id = new Guid("00000000-0000-0000-0000-202604020003");
+        private Guid _idFornecedor = new Guid("00000000-0000-0000-0000-202604020002");
 
-        private readonly List<(long IdProduto, decimal Quantidade, decimal CustoUnitario)> _itens = new()
+        private readonly List<(Guid IdProduto, decimal Quantidade, decimal CustoUnitario)> _itens = new()
         {
-            (202604020001, 10m, 5.00m)
+            (new Guid("00000000-0000-0000-0000-202604020001"), 10m, 5.00m)
         };
 
         private StatusPedidoDeCompra _statusAlvo = StatusPedidoDeCompra.EmEdicao;
 
         public static PedidoDeCompraBuilder Novo() => new();
 
-        public PedidoDeCompraBuilder ComId(long id)
+        public PedidoDeCompraBuilder ComId(Guid id)
         {
             _id = id;
             return this;
@@ -33,7 +33,7 @@ namespace simple_erp.Testes.Compartilhado.Builders
             return this;
         }
 
-        public PedidoDeCompraBuilder ComIdFornecedor(long idFornecedor)
+        public PedidoDeCompraBuilder ComIdFornecedor(Guid idFornecedor)
         {
             _idFornecedor = idFornecedor;
             return this;
@@ -45,7 +45,7 @@ namespace simple_erp.Testes.Compartilhado.Builders
             return this;
         }
 
-        public PedidoDeCompraBuilder ComItem(long idProduto, decimal quantidade, decimal custoUnitario)
+        public PedidoDeCompraBuilder ComItem(Guid idProduto, decimal quantidade, decimal custoUnitario)
         {
             _itens.Add((idProduto, quantidade, custoUnitario));
             return this;
@@ -77,18 +77,13 @@ namespace simple_erp.Testes.Compartilhado.Builders
 
         public PedidoDeCompra Criar()
         {
-            var resultadoIdFornecedor = Id.TentarCriar(_idFornecedor);
-
-            if (resultadoIdFornecedor.EhFalha)
-                throw new InvalidOperationException(
-                    $"Id de fornecedor inválido no builder: {string.Join(", ", resultadoIdFornecedor.Erros!)}");
 
             var itens = _itens
                 .Select(item => CriarItem(item.IdProduto, item.Quantidade, item.CustoUnitario))
                 .ToList();
 
             var resultadoPedido = PedidoDeCompra.Criar(
-                resultadoIdFornecedor.Instancia,
+                _idFornecedor,
                 itens,
                 _id);
 
@@ -103,14 +98,10 @@ namespace simple_erp.Testes.Compartilhado.Builders
             return pedido;
         }
 
-        private static ItemDePedidoDeCompra CriarItem(long idProduto, decimal quantidade, decimal custoUnitario)
+        private static ItemDePedidoDeCompra CriarItem(Guid idProduto, decimal quantidade, decimal custoUnitario)
         {
-            var resultadoIdProduto = Id.TentarCriar(idProduto);
             var resultadoQuantidade = Quantidade.TentarCriar(quantidade);
             var resultadoCusto = Dinheiro.TentarCriar(custoUnitario);
-
-            if (resultadoIdProduto.EhFalha)
-                throw new InvalidOperationException($"Id de produto inválido no builder: {string.Join(", ", resultadoIdProduto.Erros!)}");
 
             if (resultadoQuantidade.EhFalha)
                 throw new InvalidOperationException($"Quantidade inválida no builder: {string.Join(", ", resultadoQuantidade.Erros!)}");
@@ -119,7 +110,7 @@ namespace simple_erp.Testes.Compartilhado.Builders
                 throw new InvalidOperationException($"Custo unitário inválido no builder: {string.Join(", ", resultadoCusto.Erros!)}");
 
             var resultadoItem = ItemDePedidoDeCompra.TentarCriar(
-                resultadoIdProduto.Instancia,
+                idProduto,
                 resultadoQuantidade.Instancia,
                 resultadoCusto.Instancia);
 

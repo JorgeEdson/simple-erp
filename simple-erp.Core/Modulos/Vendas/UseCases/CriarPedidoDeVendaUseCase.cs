@@ -1,9 +1,9 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
-using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Vendas.Entidades;
 using simple_erp.Core.Modulos.Vendas.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Core.Modulos.Vendas.UseCases
 {
@@ -13,27 +13,27 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
     }
 
     public record ItemPedidoDeVendaEntrada(
-        long IdProduto,
+        Guid IdProduto,
         decimal Quantidade,
         decimal PrecoUnitario,
         decimal Desconto = 0m);
 
     public record CriarPedidoDeVendaEntrada(
-        long IdCliente,
+        Guid IdCliente,
         IReadOnlyCollection<ItemPedidoDeVendaEntrada> Itens,
         decimal DescontoDoPedido = 0m) : IRequisicao<CriarPedidoDeVendaSaida>;
 
     public record ItemPedidoDeVendaSaida(
-        long IdProduto,
+        Guid IdProduto,
         decimal Quantidade,
         decimal PrecoUnitario,
         decimal Desconto,
         decimal Subtotal);
 
     public record CriarPedidoDeVendaSaida(
-        long Id,
+        Guid Id,
         int Numero,
-        long IdCliente,
+        Guid IdCliente,
         string Status,
         decimal ValorTotal,
         IReadOnlyCollection<ItemPedidoDeVendaSaida> Itens);
@@ -69,12 +69,30 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
 
             #endregion
 
+            #region Validação do identificador
+
+            if (dados.IdCliente == Guid.Empty)
+            {
+                stopwatchUseCase.Stop();
+
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["IdCliente"] = dados.IdCliente,
+                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                    }));
+
+                return Resultado<CriarPedidoDeVendaSaida>.Falha("ID_INVALIDO");
+            }
+
+            #endregion
+
             #region Validação da entrada
 
-            var resultadoIdCliente = Id.TentarCriar(dados.IdCliente);
             var resultadoDesconto = Dinheiro.TentarCriar(dados.DescontoDoPedido);
 
-            var validacaoCampos = Resultado.Combinar(resultadoIdCliente, resultadoDesconto);
+            var validacaoCampos = Resultado.Combinar(resultadoDesconto);
 
             if (validacaoCampos.EhFalha)
             {
@@ -98,16 +116,13 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
             {
                 foreach (var itemEntrada in dados.Itens)
                 {
-                    var resultadoIdProduto = Id.TentarCriar(itemEntrada.IdProduto);
                     var resultadoQuantidade = Quantidade.TentarCriar(itemEntrada.Quantidade);
                     var resultadoPreco = Dinheiro.TentarCriar(itemEntrada.PrecoUnitario);
                     var resultadoDescontoItem = Dinheiro.TentarCriar(itemEntrada.Desconto);
 
-                    var validacaoItem = Resultado.Combinar(
-                        resultadoIdProduto,
-                        resultadoQuantidade,
-                        resultadoPreco,
-                        resultadoDescontoItem);
+                    var validacaoItem = Resultado.Combinar(resultadoQuantidade,
+                resultadoPreco,
+                resultadoDescontoItem);
 
                     if (validacaoItem.EhFalha)
                     {
@@ -116,7 +131,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
                     }
 
                     var resultadoItem = ItemDePedidoDeVenda.TentarCriar(
-                        resultadoIdProduto.Instancia,
+                        itemEntrada.IdProduto,
                         resultadoQuantidade.Instancia,
                         resultadoPreco.Instancia,
                         resultadoDescontoItem.Instancia);
@@ -151,7 +166,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
             #region Validação de pré-condições
 
             var clienteExiste = await _unitOfWork.ClientesRepository.ExistePorIdAsync(
-                resultadoIdCliente.Instancia, cancellationToken);
+                dados.IdCliente, cancellationToken);
 
             if (clienteExiste.EhFalha)
             {
@@ -178,16 +193,8 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
 
             foreach (var idProduto in idsProdutos)
             {
-                var resultadoIdProd = Id.TentarCriar(idProduto);
-
-                if (resultadoIdProd.EhFalha)
-                {
-                    stopwatchUseCase.Stop();
-                    return Resultado<CriarPedidoDeVendaSaida>.Falha(resultadoIdProd.Erros!);
-                }
-
                 var existeProduto = await _unitOfWork.ProdutosRepository.ExistePorIdAsync(
-                    resultadoIdProd.Instancia, cancellationToken);
+                    idProduto, cancellationToken);
 
                 if (existeProduto.EhFalha)
                 {
@@ -221,7 +228,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
 
             var resultadoPedido = PedidoDeVenda.Criar(
                 resultadoNumero.Instancia,
-                resultadoIdCliente.Instancia,
+                dados.IdCliente,
                 itens,
                 resultadoDesconto.Instancia);
 
@@ -273,7 +280,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
                 Mensagem: "Pedido de venda criado com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["PedidoDeVendaId"] = pedido.Id.Valor,
+                    ["PedidoDeVendaId"] = pedido.Id,
                     ["Numero"] = pedido.Numero,
                     ["ValorTotal"] = pedido.ValorTotal.Valor,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -290,9 +297,9 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
 
             return Resultado<CriarPedidoDeVendaSaida>.Sucesso(
                 new CriarPedidoDeVendaSaida(
-                    Id: pedido.Id.Valor,
+                    Id: pedido.Id,
                     Numero: pedido.Numero,
-                    IdCliente: pedido.IdCliente.Valor,
+                    IdCliente: pedido.IdCliente,
                     Status: pedido.Status.ToString(),
                     ValorTotal: pedido.ValorTotal.Valor,
                     Itens: itensSaida));

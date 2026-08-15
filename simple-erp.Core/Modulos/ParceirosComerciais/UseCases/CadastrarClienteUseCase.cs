@@ -1,10 +1,11 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
 using simple_erp.Core.Modulos.ParceirosComerciais.Especificacoes;
 using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 {
@@ -28,7 +29,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
    ) : IRequisicao<CadastrarClienteSaida>;
 
     public record CadastrarClienteSaida(
-        long Id,
+        Guid Id,
         string Documento,
         string Nome,
         string Email,
@@ -243,7 +244,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Mensagem: "Falha ao persistir cadastro de cliente.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ClienteId"] = cliente.Id.Valor,
+                        ["ClienteId"] = cliente.Id,
                         ["Documento"] = cliente.Documento.Formatado,
                         ["Erros"] = resultadoSaveChanges.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -262,14 +263,14 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 Mensagem: "Cliente cadastrado com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["ClienteId"] = cliente.Id.Valor,
+                    ["ClienteId"] = cliente.Id,
                     ["Ativo"] = cliente.Ativo,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));
 
             return Resultado<CadastrarClienteSaida>.Sucesso(
                 new CadastrarClienteSaida(
-                    Id: cliente.Id.Valor,
+                    Id: cliente.Id,
                     Documento: cliente.Documento.Formatado,
                     Nome: cliente.Nome.Valor,
                     Email: cliente.Email.Valor,

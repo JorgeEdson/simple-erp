@@ -1,7 +1,8 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Core.Modulos.Producao.UseCases
 {
@@ -10,16 +11,16 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
     {
     }
 
-    public record ObterOrdemDeProducaoPorIdEntrada(long Id) : IRequisicao<ObterOrdemDeProducaoPorIdSaida>;
+    public record ObterOrdemDeProducaoPorIdEntrada(Guid Id) : IRequisicao<ObterOrdemDeProducaoPorIdSaida>;
 
     public record OrdemDeProducaoNecessidadeSaida(
-        long IdInsumo,
+        Guid IdInsumo,
         decimal QuantidadeNecessaria);
 
     public record ObterOrdemDeProducaoPorIdSaida(
-        long Id,
-        long IdProdutoFabricado,
-        long IdComposicao,
+        Guid Id,
+        Guid IdProdutoFabricado,
+        Guid IdComposicao,
         decimal QuantidadeAProduzir,
         string Status,
         IReadOnlyCollection<OrdemDeProducaoNecessidadeSaida> Necessidades);
@@ -54,14 +55,21 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoId = Id.TentarCriar(dados.Id);
-
-            if (resultadoId.EhFalha)
+            if (dados.Id == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
-                return Resultado<ObterOrdemDeProducaoPorIdSaida>.Falha(resultadoId.Erros!);
+
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["Id"] = dados.Id,
+                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                    }));
+
+                return Resultado<ObterOrdemDeProducaoPorIdSaida>.Falha("ID_INVALIDO");
             }
 
             #endregion
@@ -69,7 +77,7 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
             #region Recuperação do agregado
 
             var resultadoOrdem = await _unitOfWork.OrdensDeProducaoRepository
-                .ObterPorIdAsync(resultadoId.Instancia, cancellationToken);
+                .ObterPorIdAsync(dados.Id, cancellationToken);
 
             if (resultadoOrdem.EhFalha)
             {
@@ -112,16 +120,16 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
                 Mensagem: "Consulta de ordem de produção por id concluída com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["OrdemDeProducaoId"] = ordem.Id.Valor,
+                    ["OrdemDeProducaoId"] = ordem.Id,
                     ["Status"] = ordem.Status.ToString(),
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));
 
             return Resultado<ObterOrdemDeProducaoPorIdSaida>.Sucesso(
                 new ObterOrdemDeProducaoPorIdSaida(
-                    Id: ordem.Id.Valor,
-                    IdProdutoFabricado: ordem.IdProdutoFabricado.Valor,
-                    IdComposicao: ordem.IdComposicao.Valor,
+                    Id: ordem.Id,
+                    IdProdutoFabricado: ordem.IdProdutoFabricado,
+                    IdComposicao: ordem.IdComposicao,
                     QuantidadeAProduzir: ordem.QuantidadeAProduzir,
                     Status: ordem.Status.ToString(),
                     Necessidades: necessidades));

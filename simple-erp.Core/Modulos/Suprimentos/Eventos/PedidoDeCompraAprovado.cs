@@ -5,7 +5,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.Eventos
 {
     public sealed class PedidoDeCompraAprovado : EventoDeDominio
     {
-        public PedidoDeCompraAprovado(Id idPedidoDeCompra, Id idFornecedor, decimal valorTotal)
+        public PedidoDeCompraAprovado(Guid idPedidoDeCompra, Guid idFornecedor, decimal valorTotal)
             : base(idPedidoDeCompra)
         {
             IdPedidoDeCompra = idPedidoDeCompra;
@@ -13,8 +13,8 @@ namespace simple_erp.Core.Modulos.Suprimentos.Eventos
             ValorTotal = valorTotal;
         }
 
-        public Id IdPedidoDeCompra { get; }
-        public Id IdFornecedor { get; }
+        public Guid IdPedidoDeCompra { get; }
+        public Guid IdFornecedor { get; }
 
         /// <summary>
         /// Valor total do pedido no momento da aprovação. Serve de gatilho para a

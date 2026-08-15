@@ -1,6 +1,6 @@
-﻿using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Base;
 
-namespace simple_erp.Core.Compartilhado.Interfaces
+namespace simple_erp.Core.Compartilhado.Contratos.Aplicacao
 {
     public interface IUseCase<in TEntrada, TSaida>
     {

@@ -1,13 +1,14 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Entidades;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.ObjetosDeValor;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases;
 using simple_erp.Testes.Compartilhado.Builders;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
 {
@@ -32,7 +33,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
         {
             // Arrange
             var entrada = new EditarProdutoEntrada(
-                Id: 0,
+                Id: Guid.Empty,
                 Codigo: "",
                 Descricao: "",
                 UnidadeDeMedida: "INVALIDO");
@@ -46,12 +47,12 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
 
             await _produtosRepository
                 .DidNotReceive()
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>());
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
 
             await _produtosRepository
                 .DidNotReceive()
                 .ExisteOutroPorCodigoAsync(
-                    Arg.Any<Id>(),
+                    Arg.Any<Guid>(),
                     Arg.Any<CodigoProduto>(),
                     Arg.Any<CancellationToken>());
 
@@ -71,7 +72,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
             var entrada = CriarEntradaValida();
 
             _produtosRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Produto?>.Falha("ERRO_AO_OBTER_PRODUTO"));
 
             // Act
@@ -97,7 +98,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
             var entrada = CriarEntradaValida();
 
             _produtosRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Produto>.Falha("PRODUTO_NAO_ENCONTRADO"));
 
             // Act
@@ -121,21 +122,21 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
         {
             // Arrange
             var produto = ProdutoBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .ComCodigo("PROD-001")
                 .Criar();
 
             var entrada = CriarEntradaValida(
-                id: produto.Id.Valor,
+                id: produto.Id,
                 codigo: "PROD-002");
 
             _produtosRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Produto?>.Sucesso(produto));
 
             _produtosRepository
                 .ExisteOutroPorCodigoAsync(
-                    Arg.Any<Id>(),
+                    Arg.Any<Guid>(),
                     Arg.Any<CodigoProduto>(),
                     Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Falha("ERRO_AO_VERIFICAR_CODIGO"));
@@ -150,7 +151,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
             await _produtosRepository
                 .Received(1)
                 .ExisteOutroPorCodigoAsync(
-                    Arg.Is<Id>(id => id.Valor == produto.Id.Valor),
+                    Arg.Is<Guid>(id => id == produto.Id),
                     Arg.Any<CodigoProduto>(),
                     Arg.Any<CancellationToken>());
 
@@ -164,21 +165,21 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
         {
             // Arrange
             var produto = ProdutoBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .ComCodigo("PROD-001")
                 .Criar();
 
             var entrada = CriarEntradaValida(
-                id: produto.Id.Valor,
+                id: produto.Id,
                 codigo: "PROD-002");
 
             _produtosRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Produto?>.Sucesso(produto));
 
             _produtosRepository
                 .ExisteOutroPorCodigoAsync(
-                    Arg.Any<Id>(),
+                    Arg.Any<Guid>(),
                     Arg.Any<CodigoProduto>(),
                     Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(true));
@@ -193,7 +194,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
             await _produtosRepository
                 .Received(1)
                 .ExisteOutroPorCodigoAsync(
-                    Arg.Is<Id>(id => id.Valor == produto.Id.Valor),
+                    Arg.Is<Guid>(id => id == produto.Id),
                     Arg.Any<CodigoProduto>(),
                     Arg.Any<CancellationToken>());
 
@@ -211,18 +212,18 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
         {
             // Arrange
             var produto = ProdutoBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .ComCodigo("PROD-001")
                 .Criar();
 
             var entrada = CriarEntradaValida(
-                id: produto.Id.Valor,
+                id: produto.Id,
                 codigo: produto.Codigo.Valor,
                 descricao: "Produto Editado",
                 unidadeDeMedida: "KG");
 
             _produtosRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Produto?>.Sucesso(produto));
 
             _produtosRepository
@@ -244,7 +245,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
             await _produtosRepository
                 .DidNotReceive()
                 .ExisteOutroPorCodigoAsync(
-                    Arg.Any<Id>(),
+                    Arg.Any<Guid>(),
                     Arg.Any<CodigoProduto>(),
                     Arg.Any<CancellationToken>());
 
@@ -252,7 +253,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
                 .Received(1)
                 .AtualizarAsync(
                     Arg.Is<Produto>(p =>
-                        p.Id.Valor == produto.Id.Valor &&
+                        p.Id == produto.Id &&
                         p.Codigo.Valor == entrada.Codigo &&
                         p.Descricao.Valor == entrada.Descricao &&
                         p.UnidadeDeMedida.Valor == entrada.UnidadeDeMedida),
@@ -268,18 +269,18 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
         {
             // Arrange
             var produto = ProdutoBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .Criar();
 
-            var entrada = CriarEntradaValida(id: produto.Id.Valor);
+            var entrada = CriarEntradaValida(id: produto.Id);
 
             _produtosRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Produto?>.Sucesso(produto));
 
             _produtosRepository
                 .ExisteOutroPorCodigoAsync(
-                    Arg.Any<Id>(),
+                    Arg.Any<Guid>(),
                     Arg.Any<CodigoProduto>(),
                     Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(false));
@@ -305,18 +306,18 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
         {
             // Arrange
             var produto = ProdutoBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .Criar();
 
-            var entrada = CriarEntradaValida(id: produto.Id.Valor);
+            var entrada = CriarEntradaValida(id: produto.Id);
 
             _produtosRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Produto?>.Sucesso(produto));
 
             _produtosRepository
                 .ExisteOutroPorCodigoAsync(
-                    Arg.Any<Id>(),
+                    Arg.Any<Guid>(),
                     Arg.Any<CodigoProduto>(),
                     Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(false));
@@ -350,23 +351,23 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
         {
             // Arrange
             var produto = ProdutoBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .ComCodigo("PROD-001")
                 .Criar();
 
             var entrada = CriarEntradaValida(
-                id: produto.Id.Valor,
+                id: produto.Id,
                 codigo: "PROD-NEW",
                 descricao: "Produto Atualizado",
                 unidadeDeMedida: "L");
 
             _produtosRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Produto?>.Sucesso(produto));
 
             _produtosRepository
                 .ExisteOutroPorCodigoAsync(
-                    Arg.Any<Id>(),
+                    Arg.Any<Guid>(),
                     Arg.Any<CodigoProduto>(),
                     Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(false));
@@ -384,7 +385,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
 
             // Assert
             resultado.EhSucesso.Should().BeTrue();
-            resultado.Instancia.Id.Should().Be(produto.Id.Valor);
+            resultado.Instancia.Id.Should().Be(produto.Id);
             resultado.Instancia.Codigo.Should().Be("PROD-NEW");
             resultado.Instancia.Descricao.Should().Be("Produto Atualizado");
             resultado.Instancia.UnidadeDeMedida.Should().Be("L");
@@ -393,7 +394,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
             await _produtosRepository
                 .Received(1)
                 .ExisteOutroPorCodigoAsync(
-                    Arg.Is<Id>(id => id.Valor == produto.Id.Valor),
+                    Arg.Is<Guid>(id => id == produto.Id),
                     Arg.Is<CodigoProduto>(c => c.Valor == entrada.Codigo),
                     Arg.Any<CancellationToken>());
 
@@ -401,7 +402,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
                 .Received(1)
                 .AtualizarAsync(
                     Arg.Is<Produto>(p =>
-                        p.Id.Valor == produto.Id.Valor &&
+                        p.Id == produto.Id &&
                         p.Codigo.Valor == entrada.Codigo &&
                         p.Descricao.Valor == entrada.Descricao &&
                         p.UnidadeDeMedida.Valor == entrada.UnidadeDeMedida),
@@ -413,13 +414,13 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
         }
 
         private static EditarProdutoEntrada CriarEntradaValida(
-            long id = 123456,
+            Guid? id = null,
             string codigo = "PROD-EDIT",
             string descricao = "Produto Editado",
             string unidadeDeMedida = "UN")
         {
             return new EditarProdutoEntrada(
-                Id: id,
+                Id: id ?? new Guid("00000000-0000-0000-0000-000000123456"),
                 Codigo: codigo,
                 Descricao: descricao,
                 UnidadeDeMedida: unidadeDeMedida);

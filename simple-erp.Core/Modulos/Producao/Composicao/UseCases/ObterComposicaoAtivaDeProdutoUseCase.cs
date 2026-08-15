@@ -1,7 +1,8 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
 {
@@ -10,16 +11,16 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
     {
     }
 
-    public record ObterComposicaoAtivaDeProdutoEntrada(long IdProdutoFabricado) : IRequisicao<ObterComposicaoAtivaDeProdutoSaida>;
+    public record ObterComposicaoAtivaDeProdutoEntrada(Guid IdProdutoFabricado) : IRequisicao<ObterComposicaoAtivaDeProdutoSaida>;
 
     public record ComposicaoAtivaItemSaida(
-        long IdInsumo,
+        Guid IdInsumo,
         decimal QuantidadePorUnidade);
 
     public record ObterComposicaoAtivaDeProdutoSaida(
-        long IdProdutoFabricado,
+        Guid IdProdutoFabricado,
         bool PossuiReceitaAtiva,
-        long? IdComposicao,
+        Guid? IdComposicao,
         int? Versao,
         IReadOnlyCollection<ComposicaoAtivaItemSaida> Itens);
 
@@ -53,14 +54,21 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoId = Id.TentarCriar(dados.IdProdutoFabricado);
-
-            if (resultadoId.EhFalha)
+            if (dados.IdProdutoFabricado == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
-                return Resultado<ObterComposicaoAtivaDeProdutoSaida>.Falha(resultadoId.Erros!);
+
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["IdProdutoFabricado"] = dados.IdProdutoFabricado,
+                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                    }));
+
+                return Resultado<ObterComposicaoAtivaDeProdutoSaida>.Falha("ID_INVALIDO");
             }
 
             #endregion
@@ -68,7 +76,7 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
             #region Recuperação do agregado
 
             var existeAtiva = await _unitOfWork.ComposicoesDeProdutoRepository
-                .ExisteAtivaPorProdutoAsync(resultadoId.Instancia, cancellationToken);
+                .ExisteAtivaPorProdutoAsync(dados.IdProdutoFabricado, cancellationToken);
 
             if (existeAtiva.EhFalha)
             {
@@ -97,7 +105,7 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
             }
 
             var resultadoAtiva = await _unitOfWork.ComposicoesDeProdutoRepository
-                .ObterAtivaPorProdutoAsync(resultadoId.Instancia, cancellationToken);
+                .ObterAtivaPorProdutoAsync(dados.IdProdutoFabricado, cancellationToken);
 
             if (resultadoAtiva.EhFalha)
             {
@@ -127,7 +135,7 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
                 Mensagem: "Consulta da composição ativa concluída com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["ComposicaoId"] = composicao.Id.Valor,
+                    ["ComposicaoId"] = composicao.Id,
                     ["Versao"] = composicao.Versao,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));
@@ -136,7 +144,7 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
                 new ObterComposicaoAtivaDeProdutoSaida(
                     IdProdutoFabricado: dados.IdProdutoFabricado,
                     PossuiReceitaAtiva: true,
-                    IdComposicao: composicao.Id.Valor,
+                    IdComposicao: composicao.Id,
                     Versao: composicao.Versao,
                     Itens: itens));
 

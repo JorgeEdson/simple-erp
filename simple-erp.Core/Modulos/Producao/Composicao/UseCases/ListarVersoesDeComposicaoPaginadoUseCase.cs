@@ -1,7 +1,7 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
-using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
 {
@@ -13,7 +13,7 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
     public sealed record ListarVersoesDeComposicaoPaginadoEntrada(
         int NumeroPagina,
         int TamanhoPagina,
-        long IdProdutoFabricado,
+        Guid IdProdutoFabricado,
         bool? ApenasAtivas = null) : IRequisicao<ListarVersoesDeComposicaoPaginadoSaida>;
 
     public sealed record ListarVersoesDeComposicaoPaginadoSaida(
@@ -24,15 +24,15 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
         IReadOnlyCollection<VersaoDeComposicaoItemSaida> Itens);
 
     public sealed record VersaoDeComposicaoItemSaida(
-        long Id,
-        long IdProdutoFabricado,
+        Guid Id,
+        Guid IdProdutoFabricado,
         int Versao,
         bool Ativa,
         int QuantidadeItens,
         DateTime DataCriacaoUtc);
 
     public sealed record ListarVersoesDeComposicaoFiltros(
-        long IdProdutoFabricado,
+        Guid IdProdutoFabricado,
         bool? ApenasAtivas = null);
 
     public sealed class ListarVersoesDeComposicaoPaginadoUseCase : IListarVersoesDeComposicaoPaginadoUseCase
@@ -68,36 +68,28 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
 
             #endregion
 
+            #region Validação do identificador
+
+            if (dados.IdProdutoFabricado == Guid.Empty)
+            {
+                stopwatchUseCase.Stop();
+
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["IdProdutoFabricado"] = dados.IdProdutoFabricado,
+                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                    }));
+
+                return Resultado<ListarVersoesDeComposicaoPaginadoSaida>.Falha("ID_INVALIDO");
+            }
+
+            #endregion
+
             #region Validação dos parâmetros
 
             var erros = new List<string>();
-
-            var resultadoId = Id.TentarCriar(dados.IdProdutoFabricado);
-            if (resultadoId.EhFalha)
-                erros.AddRange(resultadoId.Erros!);
-
-            if (dados.NumeroPagina <= 0)
-                erros.Add("NUMERO_PAGINA_INVALIDO");
-
-            if (dados.TamanhoPagina <= 0)
-                erros.Add("TAMANHO_PAGINA_INVALIDO");
-
-            if (dados.TamanhoPagina > 100)
-                erros.Add("TAMANHO_PAGINA_MAXIMO_EXCEDIDO");
-
-            if (erros.Any())
-            {
-                stopwatchUseCase.Stop();
-                _logService.RegistrarLogWarning(new RegistroDeLog(
-                    Mensagem: "Falha na validação dos parâmetros da listagem de versões de composição.",
-                    Propriedades: new Dictionary<string, object?>
-                    {
-                        ["Erros"] = erros.ToArray(),
-                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
-                    }));
-                return Resultado<ListarVersoesDeComposicaoPaginadoSaida>.Falha(erros);
-            }
-
             #endregion
 
             #region Consulta paginada
@@ -134,8 +126,8 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
 
             var itens = pagina.Itens
                 .Select(composicao => new VersaoDeComposicaoItemSaida(
-                    Id: composicao.Id.Valor,
-                    IdProdutoFabricado: composicao.IdProdutoFabricado.Valor,
+                    Id: composicao.Id,
+                    IdProdutoFabricado: composicao.IdProdutoFabricado,
                     Versao: composicao.Versao,
                     Ativa: composicao.Ativa,
                     QuantidadeItens: composicao.Itens.Count,

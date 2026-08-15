@@ -5,12 +5,12 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.Eventos
 {
     public sealed class ProdutoReativado : EventoDeDominio
     {
-        public ProdutoReativado(Id idProduto)
+        public ProdutoReativado(Guid idProduto)
             : base(idProduto)
         {
             IdProduto = idProduto;
         }
 
-        public Id IdProduto { get; }
+        public Guid IdProduto { get; }
     }
 }

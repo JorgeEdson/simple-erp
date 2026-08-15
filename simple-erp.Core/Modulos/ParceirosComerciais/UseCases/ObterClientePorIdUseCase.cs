@@ -1,7 +1,8 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 {
@@ -9,10 +10,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
     {
     }
 
-    public sealed record ObterClientePorIdEntrada(long Id) : IRequisicao<ObterClientePorIdSaida>;
+    public sealed record ObterClientePorIdEntrada(Guid Id) : IRequisicao<ObterClientePorIdSaida>;
 
     public sealed record ObterClientePorIdSaida(
-        long Id,
+        Guid Id,
         string Nome,
         string Documento,
         string Email,
@@ -61,24 +62,21 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoId = Id.TentarCriar(dados.Id);
-
-            if (resultadoId.EhFalha)
+            if (dados.Id == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
 
                 _logService.RegistrarLogWarning(new RegistroDeLog(
-                    Mensagem: "Falha na validação do identificador para obtenção de cliente por id.",
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ClienteId"] = dados.Id,
-                        ["Erros"] = resultadoId.Erros?.ToArray(),
+                        ["Id"] = dados.Id,
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
 
-                return Resultado<ObterClientePorIdSaida>.Falha(resultadoId.Erros!);
+                return Resultado<ObterClientePorIdSaida>.Falha("ID_INVALIDO");
             }
 
             #endregion
@@ -88,7 +86,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
             var stopwatchObterCliente = Stopwatch.StartNew();
 
             var resultadoCliente = await _unitOfWork.ClientesRepository.ObterPorIdAsync(
-                resultadoId.Instancia,
+                dados.Id,
                 cancellationToken);
 
             stopwatchObterCliente.Stop();
@@ -109,7 +107,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Mensagem: "Falha ao obter cliente por id no repositório.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ClienteId"] = resultadoId.Instancia.Valor,
+                        ["ClienteId"] = dados.Id,
                         ["Erros"] = resultadoCliente.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -127,7 +125,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Mensagem: "Tentativa de obtenção de cliente não encontrado por id.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ClienteId"] = resultadoId.Instancia.Valor,
+                        ["ClienteId"] = dados.Id,
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
 
@@ -141,7 +139,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
             var stopwatchMapeamento = Stopwatch.StartNew();
 
             var saida = new ObterClientePorIdSaida(
-                Id: cliente.Id.Valor,
+                Id: cliente.Id,
                 Nome: cliente.Nome.Valor,
                 Documento: cliente.Documento.Valor,
                 Email: cliente.Email.Valor,
@@ -178,7 +176,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 Mensagem: "Cliente obtido por id com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["ClienteId"] = cliente.Id.Valor,
+                    ["ClienteId"] = cliente.Id,
                     ["Ativo"] = cliente.Ativo,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));

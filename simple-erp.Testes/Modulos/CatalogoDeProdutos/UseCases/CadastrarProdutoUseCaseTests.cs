@@ -1,11 +1,12 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Entidades;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.ObjetosDeValor;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
 {
@@ -198,7 +199,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
             resultado.Instancia.UnidadeDeMedida.Should().Be(entrada.UnidadeDeMedida);
             resultado.Instancia.Classificacao.Should().Be(ClassificacaoProduto.Revenda.ToString());
             resultado.Instancia.Ativo.Should().BeTrue();
-            resultado.Instancia.Id.Should().BeGreaterThan(0);
+            resultado.Instancia.Id.Should().NotBeEmpty();
 
             await _produtosRepository
                 .Received(1)

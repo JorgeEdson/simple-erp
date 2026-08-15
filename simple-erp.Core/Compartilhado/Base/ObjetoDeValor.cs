@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace simple_erp.Core.Compartilhado.Base
+﻿namespace simple_erp.Core.Compartilhado.Base
 {
     public interface IConfiguracaoObjetoDeValor
     {

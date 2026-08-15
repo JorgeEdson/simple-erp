@@ -1,5 +1,6 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.EventosDeDominio;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Modulos.Estoque.ObjetosDeValor;
 using simple_erp.Core.Modulos.Estoque.UseCases;
 using simple_erp.Core.Modulos.Suprimentos.Eventos;
@@ -28,7 +29,7 @@ namespace simple_erp.Core.Modulos.Estoque.Handlers
                 Propriedades: new Dictionary<string, object?>
                 {
                     ["Handler"] = nameof(EntradaPorCompraHandler),
-                    ["PedidoDeCompraId"] = evento.IdPedidoDeCompra.Valor,
+                    ["PedidoDeCompraId"] = evento.IdPedidoDeCompra,
                     ["QuantidadeItens"] = evento.Itens.Count
                 }));
 
@@ -41,7 +42,7 @@ namespace simple_erp.Core.Modulos.Estoque.Handlers
                     Tipo: TipoDeMovimentacao.EntradaPorCompra,
                     Quantidade: item.Quantidade,
                     OrigemTipo: TipoOrigemMovimentacao.Compra,
-                    OrigemIdReferencia: evento.IdPedidoDeCompra.Valor,
+                    OrigemIdReferencia: evento.IdPedidoDeCompra,
                     PermitirSaldoNegativo: false);
 
                 var resultado = await _registrarMovimentacao.ExecutarAsync(entrada, cancellationToken);

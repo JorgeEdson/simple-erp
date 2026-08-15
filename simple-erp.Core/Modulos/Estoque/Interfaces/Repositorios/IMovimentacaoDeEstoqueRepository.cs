@@ -1,5 +1,5 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Dominio;
 using simple_erp.Core.Modulos.Estoque.Entidades;
 using simple_erp.Core.Modulos.Estoque.UseCases;
 

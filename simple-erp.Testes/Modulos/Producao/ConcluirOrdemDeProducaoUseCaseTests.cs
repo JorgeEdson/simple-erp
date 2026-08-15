@@ -1,7 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Producao.Entidades;
 using simple_erp.Core.Modulos.Producao.Eventos;
@@ -10,12 +9,14 @@ using simple_erp.Core.Modulos.Producao.UseCases;
 using simple_erp.Testes.Compartilhado.Builders;
 using System.Collections.Generic;
 using System.Linq;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.Producao
 {
     public sealed class ConcluirOrdemDeProducaoUseCaseTests
     {
-        private const long IdOrdem = 202604020400;
+        private static readonly Guid IdOrdem = new Guid("00000000-0000-0000-0000-202604020400");
 
         private readonly IUnitOfWork _unitOfWork;
         private readonly IOrdemDeProducaoRepository _ordensRepository;
@@ -35,7 +36,7 @@ namespace simple_erp.Testes.Modulos.Producao
 
         private void RetornarOrdem(OrdemDeProducao ordem) =>
             _ordensRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<OrdemDeProducao?>.Sucesso(ordem));
 
         private void ConfigurarPersistenciaOk()
@@ -68,8 +69,8 @@ namespace simple_erp.Testes.Modulos.Producao
             var ordem = OrdemDeProducaoBuilder.Novo()
                 .ComId(IdOrdem)
                 .SemNecessidades()
-                .ComNecessidade(202604020010, 10m)
-                .ComNecessidade(202604020011, 15m)
+                .ComNecessidade(new Guid("00000000-0000-0000-0000-202604020010"), 10m)
+                .ComNecessidade(new Guid("00000000-0000-0000-0000-202604020011"), 15m)
                 .Confirmada()
                 .Criar();
 

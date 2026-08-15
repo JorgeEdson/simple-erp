@@ -1,7 +1,8 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Modulos.Financeiro.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Core.Modulos.Financeiro.UseCases
 {
@@ -15,7 +16,7 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
         int TamanhoPagina,
         TipoDeTitulo? Tipo = null,
         StatusTitulo? Status = null,
-        long? IdParceiro = null,
+        Guid? IdParceiro = null,
         DateTime? VencimentoInicio = null,
         DateTime? VencimentoFim = null) : IRequisicao<ListarTitulosPaginadoSaida>;
 
@@ -27,9 +28,9 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
         IReadOnlyCollection<ListarTitulosItemSaida> Itens);
 
     public sealed record ListarTitulosItemSaida(
-        long Id,
+        Guid Id,
         string Tipo,
-        long IdParceiro,
+        Guid IdParceiro,
         decimal ValorOriginal,
         decimal SaldoDevedor,
         string Status,
@@ -38,7 +39,7 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
     public sealed record ListarTitulosFiltros(
         TipoDeTitulo? Tipo = null,
         StatusTitulo? Status = null,
-        long? IdParceiro = null,
+        Guid? IdParceiro = null,
         DateTime? VencimentoInicio = null,
         DateTime? VencimentoFim = null);
 
@@ -147,9 +148,9 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
 
             var itens = pagina.Itens
                 .Select(titulo => new ListarTitulosItemSaida(
-                    Id: titulo.Id.Valor,
+                    Id: titulo.Id,
                     Tipo: titulo.Tipo.ToString(),
-                    IdParceiro: titulo.IdParceiro.Valor,
+                    IdParceiro: titulo.IdParceiro,
                     ValorOriginal: titulo.ValorOriginal,
                     SaldoDevedor: titulo.SaldoDevedor,
                     Status: titulo.Status.ToString(),

@@ -14,13 +14,13 @@ namespace simple_erp.Testes.Modulos.Estoque
 
         private static OrigemDaMovimentacao Origem(
             TipoOrigemMovimentacao tipo = TipoOrigemMovimentacao.AjusteManual,
-            long? idReferencia = null) =>
+            Guid? idReferencia = null) =>
             OrigemDaMovimentacao.TentarCriar(tipo, idReferencia).Instancia;
 
         [Fact]
         public void Criar_DeveIniciarComSaldoZeroEEmitirEvento()
         {
-            var idProduto = Id.TentarCriar(202604020001).Instancia;
+            var idProduto = new Guid("00000000-0000-0000-0000-202604020001");
 
             var resultado = SaldoDeEstoque.Criar(idProduto);
 
@@ -39,7 +39,7 @@ namespace simple_erp.Testes.Modulos.Estoque
             var resultado = saldo.Movimentar(
                 TipoDeMovimentacao.EntradaPorCompra,
                 Qtd(5m),
-                Origem(TipoOrigemMovimentacao.Compra, 500));
+                Origem(TipoOrigemMovimentacao.Compra, new Guid("00000000-0000-0000-0000-000000000500")));
 
             resultado.EhSucesso.Should().BeTrue();
             saldo.QuantidadeAtual.Should().Be(15m);
@@ -56,7 +56,7 @@ namespace simple_erp.Testes.Modulos.Estoque
             var resultado = saldo.Movimentar(
                 TipoDeMovimentacao.SaidaPorVenda,
                 Qtd(4m),
-                Origem(TipoOrigemMovimentacao.Venda, 700));
+                Origem(TipoOrigemMovimentacao.Venda, new Guid("00000000-0000-0000-0000-000000000700")));
 
             resultado.EhSucesso.Should().BeTrue();
             saldo.QuantidadeAtual.Should().Be(6m);
@@ -87,7 +87,7 @@ namespace simple_erp.Testes.Modulos.Estoque
             var resultado = saldo.Movimentar(
                 TipoDeMovimentacao.SaidaPorProducao,
                 Qtd(5m),
-                Origem(TipoOrigemMovimentacao.Producao, 900),
+                Origem(TipoOrigemMovimentacao.Producao, new Guid("00000000-0000-0000-0000-000000000900")),
                 permitirSaldoNegativo: true);
 
             resultado.EhSucesso.Should().BeTrue();
@@ -104,7 +104,7 @@ namespace simple_erp.Testes.Modulos.Estoque
             var resultado = saldo.Movimentar(
                 TipoDeMovimentacao.EntradaPorProducao,
                 Qtd(8m),
-                Origem(TipoOrigemMovimentacao.Producao, 901));
+                Origem(TipoOrigemMovimentacao.Producao, new Guid("00000000-0000-0000-0000-000000000901")));
 
             resultado.EhSucesso.Should().BeTrue();
             saldo.QuantidadeAtual.Should().Be(8m);

@@ -1,9 +1,8 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
-using simple_erp.Core.Compartilhado.ObjetosDeValor;
-using simple_erp.Core.Modulos.Vendas.Entidades;
 using simple_erp.Core.Modulos.Vendas.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Core.Modulos.Vendas.UseCases
 {
@@ -13,11 +12,11 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
     }
 
     public record AplicarDescontoNoPedidoDeVendaEntrada(
-        long IdPedidoDeVenda,
+        Guid IdPedidoDeVenda,
         decimal Desconto) : IRequisicao<AplicarDescontoNoPedidoDeVendaSaida>;
 
     public record AplicarDescontoNoPedidoDeVendaSaida(
-        long Id,
+        Guid Id,
         string Status,
         decimal DescontoDoPedido,
         decimal ValorTotal);
@@ -53,12 +52,30 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
 
             #endregion
 
+            #region Validação do identificador
+
+            if (dados.IdPedidoDeVenda == Guid.Empty)
+            {
+                stopwatchUseCase.Stop();
+
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["IdPedidoDeVenda"] = dados.IdPedidoDeVenda,
+                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                    }));
+
+                return Resultado<AplicarDescontoNoPedidoDeVendaSaida>.Falha("ID_INVALIDO");
+            }
+
+            #endregion
+
             #region Validação da entrada
 
-            var resultadoId = Id.TentarCriar(dados.IdPedidoDeVenda);
             var resultadoDesconto = Dinheiro.TentarCriar(dados.Desconto);
 
-            var validacao = Resultado.Combinar(resultadoId, resultadoDesconto);
+            var validacao = Resultado.Combinar(resultadoDesconto);
 
             if (validacao.EhFalha)
             {
@@ -71,7 +88,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
             #region Recuperação do agregado
 
             var resultadoPedido = await _unitOfWork.PedidosDeVendaRepository
-                .ObterPorIdAsync(resultadoId.Instancia, cancellationToken);
+                .ObterPorIdAsync(dados.IdPedidoDeVenda, cancellationToken);
 
             if (resultadoPedido.EhFalha)
             {
@@ -102,7 +119,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
                         Mensagem: "Falha ao aplicar desconto no agregado PedidoDeVenda.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["PedidoDeVendaId"] = pedido.Id.Valor,
+                            ["PedidoDeVendaId"] = pedido.Id,
                             ["Erros"] = resultadoAplicacao.Erros?.ToArray(),
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                         }));
@@ -142,7 +159,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
                 Mensagem: "Desconto aplicado no pedido de venda com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["PedidoDeVendaId"] = pedido.Id.Valor,
+                    ["PedidoDeVendaId"] = pedido.Id,
                     ["DescontoDoPedido"] = pedido.DescontoDoPedido,
                     ["ValorTotal"] = pedido.ValorTotal.Valor,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -150,7 +167,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
 
             return Resultado<AplicarDescontoNoPedidoDeVendaSaida>.Sucesso(
                 new AplicarDescontoNoPedidoDeVendaSaida(
-                    Id: pedido.Id.Valor,
+                    Id: pedido.Id,
                     Status: pedido.Status.ToString(),
                     DescontoDoPedido: pedido.DescontoDoPedido,
                     ValorTotal: pedido.ValorTotal.Valor));

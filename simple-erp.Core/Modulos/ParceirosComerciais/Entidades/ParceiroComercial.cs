@@ -1,4 +1,5 @@
-﻿using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Contratos.Dominio;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
 using System;
@@ -27,7 +28,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.Entidades
             Email email,
             Endereco endereco,
             bool ativo = true,
-            long? id = null,
+            Guid? id = null,
             DateTime? dataCriacaoUtc = null,
             DateTime? dataAtualizacaoUtc = null)
             : base(id, dataCriacaoUtc, dataAtualizacaoUtc)

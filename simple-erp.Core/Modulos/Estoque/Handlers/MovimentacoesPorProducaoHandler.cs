@@ -1,5 +1,6 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.EventosDeDominio;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Modulos.Estoque.ObjetosDeValor;
 using simple_erp.Core.Modulos.Estoque.UseCases;
 using simple_erp.Core.Modulos.Producao.Eventos;
@@ -29,8 +30,8 @@ namespace simple_erp.Core.Modulos.Estoque.Handlers
                 Propriedades: new Dictionary<string, object?>
                 {
                     ["Handler"] = nameof(MovimentacoesPorProducaoHandler),
-                    ["OrdemDeProducaoId"] = evento.IdOrdemDeProducao.Valor,
-                    ["IdProdutoFabricado"] = evento.IdProdutoFabricado.Valor,
+                    ["OrdemDeProducaoId"] = evento.IdOrdemDeProducao,
+                    ["IdProdutoFabricado"] = evento.IdProdutoFabricado,
                     ["QuantidadeInsumos"] = evento.InsumosConsumidos.Count
                 }));
 
@@ -44,7 +45,7 @@ namespace simple_erp.Core.Modulos.Estoque.Handlers
                     Tipo: TipoDeMovimentacao.SaidaPorProducao,
                     Quantidade: insumo.Quantidade,
                     OrigemTipo: TipoOrigemMovimentacao.Producao,
-                    OrigemIdReferencia: evento.IdOrdemDeProducao.Valor,
+                    OrigemIdReferencia: evento.IdOrdemDeProducao,
                     PermitirSaldoNegativo: false);
 
                 var resultadoSaida = await _registrarMovimentacao.ExecutarAsync(saida, cancellationToken);
@@ -55,11 +56,11 @@ namespace simple_erp.Core.Modulos.Estoque.Handlers
 
             // Entrada por produção: o produto acabado.
             var entrada = new RegistrarMovimentacaoDeEstoqueEntrada(
-                IdProduto: evento.IdProdutoFabricado.Valor,
+                IdProduto: evento.IdProdutoFabricado,
                 Tipo: TipoDeMovimentacao.EntradaPorProducao,
                 Quantidade: evento.QuantidadeProduzida,
                 OrigemTipo: TipoOrigemMovimentacao.Producao,
-                OrigemIdReferencia: evento.IdOrdemDeProducao.Valor,
+                OrigemIdReferencia: evento.IdOrdemDeProducao,
                 PermitirSaldoNegativo: false);
 
             var resultadoEntrada = await _registrarMovimentacao.ExecutarAsync(entrada, cancellationToken);

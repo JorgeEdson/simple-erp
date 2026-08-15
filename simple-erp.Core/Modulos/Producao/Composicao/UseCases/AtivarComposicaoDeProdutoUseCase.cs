@@ -1,8 +1,8 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
-using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Producao.Composicao.Entidades;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
 {
@@ -11,11 +11,11 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
     {
     }
 
-    public record AtivarComposicaoDeProdutoEntrada(long Id) : IRequisicao<AtivarComposicaoDeProdutoSaida>;
+    public record AtivarComposicaoDeProdutoEntrada(Guid Id) : IRequisicao<AtivarComposicaoDeProdutoSaida>;
 
     public record AtivarComposicaoDeProdutoSaida(
-        long Id,
-        long IdProdutoFabricado,
+        Guid Id,
+        Guid IdProdutoFabricado,
         int Versao,
         bool Ativa);
 
@@ -49,14 +49,21 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoId = Id.TentarCriar(dados.Id);
-
-            if (resultadoId.EhFalha)
+            if (dados.Id == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
-                return Resultado<AtivarComposicaoDeProdutoSaida>.Falha(resultadoId.Erros!);
+
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["Id"] = dados.Id,
+                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                    }));
+
+                return Resultado<AtivarComposicaoDeProdutoSaida>.Falha("ID_INVALIDO");
             }
 
             #endregion
@@ -64,7 +71,7 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
             #region Recuperação do agregado
 
             var resultadoComposicao = await _unitOfWork.ComposicoesDeProdutoRepository
-                .ObterPorIdAsync(resultadoId.Instancia, cancellationToken);
+                .ObterPorIdAsync(dados.Id, cancellationToken);
 
             if (resultadoComposicao.EhFalha)
             {
@@ -154,7 +161,7 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
                 Mensagem: "Composição de produto ativada com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["ComposicaoId"] = composicao.Id.Valor,
+                    ["ComposicaoId"] = composicao.Id,
                     ["Versao"] = composicao.Versao,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));
@@ -167,8 +174,8 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
         private static AtivarComposicaoDeProdutoSaida Mapear(ComposicaoDeProduto composicao)
         {
             return new AtivarComposicaoDeProdutoSaida(
-                Id: composicao.Id.Valor,
-                IdProdutoFabricado: composicao.IdProdutoFabricado.Valor,
+                Id: composicao.Id,
+                IdProdutoFabricado: composicao.IdProdutoFabricado,
                 Versao: composicao.Versao,
                 Ativa: composicao.Ativa);
         }

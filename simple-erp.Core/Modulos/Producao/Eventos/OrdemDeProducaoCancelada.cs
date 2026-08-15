@@ -5,12 +5,12 @@ namespace simple_erp.Core.Modulos.Producao.Eventos
 {
     public sealed class OrdemDeProducaoCancelada : EventoDeDominio
     {
-        public OrdemDeProducaoCancelada(Id idOrdemDeProducao)
+        public OrdemDeProducaoCancelada(Guid idOrdemDeProducao)
             : base(idOrdemDeProducao)
         {
             IdOrdemDeProducao = idOrdemDeProducao;
         }
 
-        public Id IdOrdemDeProducao { get; }
+        public Guid IdOrdemDeProducao { get; }
     }
 }

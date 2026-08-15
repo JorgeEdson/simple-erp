@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace simple_erp.Core.Compartilhado.Especificacoes
+namespace simple_erp.Core.Compartilhado.Contratos.Dominio
 {
     /// <summary>
     /// <b>Specification</b> (padrão tático do DDD): encapsula uma regra de negócio na forma

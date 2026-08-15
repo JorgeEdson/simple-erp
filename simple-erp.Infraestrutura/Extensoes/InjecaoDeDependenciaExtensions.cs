@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Dominio;
+using simple_erp.Core.Compartilhado.Contratos.EventosDeDominio;
 using simple_erp.Infraestrutura.Persistencia;
 using simple_erp.Infraestrutura.Persistencia.Contexto;
 using simple_erp.Infraestrutura.Persistencia.Interceptadores;

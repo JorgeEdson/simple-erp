@@ -7,6 +7,6 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.ObjetosDeValor
     /// ao agregado OrdemDeProducao.
     /// </summary>
     public sealed record NecessidadeCalculada(
-        long IdInsumo,
+        Guid IdInsumo,
         decimal QuantidadeTotal);
 }

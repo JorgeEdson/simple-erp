@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using simple_erp.Api.Comum;
 using simple_erp.Api.Modelos.Vendas;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.EventosDeDominio;
 using simple_erp.Core.Modulos.Vendas.ObjetosDeValor;
 using simple_erp.Core.Modulos.Vendas.UseCases;
 
@@ -56,11 +56,11 @@ namespace simple_erp.Api.Controllers
         // Nome de rota único na aplicação (usado pelo CreatedAtRoute do POST).
         private const string RotaObterPorId = "ObterPedidoDeVendaPorId";
 
-        [HttpGet("{id:long}", Name = RotaObterPorId)]
+        [HttpGet("{id:guid}", Name = RotaObterPorId)]
         [ProducesResponseType(typeof(ObterPedidoDeVendaPorIdSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> ObterPorId(long id, CancellationToken cancellationToken)
+        public async Task<IActionResult> ObterPorId(Guid id, CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
                 new ObterPedidoDeVendaPorIdEntrada(id), cancellationToken);
@@ -74,7 +74,7 @@ namespace simple_erp.Api.Controllers
             CancellationToken cancellationToken,
             [FromQuery] int numeroPagina = 1,
             [FromQuery] int tamanhoPagina = 10,
-            [FromQuery] long? idCliente = null,
+            [FromQuery] Guid? idCliente = null,
             [FromQuery] string? status = null,
             [FromQuery] DateTime? dataInicio = null,
             [FromQuery] DateTime? dataFim = null)
@@ -95,12 +95,12 @@ namespace simple_erp.Api.Controllers
             return Responder(resultado);
         }
 
-        [HttpPost("{id:long}/itens")]
+        [HttpPost("{id:guid}/itens")]
         [ProducesResponseType(typeof(AdicionarItemAoPedidoDeVendaSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> AdicionarItem(
-            long id,
+            Guid id,
             [FromBody] AdicionarItemAoPedidoDeVendaRequest requisicao,
             CancellationToken cancellationToken)
         {
@@ -119,13 +119,13 @@ namespace simple_erp.Api.Controllers
         /// O item é endereçado pelo produto, não por um id próprio: o domínio trata o
         /// produto como chave do item dentro do pedido.
         /// </remarks>
-        [HttpDelete("{id:long}/itens/{idProduto:long}")]
+        [HttpDelete("{id:guid}/itens/{idProduto:guid}")]
         [ProducesResponseType(typeof(RemoverItemDoPedidoDeVendaSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> RemoverItem(
-            long id,
-            long idProduto,
+            Guid id,
+            Guid idProduto,
             CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
@@ -137,12 +137,12 @@ namespace simple_erp.Api.Controllers
         /// PUT, não POST: o domínio faz <c>DescontoDoPedido = desconto</c>, substituindo
         /// o valor anterior. Repetir a chamada com o mesmo corpo dá o mesmo resultado.
         /// </remarks>
-        [HttpPut("{id:long}/desconto")]
+        [HttpPut("{id:guid}/desconto")]
         [ProducesResponseType(typeof(AplicarDescontoNoPedidoDeVendaSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> AplicarDesconto(
-            long id,
+            Guid id,
             [FromBody] AplicarDescontoNoPedidoDeVendaRequest requisicao,
             CancellationToken cancellationToken)
         {
@@ -158,22 +158,22 @@ namespace simple_erp.Api.Controllers
         /// congela valores — o pedido deixa de ser editável. Como o despacho é pelo
         /// outbox, o 200 confirma o pedido aprovado, não os efeitos já aplicados.
         /// </remarks>
-        [HttpPost("{id:long}/aprovar")]
+        [HttpPost("{id:guid}/aprovar")]
         [ProducesResponseType(typeof(AprovarPedidoDeVendaSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Aprovar(long id, CancellationToken cancellationToken)
+        public async Task<IActionResult> Aprovar(Guid id, CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
                 new AprovarPedidoDeVendaEntrada(id), cancellationToken);
             return Responder(resultado);
         }
 
-        [HttpPost("{id:long}/concluir")]
+        [HttpPost("{id:guid}/concluir")]
         [ProducesResponseType(typeof(ConcluirPedidoDeVendaSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Concluir(long id, CancellationToken cancellationToken)
+        public async Task<IActionResult> Concluir(Guid id, CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
                 new ConcluirPedidoDeVendaEntrada(id), cancellationToken);
@@ -184,12 +184,12 @@ namespace simple_erp.Api.Controllers
         /// Único cancelamento do sistema que exige corpo: o motivo é obrigatório no
         /// domínio e viaja no evento <c>PedidoDeVendaCancelado</c>.
         /// </remarks>
-        [HttpPost("{id:long}/cancelar")]
+        [HttpPost("{id:guid}/cancelar")]
         [ProducesResponseType(typeof(CancelarPedidoDeVendaSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Cancelar(
-            long id,
+            Guid id,
             [FromBody] CancelarPedidoDeVendaRequest requisicao,
             CancellationToken cancellationToken)
         {

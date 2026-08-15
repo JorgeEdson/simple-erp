@@ -1,7 +1,7 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
-using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Core.Modulos.Vendas.UseCases
 {
@@ -10,10 +10,10 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
     {
     }
 
-    public record ConcluirPedidoDeVendaEntrada(long Id) : IRequisicao<ConcluirPedidoDeVendaSaida>;
+    public record ConcluirPedidoDeVendaEntrada(Guid Id) : IRequisicao<ConcluirPedidoDeVendaSaida>;
 
     public record ConcluirPedidoDeVendaSaida(
-        long Id,
+        Guid Id,
         string Status);
 
     public sealed class ConcluirPedidoDeVendaUseCase : IConcluirPedidoDeVendaUseCase
@@ -46,14 +46,21 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoId = Id.TentarCriar(dados.Id);
-
-            if (resultadoId.EhFalha)
+            if (dados.Id == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
-                return Resultado<ConcluirPedidoDeVendaSaida>.Falha(resultadoId.Erros!);
+
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["Id"] = dados.Id,
+                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                    }));
+
+                return Resultado<ConcluirPedidoDeVendaSaida>.Falha("ID_INVALIDO");
             }
 
             #endregion
@@ -61,7 +68,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
             #region Recuperação do agregado
 
             var resultadoPedido = await _unitOfWork.PedidosDeVendaRepository
-                .ObterPorIdAsync(resultadoId.Instancia, cancellationToken);
+                .ObterPorIdAsync(dados.Id, cancellationToken);
 
             if (resultadoPedido.EhFalha)
             {
@@ -92,7 +99,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
                         Mensagem: "Falha ao concluir o agregado PedidoDeVenda.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["PedidoDeVendaId"] = pedido.Id.Valor,
+                            ["PedidoDeVendaId"] = pedido.Id,
                             ["Status"] = pedido.Status.ToString(),
                             ["Erros"] = resultadoConcluir.Erros?.ToArray(),
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -133,14 +140,14 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
                 Mensagem: "Pedido de venda concluído com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["PedidoDeVendaId"] = pedido.Id.Valor,
+                    ["PedidoDeVendaId"] = pedido.Id,
                     ["Status"] = pedido.Status.ToString(),
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));
 
             return Resultado<ConcluirPedidoDeVendaSaida>.Sucesso(
                 new ConcluirPedidoDeVendaSaida(
-                    Id: pedido.Id.Valor,
+                    Id: pedido.Id,
                     Status: pedido.Status.ToString()));
 
             #endregion

@@ -1,4 +1,4 @@
-using simple_erp.Core.Compartilhado.Especificacoes;
+using simple_erp.Core.Compartilhado.Contratos.Dominio.Especificacoes;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
 using System.Linq.Expressions;
@@ -14,9 +14,9 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.Especificacoes
     public sealed class ParceiroDiferenteDeSpecification<TParceiro> : Specification<TParceiro>
         where TParceiro : ParceiroComercial
     {
-        private readonly Id _id;
+        private readonly Guid _id;
 
-        public ParceiroDiferenteDeSpecification(Id id)
+        public ParceiroDiferenteDeSpecification(Guid id)
         {
             _id = id;
         }

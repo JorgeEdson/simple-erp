@@ -1,4 +1,5 @@
 using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Contratos.Dominio;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Financeiro.Eventos;
 using simple_erp.Core.Modulos.Financeiro.ObjetosDeValor;
@@ -24,13 +25,13 @@ namespace simple_erp.Core.Modulos.Financeiro.Entidades
 
         private Titulo(
             TipoDeTitulo tipo,
-            Id idParceiro,
+            Guid idParceiro,
             OrigemDoTitulo origem,
             decimal valorOriginal,
             DateTime dataVencimentoUtc,
             StatusTitulo status,
             IEnumerable<BaixaDoTitulo> baixas,
-            long? id = null,
+            Guid? id = null,
             DateTime? dataCriacaoUtc = null,
             DateTime? dataAtualizacaoUtc = null)
             : base(id, dataCriacaoUtc, dataAtualizacaoUtc)
@@ -45,7 +46,7 @@ namespace simple_erp.Core.Modulos.Financeiro.Entidades
         }
 
         public TipoDeTitulo Tipo { get; private set; }
-        public Id IdParceiro { get; private set; }
+        public Guid IdParceiro { get; private set; }
         public OrigemDoTitulo Origem { get; private set; }
         public decimal ValorOriginal { get; private set; }
         public DateTime DataVencimentoUtc { get; private set; }
@@ -66,15 +67,15 @@ namespace simple_erp.Core.Modulos.Financeiro.Entidades
 
         public static Resultado<Titulo> Criar(
             TipoDeTitulo tipo,
-            Id idParceiro,
+            Guid idParceiro,
             OrigemDoTitulo origem,
             Dinheiro valorOriginal,
             DateTime dataVencimentoUtc,
-            long? id = null)
+            Guid? id = null)
         {
             var erros = new List<string>();
 
-            if (idParceiro is null)
+            if (idParceiro == Guid.Empty)
                 erros.Add("PARCEIRO_OBRIGATORIO");
 
             if (origem is null)
@@ -168,13 +169,13 @@ namespace simple_erp.Core.Modulos.Financeiro.Entidades
 
         public static Titulo Reconstituir(
             TipoDeTitulo tipo,
-            Id idParceiro,
+            Guid idParceiro,
             OrigemDoTitulo origem,
             decimal valorOriginal,
             DateTime dataVencimentoUtc,
             StatusTitulo status,
             IEnumerable<BaixaDoTitulo> baixas,
-            long id,
+            Guid id,
             DateTime dataCriacaoUtc,
             DateTime dataAtualizacaoUtc)
         {

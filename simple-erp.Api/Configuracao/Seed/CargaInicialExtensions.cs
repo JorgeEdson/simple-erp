@@ -1,10 +1,10 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Entidades;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
 using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Api.Configuracao.Seed
 {   
@@ -28,8 +28,7 @@ namespace simple_erp.Api.Configuracao.Seed
             var fornecedores = Construir(CatalogoDeSeed.Fornecedores, CriarFornecedor, erros);
             var produtos = Construir(CatalogoDeSeed.Produtos, CriarProduto, erros);
 
-            // Falha aqui é erro de dado no catálogo, não do usuário. Abortamos antes de
-            // gravar qualquer coisa para não deixar uma base pela metade.
+            
             if (erros.Count > 0)
             {
                 logger.LogError(
@@ -68,7 +67,7 @@ namespace simple_erp.Api.Configuracao.Seed
         
         private static async Task<bool> CargaJaAplicadaAsync(IUnitOfWork unitOfWork, ILogger logger)
         {
-            var marcador = Id.TentarCriar(CatalogoDeSeed.Clientes[0].Id).Instancia;
+            var marcador = CatalogoDeSeed.Clientes[0].Id;
 
             var existe = await unitOfWork.ClientesRepository.ExistePorIdAsync(marcador);
 
@@ -134,7 +133,7 @@ namespace simple_erp.Api.Configuracao.Seed
             return Fornecedor.Criar(nome, documento, email, endereco, dados.Id);
         }
 
-        /// <summary>Cliente e Fornecedor compartilham os mesmos Value Objects.</summary>
+        
         private static Resultado<(Nome Nome, Documento Documento, Email Email, Endereco Endereco)>
             CriarPartesDoParceiro(ParceiroDeSeed dados)
         {

@@ -58,7 +58,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Producao
         }
 
         public async Task<Resultado<OrdemDeProducao?>> ObterPorIdAsync(
-            Id id, CancellationToken cancellationToken = default)
+            Guid id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -75,7 +75,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Producao
         }
 
         public async Task<Resultado<bool>> ExistePorIdAsync(
-            Id id, CancellationToken cancellationToken = default)
+            Guid id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -131,7 +131,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Producao
         {
             const string sql = $"""
                 SELECT * FROM {TabelaComSchema}
-                WHERE (@id_produto::bigint IS NULL OR id_produto_fabricado = @id_produto)
+                WHERE (@id_produto::uuid IS NULL OR id_produto_fabricado = @id_produto)
                   AND (@status::int IS NULL OR status = @status)
                   AND (@data_inicio::timestamptz IS NULL OR data_criacao_utc >= @data_inicio)
                   AND (@data_fim::timestamptz IS NULL OR data_criacao_utc <= @data_fim)
@@ -139,7 +139,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Producao
 
             return _contexto.Set<OrdemDeProducao>().FromSqlRaw(
                 sql,
-                CriarParametro("id_produto", NpgsqlDbType.Bigint, filtro?.IdProdutoFabricado),
+                CriarParametro("id_produto", NpgsqlDbType.Uuid, filtro?.IdProdutoFabricado),
                 CriarParametro("status", NpgsqlDbType.Integer, (int?)filtro?.Status),
                 CriarParametro("data_inicio", NpgsqlDbType.TimestampTz, NormalizarUtc(filtro?.DataInicio)),
                 CriarParametro("data_fim", NpgsqlDbType.TimestampTz, NormalizarUtc(filtro?.DataFim)));

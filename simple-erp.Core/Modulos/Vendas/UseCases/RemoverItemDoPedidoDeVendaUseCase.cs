@@ -1,8 +1,7 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
-using simple_erp.Core.Compartilhado.ObjetosDeValor;
-using simple_erp.Core.Modulos.Vendas.Entidades;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Core.Modulos.Vendas.UseCases
 {
@@ -12,11 +11,11 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
     }
 
     public record RemoverItemDoPedidoDeVendaEntrada(
-        long IdPedidoDeVenda,
-        long IdProduto) : IRequisicao<RemoverItemDoPedidoDeVendaSaida>;
+        Guid IdPedidoDeVenda,
+        Guid IdProduto) : IRequisicao<RemoverItemDoPedidoDeVendaSaida>;
 
     public record RemoverItemDoPedidoDeVendaSaida(
-        long Id,
+        Guid Id,
         string Status,
         decimal ValorTotal,
         int QuantidadeItens);
@@ -52,14 +51,23 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoId = Id.TentarCriar(dados.IdPedidoDeVenda);
-
-            if (resultadoId.EhFalha)
+            if (dados.IdPedidoDeVenda == Guid.Empty
+                || dados.IdProduto == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
-                return Resultado<RemoverItemDoPedidoDeVendaSaida>.Falha(resultadoId.Erros!);
+
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["IdPedidoDeVenda"] = dados.IdPedidoDeVenda,
+                        ["IdProduto"] = dados.IdProduto,
+                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                    }));
+
+                return Resultado<RemoverItemDoPedidoDeVendaSaida>.Falha("ID_INVALIDO");
             }
 
             #endregion
@@ -67,7 +75,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
             #region Recuperação do agregado
 
             var resultadoPedido = await _unitOfWork.PedidosDeVendaRepository
-                .ObterPorIdAsync(resultadoId.Instancia, cancellationToken);
+                .ObterPorIdAsync(dados.IdPedidoDeVenda, cancellationToken);
 
             if (resultadoPedido.EhFalha)
             {
@@ -98,7 +106,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
                         Mensagem: "Falha ao remover item do agregado PedidoDeVenda.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["PedidoDeVendaId"] = pedido.Id.Valor,
+                            ["PedidoDeVendaId"] = pedido.Id,
                             ["Erros"] = resultadoRemocao.Erros?.ToArray(),
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                         }));
@@ -145,7 +153,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
                 Mensagem: "Item removido do pedido de venda com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["PedidoDeVendaId"] = pedido.Id.Valor,
+                    ["PedidoDeVendaId"] = pedido.Id,
                     ["ValorTotal"] = pedido.ValorTotal.Valor,
                     ["QuantidadeItens"] = pedido.Itens.Count,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -153,7 +161,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
 
             return Resultado<RemoverItemDoPedidoDeVendaSaida>.Sucesso(
                 new RemoverItemDoPedidoDeVendaSaida(
-                    Id: pedido.Id.Valor,
+                    Id: pedido.Id,
                     Status: pedido.Status.ToString(),
                     ValorTotal: pedido.ValorTotal.Valor,
                     QuantidadeItens: pedido.Itens.Count));

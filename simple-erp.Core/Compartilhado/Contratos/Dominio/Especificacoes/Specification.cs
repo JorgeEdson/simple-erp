@@ -1,12 +1,8 @@
+using simple_erp.Core.Compartilhado.Contratos.Dominio;
 using System.Linq.Expressions;
 
-namespace simple_erp.Core.Compartilhado.Especificacoes
-{
-    /// <summary>
-    /// Base para especificações concretas. A subclasse só precisa fornecer a expressão da
-    /// regra em <see cref="ParaExpressao"/>; a avaliação em memória e os combinadores
-    /// (And/Or/Nao) já vêm prontos aqui.
-    /// </summary>
+namespace simple_erp.Core.Compartilhado.Contratos.Dominio.Especificacoes
+{  
     public abstract class Specification<T> : ISpecification<T>
     {
         public abstract Expression<Func<T, bool>> ParaExpressao();

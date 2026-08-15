@@ -12,8 +12,8 @@ namespace simple_erp.Core.Modulos.Vendas.Eventos
     public sealed class PedidoDeVendaAprovado : EventoDeDominio
     {
         public PedidoDeVendaAprovado(
-            Id idPedidoDeVenda,
-            Id idCliente,
+            Guid idPedidoDeVenda,
+            Guid idCliente,
             decimal valorTotal,
             IReadOnlyCollection<ItemVendaAprovado> itens)
             : base(idPedidoDeVenda)
@@ -24,11 +24,11 @@ namespace simple_erp.Core.Modulos.Vendas.Eventos
             Itens = itens;
         }
 
-        public Id IdPedidoDeVenda { get; }
-        public Id IdCliente { get; }
+        public Guid IdPedidoDeVenda { get; }
+        public Guid IdCliente { get; }
         public decimal ValorTotal { get; }
         public IReadOnlyCollection<ItemVendaAprovado> Itens { get; }
     }
 
-    public sealed record ItemVendaAprovado(long IdProduto, decimal Quantidade);
+    public sealed record ItemVendaAprovado(Guid IdProduto, decimal Quantidade);
 }

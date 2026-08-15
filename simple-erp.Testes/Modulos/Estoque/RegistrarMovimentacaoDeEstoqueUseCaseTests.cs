@@ -1,7 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.Estoque.Entidades;
@@ -9,6 +8,8 @@ using simple_erp.Core.Modulos.Estoque.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.Estoque.ObjetosDeValor;
 using simple_erp.Core.Modulos.Estoque.UseCases;
 using simple_erp.Testes.Compartilhado.Builders;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.Estoque
 {
@@ -53,17 +54,17 @@ namespace simple_erp.Testes.Modulos.Estoque
             decimal quantidade,
             bool permitirNegativo = false) =>
             new(
-                IdProduto: 202604020001,
+                IdProduto: new Guid("00000000-0000-0000-0000-202604020001"),
                 Tipo: tipo,
                 Quantidade: quantidade,
                 OrigemTipo: TipoOrigemMovimentacao.Compra,
-                OrigemIdReferencia: 500,
+                OrigemIdReferencia: new Guid("00000000-0000-0000-0000-000000000500"),
                 PermitirSaldoNegativo: permitirNegativo);
 
         [Fact]
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoProdutoNaoExistir()
         {
-            _produtosRepository.ExistePorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+            _produtosRepository.ExistePorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(false));
 
             var resultado = await _useCase.ExecutarAsync(Entrada(TipoDeMovimentacao.EntradaPorCompra, 5m));
@@ -79,9 +80,9 @@ namespace simple_erp.Testes.Modulos.Estoque
         [Fact]
         public async Task ExecutarAsync_DeveCriarSaldoERegistrarEntrada_QuandoNaoHouverSaldoAinda()
         {
-            _produtosRepository.ExistePorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+            _produtosRepository.ExistePorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(true));
-            _saldosRepository.ExistePorProdutoAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+            _saldosRepository.ExistePorProdutoAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(false));
             ConfigurarPersistencia();
 
@@ -107,11 +108,11 @@ namespace simple_erp.Testes.Modulos.Estoque
         {
             var saldo = SaldoDeEstoqueBuilder.Novo().ComSaldoInicial(3m).Criar();
 
-            _produtosRepository.ExistePorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+            _produtosRepository.ExistePorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(true));
-            _saldosRepository.ExistePorProdutoAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+            _saldosRepository.ExistePorProdutoAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(true));
-            _saldosRepository.ObterPorProdutoAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+            _saldosRepository.ObterPorProdutoAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<SaldoDeEstoque?>.Sucesso(saldo));
 
             var resultado = await _useCase.ExecutarAsync(Entrada(TipoDeMovimentacao.SaidaPorVenda, 5m));
@@ -132,11 +133,11 @@ namespace simple_erp.Testes.Modulos.Estoque
         {
             var saldo = SaldoDeEstoqueBuilder.Novo().ComSaldoInicial(10m).Criar();
 
-            _produtosRepository.ExistePorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+            _produtosRepository.ExistePorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(true));
-            _saldosRepository.ExistePorProdutoAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+            _saldosRepository.ExistePorProdutoAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(true));
-            _saldosRepository.ObterPorProdutoAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+            _saldosRepository.ObterPorProdutoAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<SaldoDeEstoque?>.Sucesso(saldo));
             ConfigurarPersistencia();
 
@@ -159,11 +160,11 @@ namespace simple_erp.Testes.Modulos.Estoque
         {
             var saldo = SaldoDeEstoqueBuilder.Novo().ComSaldoInicial(3m).Criar();
 
-            _produtosRepository.ExistePorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+            _produtosRepository.ExistePorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(true));
-            _saldosRepository.ExistePorProdutoAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+            _saldosRepository.ExistePorProdutoAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(true));
-            _saldosRepository.ObterPorProdutoAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+            _saldosRepository.ObterPorProdutoAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<SaldoDeEstoque?>.Sucesso(saldo));
             ConfigurarPersistencia();
 

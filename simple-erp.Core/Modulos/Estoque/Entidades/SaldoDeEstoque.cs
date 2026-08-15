@@ -1,4 +1,5 @@
 using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Contratos.Dominio;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Estoque.Eventos;
 using simple_erp.Core.Modulos.Estoque.ObjetosDeValor;
@@ -23,9 +24,9 @@ namespace simple_erp.Core.Modulos.Estoque.Entidades
 #pragma warning restore CS8618
 
         private SaldoDeEstoque(
-            Id idProduto,
+            Guid idProduto,
             decimal quantidadeAtual,
-            long? id = null,
+            Guid? id = null,
             DateTime? dataCriacaoUtc = null,
             DateTime? dataAtualizacaoUtc = null)
             : base(id, dataCriacaoUtc, dataAtualizacaoUtc)
@@ -34,15 +35,15 @@ namespace simple_erp.Core.Modulos.Estoque.Entidades
             QuantidadeAtual = quantidadeAtual;
         }
 
-        public Id IdProduto { get; private set; }
+        public Guid IdProduto { get; private set; }
         public decimal QuantidadeAtual { get; private set; }
 
         public bool PossuiSaldo => QuantidadeAtual > 0m;
         public bool EstaNegativo => QuantidadeAtual < 0m;
 
-        public static Resultado<SaldoDeEstoque> Criar(Id idProduto, long? id = null)
+        public static Resultado<SaldoDeEstoque> Criar(Guid idProduto, Guid? id = null)
         {
-            if (idProduto is null)
+            if (idProduto == Guid.Empty)
                 return Resultado<SaldoDeEstoque>.Falha("PRODUTO_OBRIGATORIO");
 
             var saldo = new SaldoDeEstoque(idProduto, 0m, id);
@@ -107,9 +108,9 @@ namespace simple_erp.Core.Modulos.Estoque.Entidades
         }
 
         public static SaldoDeEstoque Reconstituir(
-            Id idProduto,
+            Guid idProduto,
             decimal quantidadeAtual,
-            long id,
+            Guid id,
             DateTime dataCriacaoUtc,
             DateTime dataAtualizacaoUtc)
         {

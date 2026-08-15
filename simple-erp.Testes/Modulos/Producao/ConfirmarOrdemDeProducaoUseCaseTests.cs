@@ -1,7 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Estoque.Entidades;
 using simple_erp.Core.Modulos.Estoque.Interfaces.Repositorios;
@@ -10,14 +9,16 @@ using simple_erp.Core.Modulos.Producao.Entidades;
 using simple_erp.Core.Modulos.Producao.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.Producao.UseCases;
 using simple_erp.Testes.Compartilhado.Builders;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.Producao
 {
     public sealed class ConfirmarOrdemDeProducaoUseCaseTests
     {
-        private const long IdOrdem = 202604020400;
-        private const long IdInsumoA = 202604020010; // necessidade 10
-        private const long IdInsumoB = 202604020011; // necessidade 15
+        private static readonly Guid IdOrdem = new Guid("00000000-0000-0000-0000-202604020400");
+        private static readonly Guid IdInsumoA = new Guid("00000000-0000-0000-0000-202604020010"); // necessidade 10
+        private static readonly Guid IdInsumoB = new Guid("00000000-0000-0000-0000-202604020011"); // necessidade 15
 
         private readonly IUnitOfWork _unitOfWork;
         private readonly IOrdemDeProducaoRepository _ordensRepository;
@@ -47,17 +48,17 @@ namespace simple_erp.Testes.Modulos.Producao
         {
             var ordem = OrdemDeProducaoBuilder.Novo().ComId(IdOrdem).Criada().Criar();
             _ordensRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<OrdemDeProducao?>.Sucesso(ordem));
         }
 
-        private void ConfigurarSaldo(long idInsumo, decimal saldo)
+        private void ConfigurarSaldo(Guid idInsumo, decimal saldo)
         {
             _saldosRepository
-                .ExistePorProdutoAsync(Arg.Is<Id>(i => i.Valor == idInsumo), Arg.Any<CancellationToken>())
+                .ExistePorProdutoAsync(Arg.Is<Guid>(i => i == idInsumo), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(true));
             _saldosRepository
-                .ObterPorProdutoAsync(Arg.Is<Id>(i => i.Valor == idInsumo), Arg.Any<CancellationToken>())
+                .ObterPorProdutoAsync(Arg.Is<Guid>(i => i == idInsumo), Arg.Any<CancellationToken>())
                 .Returns(Resultado<SaldoDeEstoque?>.Sucesso(
                     SaldoDeEstoqueBuilder.Novo().ComIdProduto(idInsumo).ComSaldoInicial(saldo).Criar()));
         }

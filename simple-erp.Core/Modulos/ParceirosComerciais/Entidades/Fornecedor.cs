@@ -1,4 +1,5 @@
-﻿using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Contratos.Dominio;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.Eventos;
 using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
@@ -21,7 +22,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.Entidades
             Email email,
             Endereco endereco,
             bool ativo = true,
-            long? id = null,
+            Guid? id = null,
             DateTime? dataCriacaoUtc = null,
             DateTime? dataAtualizacaoUtc = null)
             : base(
@@ -41,7 +42,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.Entidades
             Documento documento,
             Email email,
             Endereco endereco,
-            long? id = null)
+            Guid? id = null)
         {
             var erros = new List<string>();
 
@@ -110,7 +111,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.Entidades
             Email email,
             Endereco endereco,
             bool ativo,
-            long id,
+            Guid id,
             DateTime dataCriacaoUtc,
             DateTime dataAtualizacaoUtc)
         {

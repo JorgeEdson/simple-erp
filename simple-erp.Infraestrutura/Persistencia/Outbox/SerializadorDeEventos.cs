@@ -51,8 +51,8 @@ namespace simple_erp.Infraestrutura.Persistencia.Outbox
         {
             var opcoes = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-            opcoes.Converters.Add(new ConversorJsonDeId());
-
+            // O identificador é um Guid e o System.Text.Json já o serializa nativamente,
+            // por isso não há conversor para ele aqui.
             // Todo VO que aparece em algum construtor de evento precisa de conversor.
             // Se um evento novo passar a carregar outro VO, registre-o aqui.
             opcoes.Converters.Add(new ConversorDeVoDeTexto<Nome>(
@@ -68,17 +68,6 @@ namespace simple_erp.Infraestrutura.Persistencia.Outbox
                 texto => DescricaoProduto.TentarCriar(texto, null).Instancia!, vo => vo.Valor));
 
             return opcoes;
-        }
-
-        private sealed class ConversorJsonDeId : JsonConverter<Id>
-        {
-            public override Id Read(
-                ref Utf8JsonReader leitor, Type tipoAConverter, JsonSerializerOptions opcoes) =>
-                Id.TentarCriar(leitor.GetInt64()).Instancia!;
-
-            public override void Write(
-                Utf8JsonWriter escritor, Id valor, JsonSerializerOptions opcoes) =>
-                escritor.WriteNumberValue(valor.Valor);
         }
 
         /// <summary>

@@ -12,7 +12,7 @@ namespace simple_erp.Testes.Modulos.Producao.Repositories
     public sealed class OrdemDeProducaoRepositoryTests
         : IClassFixture<PostgresProducaoFixture>, IAsyncLifetime
     {
-        private const long IdProdutoFabricado = 202607210050;
+        private static readonly Guid IdProdutoFabricado = new Guid("00000000-0000-0000-0000-202607210050");
 
         private readonly PostgresProducaoFixture _fixture;
 
@@ -24,7 +24,7 @@ namespace simple_erp.Testes.Modulos.Producao.Repositories
         public Task InitializeAsync() => _fixture.LimparAsync();
         public Task DisposeAsync() => Task.CompletedTask;
 
-        private static Id IdDe(long valor) => Id.TentarCriar(valor).Instancia;
+        private static Guid IdDe(Guid valor) => valor;
 
         private async Task SalvarAsync(params OrdemDeProducao[] ordens)
         {
@@ -41,26 +41,26 @@ namespace simple_erp.Testes.Modulos.Producao.Repositories
         public async Task AdicionarEObterPorId_DevePersistirAsNecessidadesEmJsonb()
         {
             var ordem = OrdemDeProducaoBuilder.Novo()
-                .ComId(202607210900)
+                .ComId(new Guid("00000000-0000-0000-0000-202607210900"))
                 .ComIdProdutoFabricado(IdProdutoFabricado)
                 .ComQuantidadeAProduzir(10m)
                 .SemNecessidades()
-                .ComNecessidade(202607210010, 2m)
-                .ComNecessidade(202607210011, 5m)
+                .ComNecessidade(new Guid("00000000-0000-0000-0000-202607210010"), 2m)
+                .ComNecessidade(new Guid("00000000-0000-0000-0000-202607210011"), 5m)
                 .Criar();
 
             await SalvarAsync(ordem);
 
             await using var contexto = _fixture.CriarContexto();
             var recuperada = (await new OrdemDeProducaoRepository(contexto)
-                .ObterPorIdAsync(IdDe(202607210900))).Instancia;
+                .ObterPorIdAsync(IdDe(new Guid("00000000-0000-0000-0000-202607210900")))).Instancia;
 
             recuperada.Should().NotBeNull();
-            recuperada!.IdProdutoFabricado.Valor.Should().Be(IdProdutoFabricado);
+            recuperada!.IdProdutoFabricado.Should().Be(IdProdutoFabricado);
             recuperada.QuantidadeAProduzir.Should().Be(10m);
             recuperada.Status.Should().Be(StatusOrdemDeProducao.Criada);
             recuperada.Necessidades.Should().HaveCount(2);
-            recuperada.Necessidades.Single(n => n.IdInsumo == 202607210011)
+            recuperada.Necessidades.Single(n => n.IdInsumo == new Guid("00000000-0000-0000-0000-202607210011"))
                 .QuantidadeNecessaria.Should().Be(5m);
         }
 
@@ -70,25 +70,25 @@ namespace simple_erp.Testes.Modulos.Producao.Repositories
             await using var contexto = _fixture.CriarContexto();
             var repositorio = new OrdemDeProducaoRepository(contexto);
 
-            var resultado = await repositorio.ObterPorIdAsync(IdDe(999999999999));
+            var resultado = await repositorio.ObterPorIdAsync(IdDe(new Guid("00000000-0000-0000-0000-999999999999")));
 
             resultado.EhSucesso.Should().BeTrue();
             resultado.Instancia.Should().BeNull();
-            (await repositorio.ExistePorIdAsync(IdDe(999999999999))).Instancia.Should().BeFalse();
+            (await repositorio.ExistePorIdAsync(IdDe(new Guid("00000000-0000-0000-0000-999999999999")))).Instancia.Should().BeFalse();
         }
 
         [Fact]
         public async Task TransicaoDeStatus_ViaEntidadeRastreada_DevePersistir()
         {
             await SalvarAsync(OrdemDeProducaoBuilder.Novo()
-                .ComId(202607210910).ComIdProdutoFabricado(IdProdutoFabricado)
-                .SemNecessidades().ComNecessidade(202607210010, 1m)
+                .ComId(new Guid("00000000-0000-0000-0000-202607210910")).ComIdProdutoFabricado(IdProdutoFabricado)
+                .SemNecessidades().ComNecessidade(new Guid("00000000-0000-0000-0000-202607210010"), 1m)
                 .Criar());
 
             await using (var contexto = _fixture.CriarContexto())
             {
                 var repositorio = new OrdemDeProducaoRepository(contexto);
-                var ordem = (await repositorio.ObterPorIdAsync(IdDe(202607210910))).Instancia!;
+                var ordem = (await repositorio.ObterPorIdAsync(IdDe(new Guid("00000000-0000-0000-0000-202607210910")))).Instancia!;
 
                 ordem.Confirmar().EhSucesso.Should().BeTrue();
                 ordem.Concluir().EhSucesso.Should().BeTrue();
@@ -99,7 +99,7 @@ namespace simple_erp.Testes.Modulos.Producao.Repositories
 
             await using var contextoLeitura = _fixture.CriarContexto();
             var recuperada = (await new OrdemDeProducaoRepository(contextoLeitura)
-                .ObterPorIdAsync(IdDe(202607210910))).Instancia!;
+                .ObterPorIdAsync(IdDe(new Guid("00000000-0000-0000-0000-202607210910")))).Instancia!;
 
             recuperada.Status.Should().Be(StatusOrdemDeProducao.Concluida);
         }
@@ -108,12 +108,12 @@ namespace simple_erp.Testes.Modulos.Producao.Repositories
         public async Task ListarPaginadoAsync_DeveFiltrarPorProdutoEStatus()
         {
             await SalvarAsync(
-                OrdemDeProducaoBuilder.Novo().ComId(202607210920).ComIdProdutoFabricado(IdProdutoFabricado)
-                    .SemNecessidades().ComNecessidade(202607210010, 1m).Criar(),
-                OrdemDeProducaoBuilder.Novo().ComId(202607210921).ComIdProdutoFabricado(IdProdutoFabricado)
-                    .SemNecessidades().ComNecessidade(202607210010, 1m).Confirmada().Criar(),
-                OrdemDeProducaoBuilder.Novo().ComId(202607210922).ComIdProdutoFabricado(202607219999)
-                    .SemNecessidades().ComNecessidade(202607210010, 1m).Criar());
+                OrdemDeProducaoBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210920")).ComIdProdutoFabricado(IdProdutoFabricado)
+                    .SemNecessidades().ComNecessidade(new Guid("00000000-0000-0000-0000-202607210010"), 1m).Criar(),
+                OrdemDeProducaoBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210921")).ComIdProdutoFabricado(IdProdutoFabricado)
+                    .SemNecessidades().ComNecessidade(new Guid("00000000-0000-0000-0000-202607210010"), 1m).Confirmada().Criar(),
+                OrdemDeProducaoBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210922")).ComIdProdutoFabricado(new Guid("00000000-0000-0000-0000-202607219999"))
+                    .SemNecessidades().ComNecessidade(new Guid("00000000-0000-0000-0000-202607210010"), 1m).Criar());
 
             await using var contexto = _fixture.CriarContexto();
             var repositorio = new OrdemDeProducaoRepository(contexto);

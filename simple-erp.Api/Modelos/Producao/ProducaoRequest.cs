@@ -6,7 +6,7 @@ namespace simple_erp.Api.Modelos.Producao
     /// domínio, então aceitá-las aqui permitiria uma ordem divergente da receita.
     /// </summary>
     public sealed record CriarOrdemDeProducaoRequest(
-        long IdProdutoFabricado,
+        Guid IdProdutoFabricado,
         decimal QuantidadeAProduzir);
 
     /// <summary>
@@ -15,7 +15,7 @@ namespace simple_erp.Api.Modelos.Producao
     /// multiplica pela quantidade a produzir.
     /// </summary>
     public sealed record ItemDeComposicaoRequest(
-        long IdInsumo,
+        Guid IdInsumo,
         decimal QuantidadePorUnidade);
 
     /// <summary>

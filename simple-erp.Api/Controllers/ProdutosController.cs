@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using simple_erp.Api.Comum;
 using simple_erp.Api.Modelos.CatalogoDeProdutos;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.EventosDeDominio;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases;
 
 namespace simple_erp.Api.Controllers
@@ -37,10 +37,10 @@ namespace simple_erp.Api.Controllers
         // Nome de rota único na aplicação (usado pelo CreatedAtRoute do POST).
         private const string RotaObterPorId = "ObterProdutoPorId";
 
-        [HttpGet("{id:long}", Name = RotaObterPorId)]
+        [HttpGet("{id:guid}", Name = RotaObterPorId)]
         [ProducesResponseType(typeof(ObterProdutoPorIdSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> ObterPorId(long id, CancellationToken cancellationToken)
+        public async Task<IActionResult> ObterPorId(Guid id, CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
                 new ObterProdutoPorIdEntrada(id), cancellationToken);
@@ -67,12 +67,12 @@ namespace simple_erp.Api.Controllers
             return Responder(resultado);
         }
 
-        [HttpPut("{id:long}")]
+        [HttpPut("{id:guid}")]
         [ProducesResponseType(typeof(EditarProdutoSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Editar(
-            long id,
+            Guid id,
             [FromBody] EditarProdutoRequest requisicao,
             CancellationToken cancellationToken)
         {
@@ -86,46 +86,46 @@ namespace simple_erp.Api.Controllers
             return Responder(resultado);
         }
 
-        [HttpPost("{id:long}/inativar")]
+        [HttpPost("{id:guid}/inativar")]
         [ProducesResponseType(typeof(InativarProdutoSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Inativar(long id, CancellationToken cancellationToken)
+        public async Task<IActionResult> Inativar(Guid id, CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
                 new InativarProdutoEntrada(id), cancellationToken);
             return Responder(resultado);
         }
 
-        [HttpPost("{id:long}/reativar")]
+        [HttpPost("{id:guid}/reativar")]
         [ProducesResponseType(typeof(ReativarProdutoSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Reativar(long id, CancellationToken cancellationToken)
+        public async Task<IActionResult> Reativar(Guid id, CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
                 new ReativarProdutoEntrada(id), cancellationToken);
             return Responder(resultado);
         }
 
-        [HttpPost("{id:long}/classificar/fabricado")]
+        [HttpPost("{id:guid}/classificar/fabricado")]
         [ProducesResponseType(typeof(ClassificarProdutoComoFabricadoSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> ClassificarComoFabricado(
-            long id, CancellationToken cancellationToken)
+            Guid id, CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
                 new ClassificarProdutoComoFabricadoEntrada(id), cancellationToken);
             return Responder(resultado);
         }
 
-        [HttpPost("{id:long}/classificar/materia-prima")]
+        [HttpPost("{id:guid}/classificar/materia-prima")]
         [ProducesResponseType(typeof(ClassificarProdutoComoMateriaPrimaSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> ClassificarComoMateriaPrima(
-            long id, CancellationToken cancellationToken)
+            Guid id, CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
                 new ClassificarProdutoComoMateriaPrimaEntrada(id), cancellationToken);

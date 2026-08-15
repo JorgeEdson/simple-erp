@@ -30,10 +30,10 @@ namespace simple_erp.Core.Modulos.Estoque.ObjetosDeValor
 
         public static Resultado<OrigemDaMovimentacao> TentarCriar(
             TipoOrigemMovimentacao tipo,
-            long? idReferencia = null,
+            Guid? idReferencia = null,
             IConfiguracaoObjetoDeValor? configuracao = null)
         {
-            if (idReferencia.HasValue && idReferencia.Value <= 0)
+            if (idReferencia.HasValue && idReferencia.Value == Guid.Empty)
                 return Resultado<OrigemDaMovimentacao>.Falha("ORIGEM_REFERENCIA_INVALIDA");
 
             var propriedades = new PropriedadesOrigemDaMovimentacao(tipo, idReferencia);
@@ -43,7 +43,7 @@ namespace simple_erp.Core.Modulos.Estoque.ObjetosDeValor
         }
 
         public TipoOrigemMovimentacao Tipo => Valor.Tipo;
-        public long? IdReferencia => Valor.IdReferencia;
+        public Guid? IdReferencia => Valor.IdReferencia;
 
         public override string ToString()
         {
@@ -53,5 +53,5 @@ namespace simple_erp.Core.Modulos.Estoque.ObjetosDeValor
 
     public record PropriedadesOrigemDaMovimentacao(
         TipoOrigemMovimentacao Tipo,
-        long? IdReferencia);
+        Guid? IdReferencia);
 }

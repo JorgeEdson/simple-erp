@@ -11,9 +11,9 @@ namespace simple_erp.Testes.Modulos.Suprimentos.Repositories
     /// </summary>
     public sealed class ConversoresDeSuprimentosTests
     {
-        private static ItemDePedidoDeCompra Item(long idProduto, decimal quantidade, decimal custo) =>
+        private static ItemDePedidoDeCompra Item(Guid idProduto, decimal quantidade, decimal custo) =>
             ItemDePedidoDeCompra.TentarCriar(
-                Id.TentarCriar(idProduto).Instancia,
+                idProduto,
                 Quantidade.TentarCriar(quantidade).Instancia,
                 Dinheiro.TentarCriar(custo).Instancia).Instancia!;
 
@@ -22,8 +22,8 @@ namespace simple_erp.Testes.Modulos.Suprimentos.Repositories
         {
             var itens = new List<ItemDePedidoDeCompra>
             {
-                Item(202607210010, 5m, 2.50m),
-                Item(202607210011, 3m, 4.00m)
+                Item(new Guid("00000000-0000-0000-0000-202607210010"), 5m, 2.50m),
+                Item(new Guid("00000000-0000-0000-0000-202607210011"), 3m, 4.00m)
             };
 
             var paraBanco = ConversoresDeSuprimentos.ItensParaJson.ConvertToProviderExpression.Compile();
@@ -34,7 +34,7 @@ namespace simple_erp.Testes.Modulos.Suprimentos.Repositories
 
             var rehidratado = doBanco(json);
             rehidratado.Should().HaveCount(2);
-            rehidratado[0].IdProduto.Should().Be(202607210010);
+            rehidratado[0].IdProduto.Should().Be(new Guid("00000000-0000-0000-0000-202607210010"));
             rehidratado[0].Quantidade.Should().Be(5m);
             rehidratado[0].CustoUnitario.Should().Be(2.50m);
             rehidratado[1].Subtotal.Should().Be(12.00m, "3 * 4.00");
@@ -52,8 +52,8 @@ namespace simple_erp.Testes.Modulos.Suprimentos.Repositories
         [Fact]
         public void ComparadorDeItens_DeveIgualarColecoesComMesmoConteudo()
         {
-            var a = new List<ItemDePedidoDeCompra> { Item(202607210010, 5m, 2.50m) };
-            var b = new List<ItemDePedidoDeCompra> { Item(202607210010, 5m, 2.50m) };
+            var a = new List<ItemDePedidoDeCompra> { Item(new Guid("00000000-0000-0000-0000-202607210010"), 5m, 2.50m) };
+            var b = new List<ItemDePedidoDeCompra> { Item(new Guid("00000000-0000-0000-0000-202607210010"), 5m, 2.50m) };
 
             ConversoresDeSuprimentos.ComparadorDeItens.Equals(a, b).Should().BeTrue();
         }

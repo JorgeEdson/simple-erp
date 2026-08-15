@@ -1,7 +1,6 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
 using simple_erp.Core.Modulos.ParceirosComerciais.Interfaces.Repositorios;
@@ -10,6 +9,8 @@ using simple_erp.Testes.Compartilhado.Builders;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 {
@@ -39,7 +40,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoIdForInvalido()
         {
             // Arrange
-            var entrada = new InativarClienteEntrada(0);
+            var entrada = new InativarClienteEntrada(Guid.Empty);
 
             // Act
             var resultado = await _useCase.ExecutarAsync(entrada);
@@ -50,7 +51,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 
             await _clientesRepository
                 .DidNotReceive()
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>());
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
 
             await _clientesRepository
                 .DidNotReceive()
@@ -65,10 +66,10 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoOcorrerErroAoObterClientePorId()
         {
             // Arrange
-            var entrada = new InativarClienteEntrada(123456);
+            var entrada = new InativarClienteEntrada(new Guid("00000000-0000-0000-0000-000000123456"));
 
             _clientesRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Cliente?>.Falha("ERRO_AO_OBTER_CLIENTE"));
 
             // Act
@@ -91,10 +92,10 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoClienteNaoForEncontrado()
         {
             // Arrange
-            var entrada = new InativarClienteEntrada(123456);
+            var entrada = new InativarClienteEntrada(new Guid("00000000-0000-0000-0000-000000123456"));
 
             _clientesRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Cliente?>.Falha("CLIENTE_NAO_ENCONTRADO"));
 
             // Act
@@ -118,13 +119,13 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
         {
             // Arrange
             var cliente = ClienteBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .Criar();
 
-            var entrada = new InativarClienteEntrada(cliente.Id.Valor);
+            var entrada = new InativarClienteEntrada(cliente.Id);
 
             _clientesRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Cliente?>.Sucesso(cliente));
 
             _clientesRepository
@@ -148,13 +149,13 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
         {
             // Arrange
             var cliente = ClienteBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .Criar();
 
-            var entrada = new InativarClienteEntrada(cliente.Id.Valor);
+            var entrada = new InativarClienteEntrada(cliente.Id);
 
             _clientesRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Cliente?>.Sucesso(cliente));
 
             _clientesRepository
@@ -176,7 +177,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
                 .Received(1)
                 .AtualizarAsync(
                     Arg.Is<Cliente>(c =>
-                        c.Id.Valor == cliente.Id.Valor &&
+                        c.Id == cliente.Id &&
                         c.Ativo == false),
                     Arg.Any<CancellationToken>());
 
@@ -190,13 +191,13 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
         {
             // Arrange
             var cliente = ClienteBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .Criar();
 
-            var entrada = new InativarClienteEntrada(cliente.Id.Valor);
+            var entrada = new InativarClienteEntrada(cliente.Id);
 
             _clientesRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Cliente?>.Sucesso(cliente));
 
             _clientesRepository
@@ -212,20 +213,20 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 
             // Assert
             resultado.EhSucesso.Should().BeTrue();
-            resultado.Instancia.Id.Should().Be(cliente.Id.Valor);
+            resultado.Instancia.Id.Should().Be(cliente.Id);
             resultado.Instancia.Ativo.Should().BeFalse();
 
             await _clientesRepository
                 .Received(1)
                 .ObterPorIdAsync(
-                    Arg.Is<Id>(id => id.Valor == cliente.Id.Valor),
+                    Arg.Is<Guid>(id => id == cliente.Id),
                     Arg.Any<CancellationToken>());
 
             await _clientesRepository
                 .Received(1)
                 .AtualizarAsync(
                     Arg.Is<Cliente>(c =>
-                        c.Id.Valor == cliente.Id.Valor &&
+                        c.Id == cliente.Id &&
                         c.Ativo == false),
                     Arg.Any<CancellationToken>());
 

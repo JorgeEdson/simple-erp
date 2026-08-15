@@ -57,7 +57,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Producao
         }
 
         public async Task<Resultado<ComposicaoDeProduto?>> ObterPorIdAsync(
-            Id id, CancellationToken cancellationToken = default)
+            Guid id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -74,7 +74,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Producao
         }
 
         public async Task<Resultado<bool>> ExisteAtivaPorProdutoAsync(
-            Id idProdutoFabricado, CancellationToken cancellationToken = default)
+            Guid idProdutoFabricado, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -91,7 +91,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Producao
         }
 
         public async Task<Resultado<ComposicaoDeProduto?>> ObterAtivaPorProdutoAsync(
-            Id idProdutoFabricado, CancellationToken cancellationToken = default)
+            Guid idProdutoFabricado, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -108,7 +108,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Producao
         }
 
         public async Task<Resultado<int>> ObterProximaVersaoPorProdutoAsync(
-            Id idProdutoFabricado, CancellationToken cancellationToken = default)
+            Guid idProdutoFabricado, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -138,7 +138,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Producao
                 var pagina = numeroPagina < 1 ? 1 : numeroPagina;
                 var tamanho = tamanhoPagina < 1 ? 10 : Math.Min(tamanhoPagina, 100);
 
-                var idProduto = Id.TentarCriar(filtro.IdProdutoFabricado).Instancia;
+                var idProduto = filtro.IdProdutoFabricado;
 
                 var consulta = _contexto.Set<ComposicaoDeProduto>()
                     .AsNoTracking()

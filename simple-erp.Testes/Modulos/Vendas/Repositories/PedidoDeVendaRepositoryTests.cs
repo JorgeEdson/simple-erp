@@ -12,7 +12,7 @@ namespace simple_erp.Testes.Modulos.Vendas.Repositories
     public sealed class PedidoDeVendaRepositoryTests
         : IClassFixture<PostgresVendasFixture>, IAsyncLifetime
     {
-        private const long IdCliente = 202607210001;
+        private static readonly Guid IdCliente = new Guid("00000000-0000-0000-0000-202607210001");
 
         private readonly PostgresVendasFixture _fixture;
 
@@ -24,7 +24,7 @@ namespace simple_erp.Testes.Modulos.Vendas.Repositories
         public Task InitializeAsync() => _fixture.LimparAsync();
         public Task DisposeAsync() => Task.CompletedTask;
 
-        private static Id IdDe(long valor) => Id.TentarCriar(valor).Instancia;
+        private static Guid IdDe(Guid valor) => valor;
 
         private async Task SalvarAsync(params PedidoDeVenda[] pedidos)
         {
@@ -41,12 +41,12 @@ namespace simple_erp.Testes.Modulos.Vendas.Repositories
         public async Task AdicionarEObterPorId_DevePersistirItensDescontoEValorTotal()
         {
             var pedido = PedidoDeVendaBuilder.Novo()
-                .ComId(202607211100)
+                .ComId(new Guid("00000000-0000-0000-0000-202607211100"))
                 .ComNumero(1)
                 .ComIdCliente(IdCliente)
                 .SemItens() // limpa o item padrão do builder para partir do zero
-                .ComItem(202607210010, quantidade: 4m, precoUnitario: 10m, desconto: 0m)
-                .ComItem(202607210011, quantidade: 2m, precoUnitario: 25m, desconto: 5m)
+                .ComItem(new Guid("00000000-0000-0000-0000-202607210010"), quantidade: 4m, precoUnitario: 10m, desconto: 0m)
+                .ComItem(new Guid("00000000-0000-0000-0000-202607210011"), quantidade: 2m, precoUnitario: 25m, desconto: 5m)
                 .ComDescontoDoPedido(10m)
                 .EmEdicao()
                 .Criar();
@@ -55,11 +55,11 @@ namespace simple_erp.Testes.Modulos.Vendas.Repositories
 
             await using var contexto = _fixture.CriarContexto();
             var recuperado = (await new PedidoDeVendaRepository(contexto)
-                .ObterPorIdAsync(IdDe(202607211100))).Instancia;
+                .ObterPorIdAsync(IdDe(new Guid("00000000-0000-0000-0000-202607211100")))).Instancia;
 
             recuperado.Should().NotBeNull();
             recuperado!.Numero.Should().Be(1);
-            recuperado.IdCliente.Valor.Should().Be(IdCliente);
+            recuperado.IdCliente.Should().Be(IdCliente);
             recuperado.Status.Should().Be(StatusPedidoDeVenda.EmEdicao);
             recuperado.Itens.Should().HaveCount(2);
             recuperado.DescontoDoPedido.Should().Be(10m);
@@ -74,11 +74,11 @@ namespace simple_erp.Testes.Modulos.Vendas.Repositories
             await using var contexto = _fixture.CriarContexto();
             var repositorio = new PedidoDeVendaRepository(contexto);
 
-            var resultado = await repositorio.ObterPorIdAsync(IdDe(999999999999));
+            var resultado = await repositorio.ObterPorIdAsync(IdDe(new Guid("00000000-0000-0000-0000-999999999999")));
 
             resultado.EhSucesso.Should().BeTrue();
             resultado.Instancia.Should().BeNull();
-            (await repositorio.ExistePorIdAsync(IdDe(999999999999))).Instancia.Should().BeFalse();
+            (await repositorio.ExistePorIdAsync(IdDe(new Guid("00000000-0000-0000-0000-999999999999")))).Instancia.Should().BeFalse();
         }
 
         [Fact]
@@ -89,8 +89,8 @@ namespace simple_erp.Testes.Modulos.Vendas.Repositories
                 .Should().Be(1, "sem pedidos, o primeiro número é 1");
 
             await SalvarAsync(
-                PedidoDeVendaBuilder.Novo().ComId(202607211110).ComNumero(1).ComIdCliente(IdCliente).Criar(),
-                PedidoDeVendaBuilder.Novo().ComId(202607211111).ComNumero(2).ComIdCliente(IdCliente).Criar());
+                PedidoDeVendaBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607211110")).ComNumero(1).ComIdCliente(IdCliente).Criar(),
+                PedidoDeVendaBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607211111")).ComNumero(2).ComIdCliente(IdCliente).Criar());
 
             await using var contexto = _fixture.CriarContexto();
             var repositorio = new PedidoDeVendaRepository(contexto);
@@ -106,9 +106,9 @@ namespace simple_erp.Testes.Modulos.Vendas.Repositories
             var repositorio = new PedidoDeVendaRepository(contexto);
 
             await repositorio.AdicionarAsync(
-                PedidoDeVendaBuilder.Novo().ComId(202607211120).ComNumero(7).ComIdCliente(IdCliente).Criar());
+                PedidoDeVendaBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607211120")).ComNumero(7).ComIdCliente(IdCliente).Criar());
             await repositorio.AdicionarAsync(
-                PedidoDeVendaBuilder.Novo().ComId(202607211121).ComNumero(7).ComIdCliente(IdCliente).Criar());
+                PedidoDeVendaBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607211121")).ComNumero(7).ComIdCliente(IdCliente).Criar());
 
             var acao = async () => await contexto.SaveChangesAsync();
 
@@ -119,25 +119,25 @@ namespace simple_erp.Testes.Modulos.Vendas.Repositories
         public async Task EditarItens_ViaEntidadeRastreada_DevePersistirAsAlteracoesDaColecao()
         {
             await SalvarAsync(PedidoDeVendaBuilder.Novo()
-                .ComId(202607211130).ComNumero(10).ComIdCliente(IdCliente)
+                .ComId(new Guid("00000000-0000-0000-0000-202607211130")).ComNumero(10).ComIdCliente(IdCliente)
                 .SemItens() // limpa o item padrão do builder para partir do zero
-                .ComItem(202607210010, 5m, 2m)
+                .ComItem(new Guid("00000000-0000-0000-0000-202607210010"), 5m, 2m)
                 .EmEdicao().Criar());
 
             // Fluxo real: obter (rastreado) → adicionar/remover item → Atualizar → SaveChanges.
             await using (var contexto = _fixture.CriarContexto())
             {
                 var repositorio = new PedidoDeVendaRepository(contexto);
-                var pedido = (await repositorio.ObterPorIdAsync(IdDe(202607211130))).Instancia!;
+                var pedido = (await repositorio.ObterPorIdAsync(IdDe(new Guid("00000000-0000-0000-0000-202607211130")))).Instancia!;
 
                 var novoItem = ItemDePedidoDeVenda.TentarCriar(
-                    IdDe(202607210011),
+                    IdDe(new Guid("00000000-0000-0000-0000-202607210011")),
                     Quantidade.TentarCriar(3m).Instancia,
                     Dinheiro.TentarCriar(4m).Instancia,
                     Dinheiro.TentarCriar(0m).Instancia).Instancia;
 
                 pedido.AdicionarItem(novoItem).EhSucesso.Should().BeTrue();
-                pedido.RemoverItem(202607210010).EhSucesso.Should().BeTrue();
+                pedido.RemoverItem(new Guid("00000000-0000-0000-0000-202607210010")).EhSucesso.Should().BeTrue();
 
                 (await repositorio.AtualizarAsync(pedido)).EhSucesso.Should().BeTrue();
                 await contexto.SaveChangesAsync();
@@ -145,10 +145,10 @@ namespace simple_erp.Testes.Modulos.Vendas.Repositories
 
             await using var contextoLeitura = _fixture.CriarContexto();
             var recuperado = (await new PedidoDeVendaRepository(contextoLeitura)
-                .ObterPorIdAsync(IdDe(202607211130))).Instancia!;
+                .ObterPorIdAsync(IdDe(new Guid("00000000-0000-0000-0000-202607211130")))).Instancia!;
 
             recuperado.Itens.Should().ContainSingle();
-            recuperado.Itens.Single().IdProduto.Should().Be(202607210011);
+            recuperado.Itens.Single().IdProduto.Should().Be(new Guid("00000000-0000-0000-0000-202607210011"));
             recuperado.ValorTotal.Valor.Should().Be(12m, "3 * 4.00");
         }
 
@@ -156,13 +156,13 @@ namespace simple_erp.Testes.Modulos.Vendas.Repositories
         public async Task Cancelar_ViaEntidadeRastreada_DevePersistirStatusEMotivo()
         {
             await SalvarAsync(PedidoDeVendaBuilder.Novo()
-                .ComId(202607211140).ComNumero(11).ComIdCliente(IdCliente)
+                .ComId(new Guid("00000000-0000-0000-0000-202607211140")).ComNumero(11).ComIdCliente(IdCliente)
                 .EmEdicao().Criar());
 
             await using (var contexto = _fixture.CriarContexto())
             {
                 var repositorio = new PedidoDeVendaRepository(contexto);
-                var pedido = (await repositorio.ObterPorIdAsync(IdDe(202607211140))).Instancia!;
+                var pedido = (await repositorio.ObterPorIdAsync(IdDe(new Guid("00000000-0000-0000-0000-202607211140")))).Instancia!;
 
                 var motivo = MotivoCancelamento.TentarCriar("Cliente desistiu da compra").Instancia;
                 pedido.Cancelar(motivo).EhSucesso.Should().BeTrue();
@@ -173,7 +173,7 @@ namespace simple_erp.Testes.Modulos.Vendas.Repositories
 
             await using var contextoLeitura = _fixture.CriarContexto();
             var recuperado = (await new PedidoDeVendaRepository(contextoLeitura)
-                .ObterPorIdAsync(IdDe(202607211140))).Instancia!;
+                .ObterPorIdAsync(IdDe(new Guid("00000000-0000-0000-0000-202607211140")))).Instancia!;
 
             recuperado.Status.Should().Be(StatusPedidoDeVenda.Cancelado);
             recuperado.MotivoCancelamento.Should().Be("Cliente desistiu da compra");
@@ -183,11 +183,11 @@ namespace simple_erp.Testes.Modulos.Vendas.Repositories
         public async Task ListarPaginadoAsync_DeveFiltrarPorClienteEStatus()
         {
             await SalvarAsync(
-                PedidoDeVendaBuilder.Novo().ComId(202607211150).ComNumero(20).ComIdCliente(IdCliente)
+                PedidoDeVendaBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607211150")).ComNumero(20).ComIdCliente(IdCliente)
                     .EmEdicao().Criar(),
-                PedidoDeVendaBuilder.Novo().ComId(202607211151).ComNumero(21).ComIdCliente(IdCliente)
+                PedidoDeVendaBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607211151")).ComNumero(21).ComIdCliente(IdCliente)
                     .Aprovado().Criar(),
-                PedidoDeVendaBuilder.Novo().ComId(202607211152).ComNumero(22).ComIdCliente(202607219999)
+                PedidoDeVendaBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607211152")).ComNumero(22).ComIdCliente(new Guid("00000000-0000-0000-0000-202607219999"))
                     .EmEdicao().Criar());
 
             await using var contexto = _fixture.CriarContexto();

@@ -13,8 +13,8 @@ namespace simple_erp.Core.Modulos.Suprimentos.Eventos
     public sealed class PedidoDeCompraEfetivado : EventoDeDominio
     {
         public PedidoDeCompraEfetivado(
-            Id idPedidoDeCompra,
-            Id idFornecedor,
+            Guid idPedidoDeCompra,
+            Guid idFornecedor,
             decimal valorTotal,
             IReadOnlyCollection<ItemPedidoDeCompraEfetivado> itens)
             : base(idPedidoDeCompra)
@@ -25,14 +25,14 @@ namespace simple_erp.Core.Modulos.Suprimentos.Eventos
             Itens = itens;
         }
 
-        public Id IdPedidoDeCompra { get; }
-        public Id IdFornecedor { get; }
+        public Guid IdPedidoDeCompra { get; }
+        public Guid IdFornecedor { get; }
         public decimal ValorTotal { get; }
         public IReadOnlyCollection<ItemPedidoDeCompraEfetivado> Itens { get; }
     }
 
     public sealed record ItemPedidoDeCompraEfetivado(
-        long IdProduto,
+        Guid IdProduto,
         decimal Quantidade,
         decimal CustoUnitario);
 }

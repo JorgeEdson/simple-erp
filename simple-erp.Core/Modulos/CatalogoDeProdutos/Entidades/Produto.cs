@@ -1,4 +1,5 @@
 using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Contratos.Dominio;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Eventos;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.ObjetosDeValor;
@@ -21,7 +22,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.Entidades
             UnidadeDeMedida unidadeDeMedida,
             ClassificacaoProduto classificacao,
             bool ativo = true,
-            long? id = null,
+            Guid? id = null,
             DateTime? dataCriacaoUtc = null,
             DateTime? dataAtualizacaoUtc = null)
             : base(id, dataCriacaoUtc, dataAtualizacaoUtc)
@@ -48,7 +49,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.Entidades
             DescricaoProduto descricao,
             UnidadeDeMedida unidadeDeMedida,
             ClassificacaoProduto classificacao = ClassificacaoProduto.Revenda,
-            long? id = null)
+            Guid? id = null)
         {
             var erros = new List<string>();
 
@@ -95,7 +96,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.Entidades
             UnidadeDeMedida unidadeDeMedida,
             ClassificacaoProduto classificacao,
             bool ativo,
-            long id,
+            Guid id,
             DateTime dataCriacaoUtc,
             DateTime dataAtualizacaoUtc)
         {

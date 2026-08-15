@@ -1,7 +1,7 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
-using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Core.Modulos.Producao.UseCases
 {
@@ -10,10 +10,10 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
     {
     }
 
-    public record CancelarOrdemDeProducaoEntrada(long Id) : IRequisicao<CancelarOrdemDeProducaoSaida>;
+    public record CancelarOrdemDeProducaoEntrada(Guid Id) : IRequisicao<CancelarOrdemDeProducaoSaida>;
 
     public record CancelarOrdemDeProducaoSaida(
-        long Id,
+        Guid Id,
         string Status);
 
     public sealed class CancelarOrdemDeProducaoUseCase : ICancelarOrdemDeProducaoUseCase
@@ -46,14 +46,21 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoId = Id.TentarCriar(dados.Id);
-
-            if (resultadoId.EhFalha)
+            if (dados.Id == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
-                return Resultado<CancelarOrdemDeProducaoSaida>.Falha(resultadoId.Erros!);
+
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["Id"] = dados.Id,
+                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                    }));
+
+                return Resultado<CancelarOrdemDeProducaoSaida>.Falha("ID_INVALIDO");
             }
 
             #endregion
@@ -61,7 +68,7 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
             #region Recuperação do agregado
 
             var resultadoOrdem = await _unitOfWork.OrdensDeProducaoRepository
-                .ObterPorIdAsync(resultadoId.Instancia, cancellationToken);
+                .ObterPorIdAsync(dados.Id, cancellationToken);
 
             if (resultadoOrdem.EhFalha)
             {
@@ -99,7 +106,7 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
                         Mensagem: "Falha ao cancelar o agregado OrdemDeProducao.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["OrdemDeProducaoId"] = ordem.Id.Valor,
+                            ["OrdemDeProducaoId"] = ordem.Id,
                             ["Status"] = ordem.Status.ToString(),
                             ["Erros"] = resultadoCancelar.Erros?.ToArray(),
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -147,14 +154,14 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
                 Mensagem: "Ordem de produção cancelada com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["OrdemDeProducaoId"] = ordem.Id.Valor,
+                    ["OrdemDeProducaoId"] = ordem.Id,
                     ["Status"] = ordem.Status.ToString(),
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));
 
             return Resultado<CancelarOrdemDeProducaoSaida>.Sucesso(
                 new CancelarOrdemDeProducaoSaida(
-                    Id: ordem.Id.Valor,
+                    Id: ordem.Id,
                     Status: ordem.Status.ToString()));
 
             #endregion

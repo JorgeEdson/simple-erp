@@ -20,13 +20,13 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.ObjetosDeValor
         }
 
         public static Resultado<ItemDeComposicao> TentarCriar(
-            Id idInsumo,
+            Guid idInsumo,
             Quantidade quantidadePorUnidade,
             IConfiguracaoObjetoDeValor? configuracao = null)
         {
             var erros = new List<string>();
 
-            if (idInsumo is null)
+            if (idInsumo == Guid.Empty)
                 erros.Add("INSUMO_OBRIGATORIO");
 
             if (quantidadePorUnidade is null)
@@ -36,17 +36,17 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.ObjetosDeValor
                 return Resultado<ItemDeComposicao>.Falha(erros);
 
             var propriedades = new PropriedadesItemDeComposicao(
-                IdInsumo: idInsumo!.Valor,
+                IdInsumo: idInsumo,
                 QuantidadePorUnidade: quantidadePorUnidade!.Valor);
 
             return Resultado<ItemDeComposicao>.Sucesso(
                 new ItemDeComposicao(propriedades, configuracao));
         }
 
-        public long IdInsumo => Valor.IdInsumo;
+        public Guid IdInsumo => Valor.IdInsumo;
         public decimal QuantidadePorUnidade => Valor.QuantidadePorUnidade;
 
-        public bool RefereInsumo(long idInsumo) => Valor.IdInsumo == idInsumo;
+        public bool RefereInsumo(Guid idInsumo) => Valor.IdInsumo == idInsumo;
 
         public override string ToString()
         {
@@ -55,6 +55,6 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.ObjetosDeValor
     }
 
     public record PropriedadesItemDeComposicao(
-        long IdInsumo,
+        Guid IdInsumo,
         decimal QuantidadePorUnidade);
 }

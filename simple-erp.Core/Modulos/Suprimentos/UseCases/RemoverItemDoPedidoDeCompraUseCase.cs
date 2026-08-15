@@ -1,8 +1,9 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Suprimentos.Entidades;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Core.Modulos.Suprimentos.UseCases
 {
@@ -12,11 +13,11 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
     }
 
     public record RemoverItemDoPedidoDeCompraEntrada(
-        long IdPedidoDeCompra,
-        long IdProduto) : IRequisicao<RemoverItemDoPedidoDeCompraSaida>;
+        Guid IdPedidoDeCompra,
+        Guid IdProduto) : IRequisicao<RemoverItemDoPedidoDeCompraSaida>;
 
     public record RemoverItemDoPedidoDeCompraSaida(
-        long Id,
+        Guid Id,
         string Status,
         decimal ValorTotal,
         int QuantidadeItens);
@@ -52,26 +53,23 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoId = Id.TentarCriar(dados.IdPedidoDeCompra);
-            var resultadoIdProduto = Id.TentarCriar(dados.IdProduto);
-
-            var validacao = Resultado.Combinar(resultadoId, resultadoIdProduto);
-
-            if (validacao.EhFalha)
+            if (dados.IdPedidoDeCompra == Guid.Empty
+                || dados.IdProduto == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
 
                 _logService.RegistrarLogWarning(new RegistroDeLog(
-                    Mensagem: "Falha na validação dos dados para remoção de item do pedido de compra.",
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["Erros"] = validacao.Erros?.ToArray(),
+                        ["IdPedidoDeCompra"] = dados.IdPedidoDeCompra,
+                        ["IdProduto"] = dados.IdProduto,
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
 
-                return Resultado<RemoverItemDoPedidoDeCompraSaida>.Falha(validacao.Erros!);
+                return Resultado<RemoverItemDoPedidoDeCompraSaida>.Falha("ID_INVALIDO");
             }
 
             #endregion
@@ -81,7 +79,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
             var stopwatchObter = Stopwatch.StartNew();
 
             var resultadoPedido = await _unitOfWork.PedidosDeCompraRepository.ObterPorIdAsync(
-                resultadoId.Instancia,
+                dados.IdPedidoDeCompra,
                 cancellationToken);
 
             stopwatchObter.Stop();
@@ -142,7 +140,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
                         Mensagem: "Falha ao remover item do agregado PedidoDeCompra.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["PedidoDeCompraId"] = pedido.Id.Valor,
+                            ["PedidoDeCompraId"] = pedido.Id,
                             ["Erros"] = resultadoRemocao.Erros?.ToArray(),
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                         }));
@@ -180,7 +178,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
                     Mensagem: "Falha ao atualizar pedido de compra no repositório durante remoção de item.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["PedidoDeCompraId"] = pedido.Id.Valor,
+                        ["PedidoDeCompraId"] = pedido.Id,
                         ["Erros"] = resultadoAtualizar.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -210,7 +208,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
                     Mensagem: "Falha ao persistir remoção de item de pedido de compra.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["PedidoDeCompraId"] = pedido.Id.Valor,
+                        ["PedidoDeCompraId"] = pedido.Id,
                         ["Erros"] = resultadoSave.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -228,7 +226,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
                 Mensagem: "Item removido do pedido de compra com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["PedidoDeCompraId"] = pedido.Id.Valor,
+                    ["PedidoDeCompraId"] = pedido.Id,
                     ["ValorTotal"] = pedido.ValorTotal.Valor,
                     ["QuantidadeItens"] = pedido.Itens.Count,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -236,7 +234,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
 
             return Resultado<RemoverItemDoPedidoDeCompraSaida>.Sucesso(
                 new RemoverItemDoPedidoDeCompraSaida(
-                    Id: pedido.Id.Valor,
+                    Id: pedido.Id,
                     Status: pedido.Status.ToString(),
                     ValorTotal: pedido.ValorTotal.Valor,
                     QuantidadeItens: pedido.Itens.Count));

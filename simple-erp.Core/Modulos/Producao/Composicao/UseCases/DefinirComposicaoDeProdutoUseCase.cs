@@ -1,10 +1,11 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Producao.Composicao.Entidades;
 using simple_erp.Core.Modulos.Producao.Composicao.ObjetosDeValor;
 using simple_erp.Core.Modulos.Producao.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
 {
@@ -14,20 +15,20 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
     }
 
     public record ItemDeComposicaoEntrada(
-        long IdInsumo,
+        Guid IdInsumo,
         decimal QuantidadePorUnidade);
 
     public record DefinirComposicaoDeProdutoEntrada(
-        long IdProdutoFabricado,
+        Guid IdProdutoFabricado,
         IReadOnlyCollection<ItemDeComposicaoEntrada> Itens) : IRequisicao<DefinirComposicaoDeProdutoSaida>;
 
     public record ItemDeComposicaoSaida(
-        long IdInsumo,
+        Guid IdInsumo,
         decimal QuantidadePorUnidade);
 
     public record DefinirComposicaoDeProdutoSaida(
-        long Id,
-        long IdProdutoFabricado,
+        Guid Id,
+        Guid IdProdutoFabricado,
         int Versao,
         bool Ativa,
         IReadOnlyCollection<ItemDeComposicaoSaida> Itens);
@@ -63,23 +64,26 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoIdProduto = Id.TentarCriar(dados.IdProdutoFabricado);
-
-            if (resultadoIdProduto.EhFalha)
+            if (dados.IdProdutoFabricado == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
+
                 _logService.RegistrarLogWarning(new RegistroDeLog(
-                    Mensagem: "Falha na validação do produto fabricado para composição.",
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["Erros"] = resultadoIdProduto.Erros?.ToArray(),
+                        ["IdProdutoFabricado"] = dados.IdProdutoFabricado,
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
-                return Resultado<DefinirComposicaoDeProdutoSaida>.Falha(resultadoIdProduto.Erros!);
+
+                return Resultado<DefinirComposicaoDeProdutoSaida>.Falha("ID_INVALIDO");
             }
 
+            #endregion
+
+            #region Validação da entrada
             var resultadoItens = ConverterItens(dados.Itens);
 
             if (resultadoItens.EhFalha)
@@ -102,7 +106,7 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
             #region Validação de pré-condições
 
             var resultadoFabricado = await ValidarProdutoFabricadoAsync(
-                resultadoIdProduto.Instancia, cancellationToken);
+                dados.IdProdutoFabricado, cancellationToken);
 
             if (resultadoFabricado.EhFalha)
             {
@@ -125,7 +129,7 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
                 #region Criação da versão de composição
 
                 var resultadoVersao = await _unitOfWork.ComposicoesDeProdutoRepository
-                    .ObterProximaVersaoPorProdutoAsync(resultadoIdProduto.Instancia, cancellationToken);
+                    .ObterProximaVersaoPorProdutoAsync(dados.IdProdutoFabricado, cancellationToken);
 
                 if (resultadoVersao.EhFalha)
                 {
@@ -141,7 +145,7 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
                 }
 
                 var resultadoComposicao = ComposicaoDeProduto.Criar(
-                    resultadoIdProduto.Instancia,
+                    dados.IdProdutoFabricado,
                     resultadoVersao.Instancia,
                     itens);
 
@@ -193,7 +197,7 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
                 Mensagem: "Composição de produto definida com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["ComposicaoId"] = composicao.Id.Valor,
+                    ["ComposicaoId"] = composicao.Id,
                     ["Versao"] = composicao.Versao,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));
@@ -214,10 +218,9 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
 
             foreach (var itemEntrada in itensEntrada)
             {
-                var resultadoIdInsumo = Id.TentarCriar(itemEntrada.IdInsumo);
                 var resultadoQuantidade = Quantidade.TentarCriar(itemEntrada.QuantidadePorUnidade);
 
-                var validacao = Resultado.Combinar(resultadoIdInsumo, resultadoQuantidade);
+                var validacao = Resultado.Combinar(resultadoQuantidade);
 
                 if (validacao.EhFalha)
                 {
@@ -226,7 +229,7 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
                 }
 
                 var resultadoItem = ItemDeComposicao.TentarCriar(
-                    resultadoIdInsumo.Instancia,
+                    itemEntrada.IdInsumo,
                     resultadoQuantidade.Instancia);
 
                 if (resultadoItem.EhFalha)
@@ -245,7 +248,7 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
         }
 
         private async Task<Resultado<bool>> ValidarProdutoFabricadoAsync(
-            Id idProdutoFabricado,
+            Guid idProdutoFabricado,
             CancellationToken cancellationToken)
         {
             var resultado = await _unitOfWork.ProdutosRepository.ObterPorIdAsync(
@@ -273,13 +276,8 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
 
             foreach (var idInsumo in idsInsumos)
             {
-                var resultadoId = Id.TentarCriar(idInsumo);
-
-                if (resultadoId.EhFalha)
-                    return Resultado<bool>.Falha(resultadoId.Erros!);
-
                 var resultadoProduto = await _unitOfWork.ProdutosRepository.ObterPorIdAsync(
-                    resultadoId.Instancia, cancellationToken);
+                    idInsumo, cancellationToken);
 
                 if (resultadoProduto.EhFalha)
                     return Resultado<bool>.Falha(resultadoProduto.Erros!);
@@ -305,8 +303,8 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.UseCases
                 .ToList();
 
             return new DefinirComposicaoDeProdutoSaida(
-                Id: composicao.Id.Valor,
-                IdProdutoFabricado: composicao.IdProdutoFabricado.Valor,
+                Id: composicao.Id,
+                IdProdutoFabricado: composicao.IdProdutoFabricado,
                 Versao: composicao.Versao,
                 Ativa: composicao.Ativa,
                 Itens: itens);

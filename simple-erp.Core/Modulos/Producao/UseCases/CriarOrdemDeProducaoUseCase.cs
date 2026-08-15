@@ -1,10 +1,10 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
-using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Producao.Composicao.ObjetosDeValor;
 using simple_erp.Core.Modulos.Producao.Entidades;
 using simple_erp.Core.Modulos.Producao.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Core.Modulos.Producao.UseCases
 {
@@ -14,17 +14,17 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
     }
 
     public record CriarOrdemDeProducaoEntrada(
-        long IdProdutoFabricado,
+        Guid IdProdutoFabricado,
         decimal QuantidadeAProduzir) : IRequisicao<CriarOrdemDeProducaoSaida>;
 
     public record NecessidadeDeMateriaPrimaSaida(
-        long IdInsumo,
+        Guid IdInsumo,
         decimal QuantidadeNecessaria);
 
     public record CriarOrdemDeProducaoSaida(
-        long Id,
-        long IdProdutoFabricado,
-        long IdComposicao,
+        Guid Id,
+        Guid IdProdutoFabricado,
+        Guid IdComposicao,
         decimal QuantidadeAProduzir,
         string Status,
         IReadOnlyCollection<NecessidadeDeMateriaPrimaSaida> Necessidades);
@@ -60,12 +60,30 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
 
             #endregion
 
+            #region Validação do identificador
+
+            if (dados.IdProdutoFabricado == Guid.Empty)
+            {
+                stopwatchUseCase.Stop();
+
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["IdProdutoFabricado"] = dados.IdProdutoFabricado,
+                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                    }));
+
+                return Resultado<CriarOrdemDeProducaoSaida>.Falha("ID_INVALIDO");
+            }
+
+            #endregion
+
             #region Validação da entrada
 
-            var resultadoIdProduto = Id.TentarCriar(dados.IdProdutoFabricado);
             var resultadoQuantidade = Quantidade.TentarCriar(dados.QuantidadeAProduzir);
 
-            var validacao = Resultado.Combinar(resultadoIdProduto, resultadoQuantidade);
+            var validacao = Resultado.Combinar(resultadoQuantidade);
 
             if (validacao.EhFalha)
             {
@@ -85,7 +103,7 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
             #region Validação de pré-condições
 
             var resultadoFabricado = await ValidarProdutoFabricadoAsync(
-                resultadoIdProduto.Instancia, cancellationToken);
+                dados.IdProdutoFabricado, cancellationToken);
 
             if (resultadoFabricado.EhFalha)
             {
@@ -94,7 +112,7 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
             }
 
             var existeAtiva = await _unitOfWork.ComposicoesDeProdutoRepository
-                .ExisteAtivaPorProdutoAsync(resultadoIdProduto.Instancia, cancellationToken);
+                .ExisteAtivaPorProdutoAsync(dados.IdProdutoFabricado, cancellationToken);
 
             if (existeAtiva.EhFalha)
             {
@@ -116,7 +134,7 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
             }
 
             var resultadoComposicao = await _unitOfWork.ComposicoesDeProdutoRepository
-                .ObterAtivaPorProdutoAsync(resultadoIdProduto.Instancia, cancellationToken);
+                .ObterAtivaPorProdutoAsync(dados.IdProdutoFabricado, cancellationToken);
 
             if (resultadoComposicao.EhFalha)
             {
@@ -160,7 +178,7 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
                 #region Criação da ordem de produção
 
                 var resultadoOrdem = OrdemDeProducao.Criar(
-                    resultadoIdProduto.Instancia,
+                    dados.IdProdutoFabricado,
                     composicao.Id,
                     resultadoQuantidade.Instancia,
                     resultadoNecessidades.Instancia);
@@ -213,8 +231,8 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
                 Mensagem: "Ordem de produção criada com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["OrdemDeProducaoId"] = ordem.Id.Valor,
-                    ["IdComposicao"] = ordem.IdComposicao.Valor,
+                    ["OrdemDeProducaoId"] = ordem.Id,
+                    ["IdComposicao"] = ordem.IdComposicao,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));
 
@@ -224,7 +242,7 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
         }
 
         private async Task<Resultado<bool>> ValidarProdutoFabricadoAsync(
-            Id idProdutoFabricado,
+            Guid idProdutoFabricado,
             CancellationToken cancellationToken)
         {
             var resultado = await _unitOfWork.ProdutosRepository.ObterPorIdAsync(
@@ -252,10 +270,9 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
 
             foreach (var calculada in calculadas)
             {
-                var resultadoIdInsumo = Id.TentarCriar(calculada.IdInsumo);
                 var resultadoQuantidade = Quantidade.TentarCriar(calculada.QuantidadeTotal);
 
-                var validacao = Resultado.Combinar(resultadoIdInsumo, resultadoQuantidade);
+                var validacao = Resultado.Combinar(resultadoQuantidade);
 
                 if (validacao.EhFalha)
                 {
@@ -264,7 +281,7 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
                 }
 
                 var resultadoNecessidade = NecessidadeDeMateriaPrima.TentarCriar(
-                    resultadoIdInsumo.Instancia,
+                    calculada.IdInsumo,
                     resultadoQuantidade.Instancia);
 
                 if (resultadoNecessidade.EhFalha)
@@ -291,9 +308,9 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
                 .ToList();
 
             return new CriarOrdemDeProducaoSaida(
-                Id: ordem.Id.Valor,
-                IdProdutoFabricado: ordem.IdProdutoFabricado.Valor,
-                IdComposicao: ordem.IdComposicao.Valor,
+                Id: ordem.Id,
+                IdProdutoFabricado: ordem.IdProdutoFabricado,
+                IdComposicao: ordem.IdComposicao,
                 QuantidadeAProduzir: ordem.QuantidadeAProduzir,
                 Status: ordem.Status.ToString(),
                 Necessidades: necessidades);

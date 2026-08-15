@@ -57,7 +57,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Estoque
 
                 var itens = await consulta
                     .AsNoTracking()
-                    // Extrato: mais recentes primeiro; Id como desempate estável.
+                    // Extrato: mais recentes primeiro; Guid como desempate estável.
                     .OrderByDescending(m => m.DataMovimentacaoUtc)
                     .ThenByDescending(m => m.Id)
                     .Skip((pagina - 1) * tamanho)
@@ -85,7 +85,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Estoque
             // intervalo [DataInicio, DataFim]. Tipos explícitos garantem os casts com DBNull.
             const string sql = $"""
                 SELECT * FROM {TabelaComSchema}
-                WHERE (@id_produto::bigint IS NULL OR id_produto = @id_produto)
+                WHERE (@id_produto::uuid IS NULL OR id_produto = @id_produto)
                   AND (@tipo::int IS NULL OR tipo = @tipo)
                   AND (@origem_tipo::int IS NULL OR (origem->>'Tipo')::int = @origem_tipo)
                   AND (@data_inicio::timestamptz IS NULL OR data_movimentacao_utc >= @data_inicio)
@@ -94,7 +94,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Estoque
 
             return _contexto.Set<MovimentacaoDeEstoque>().FromSqlRaw(
                 sql,
-                CriarParametro("id_produto", NpgsqlDbType.Bigint, filtro?.IdProduto),
+                CriarParametro("id_produto", NpgsqlDbType.Uuid, filtro?.IdProduto),
                 CriarParametro("tipo", NpgsqlDbType.Integer, (int?)filtro?.Tipo),
                 CriarParametro("origem_tipo", NpgsqlDbType.Integer, (int?)filtro?.OrigemTipo),
                 CriarParametro("data_inicio", NpgsqlDbType.TimestampTz, NormalizarUtc(filtro?.DataInicio)),
@@ -102,7 +102,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Estoque
         }
 
         // Tipo explícito no parâmetro: com DBNull o Npgsql não infere o tipo e o cast
-        // "::bigint/::int/::timestamptz" do SQL falharia sem isto.
+        // "::uuid/::int/::timestamptz" do SQL falharia sem isto.
         private static NpgsqlParameter CriarParametro(string nome, NpgsqlDbType tipo, object? valor) =>
             new(nome, tipo) { Value = valor ?? DBNull.Value };
 

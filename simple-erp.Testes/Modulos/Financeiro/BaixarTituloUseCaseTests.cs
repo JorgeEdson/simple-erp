@@ -1,18 +1,19 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Financeiro.Entidades;
 using simple_erp.Core.Modulos.Financeiro.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.Financeiro.UseCases;
 using simple_erp.Testes.Compartilhado.Builders;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.Financeiro
 {
     public sealed class BaixarTituloUseCaseTests
     {
-        private const long IdTitulo = 202604020600;
+        private static readonly Guid IdTitulo = new Guid("00000000-0000-0000-0000-202604020600");
 
         private readonly IUnitOfWork _unitOfWork;
         private readonly ITituloRepository _titulosRepository;
@@ -31,7 +32,7 @@ namespace simple_erp.Testes.Modulos.Financeiro
         }
 
         private void RetornarTitulo(Titulo titulo) =>
-            _titulosRepository.ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+            _titulosRepository.ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Titulo?>.Sucesso(titulo));
 
         [Fact]

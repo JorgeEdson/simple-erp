@@ -51,7 +51,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
                 .Criar();
 
             var cliente = ClienteBuilder.Novo()
-                .ComId(202607210001)
+                .ComId(new Guid("00000000-0000-0000-0000-202607210001"))
                 .ComNome("Maria da Silva")
                 .ComDocumento(CpfA)
                 .ComEmail("maria@teste.com")
@@ -64,12 +64,12 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
             await using var contexto = _fixture.CriarContexto();
             var repositorio = new ClienteRepository(contexto);
 
-            var resultado = await repositorio.ObterPorIdAsync(Id.TentarCriar(202607210001).Instancia);
+            var resultado = await repositorio.ObterPorIdAsync(new Guid("00000000-0000-0000-0000-202607210001"));
 
             resultado.EhSucesso.Should().BeTrue();
             var recuperado = resultado.Instancia;
             recuperado.Should().NotBeNull();
-            recuperado!.Id.Valor.Should().Be(202607210001);
+            recuperado!.Id.Should().Be(new Guid("00000000-0000-0000-0000-202607210001"));
             recuperado.Nome.Valor.Should().Be("Maria da Silva");
             recuperado.Documento.Valor.Should().Be(CpfA);
             recuperado.Documento.EhCpf.Should().BeTrue("o Documento deve se re-hidratar como CPF a partir dos dígitos");
@@ -85,7 +85,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
             await using var contexto = _fixture.CriarContexto();
             var repositorio = new ClienteRepository(contexto);
 
-            var resultado = await repositorio.ObterPorIdAsync(Id.TentarCriar(999999999999).Instancia);
+            var resultado = await repositorio.ObterPorIdAsync(new Guid("00000000-0000-0000-0000-999999999999"));
 
             // Contrato do repositório: não encontrar não é falha de infraestrutura.
             resultado.EhSucesso.Should().BeTrue();
@@ -95,7 +95,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
         [Fact]
         public async Task ObterPorDocumentoAsync_DeveEncontrarPeloValorCanonico()
         {
-            await SalvarAsync(ClienteBuilder.Novo().ComId(202607210010).ComDocumento(CpfB).Criar());
+            await SalvarAsync(ClienteBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210010")).ComDocumento(CpfB).Criar());
 
             await using var contexto = _fixture.CriarContexto();
             var repositorio = new ClienteRepository(contexto);
@@ -105,7 +105,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
 
             resultado.EhSucesso.Should().BeTrue();
             resultado.Instancia.Should().NotBeNull();
-            resultado.Instancia!.Id.Valor.Should().Be(202607210010);
+            resultado.Instancia!.Id.Should().Be(new Guid("00000000-0000-0000-0000-202607210010"));
 
             (await repositorio.ExisteAsync(new ParceiroComDocumentoSpecification<Cliente>(documento)))
                 .Instancia.Should().BeTrue();
@@ -118,8 +118,8 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
         public async Task ExisteOutroPorDocumentoAsync_DeveIgnorarOProprioCliente()
         {
             await SalvarAsync(
-                ClienteBuilder.Novo().ComId(202607210020).ComDocumento(CpfA).Criar(),
-                ClienteBuilder.Novo().ComId(202607210021).ComDocumento(CpfB).Criar());
+                ClienteBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210020")).ComDocumento(CpfA).Criar(),
+                ClienteBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210021")).ComDocumento(CpfB).Criar());
 
             await using var contexto = _fixture.CriarContexto();
             var repositorio = new ClienteRepository(contexto);
@@ -129,26 +129,26 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
             // expressa pela composição ComDocumento.And(DiferenteDe).
             (await repositorio.ExisteAsync(
                 new ParceiroComDocumentoSpecification<Cliente>(documento)
-                    .And(new ParceiroDiferenteDeSpecification<Cliente>(Id.TentarCriar(202607210020).Instancia))))
+                    .And(new ParceiroDiferenteDeSpecification<Cliente>(new Guid("00000000-0000-0000-0000-202607210020")))))
                 .Instancia.Should().BeFalse();
 
             (await repositorio.ExisteAsync(
                 new ParceiroComDocumentoSpecification<Cliente>(documento)
-                    .And(new ParceiroDiferenteDeSpecification<Cliente>(Id.TentarCriar(202607210021).Instancia))))
+                    .And(new ParceiroDiferenteDeSpecification<Cliente>(new Guid("00000000-0000-0000-0000-202607210021")))))
                 .Instancia.Should().BeTrue();
         }
 
         [Fact]
         public async Task AtualizarAsync_DevePersistirAlteracoesDaEntidadeRastreada()
         {
-            await SalvarAsync(ClienteBuilder.Novo().ComId(202607210030).ComDocumento(CpfA).Criar());
+            await SalvarAsync(ClienteBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210030")).ComDocumento(CpfA).Criar());
 
             // Fluxo real de edição: obter (rastreado) → alterar → Atualizar → SaveChanges.
             await using (var contexto = _fixture.CriarContexto())
             {
                 var repositorio = new ClienteRepository(contexto);
                 var cliente = (await repositorio.ObterPorIdAsync(
-                    Id.TentarCriar(202607210030).Instancia)).Instancia!;
+                    new Guid("00000000-0000-0000-0000-202607210030"))).Instancia!;
 
                 cliente.AlterarNome(Nome.TentarCriar("Nome Editado").Instancia);
                 (await repositorio.AtualizarAsync(cliente)).EhSucesso.Should().BeTrue();
@@ -159,7 +159,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
             await using var contextoLeitura = _fixture.CriarContexto();
             var repositorioLeitura = new ClienteRepository(contextoLeitura);
             var recuperado = (await repositorioLeitura.ObterPorIdAsync(
-                Id.TentarCriar(202607210030).Instancia)).Instancia!;
+                new Guid("00000000-0000-0000-0000-202607210030"))).Instancia!;
 
             recuperado.Nome.Valor.Should().Be("Nome Editado");
         }
@@ -168,14 +168,14 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
         public async Task ListarPaginadoAsync_DeveFiltrarNoBanco_InclusiveDentroDoJsonb()
         {
             await SalvarAsync(
-                ClienteBuilder.Novo().ComId(202607210040).ComNome("Maria Silva").ComDocumento(CpfA)
+                ClienteBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210040")).ComNome("Maria Silva").ComDocumento(CpfA)
                     .ComEndereco(EnderecoBuilder.Novo().ComCidade("São Paulo").ComEstado("SP").Criar())
                     .Criar(),
-                ClienteBuilder.Novo().ComId(202607210041).ComNome("Maria Souza").ComDocumento(CpfB)
+                ClienteBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210041")).ComNome("Maria Souza").ComDocumento(CpfB)
                     .ComEndereco(EnderecoBuilder.Novo().ComCidade("Rio de Janeiro").ComEstado("RJ").Criar())
                     .Inativo()
                     .Criar(),
-                ClienteBuilder.Novo().ComId(202607210042).ComNome("João Lima").ComDocumento(CpfC)
+                ClienteBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210042")).ComNome("João Lima").ComDocumento(CpfC)
                     .ComEndereco(EnderecoBuilder.Novo().ComCidade("São Paulo").ComEstado("SP").Criar())
                     .Criar());
 
@@ -210,9 +210,9 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
         public async Task ListarPaginadoAsync_DevePaginarOrdenandoPorNome()
         {
             await SalvarAsync(
-                ClienteBuilder.Novo().ComId(202607210050).ComNome("Carlos").ComDocumento(CpfA).Criar(),
-                ClienteBuilder.Novo().ComId(202607210051).ComNome("Ana").ComDocumento(CpfB).Criar(),
-                ClienteBuilder.Novo().ComId(202607210052).ComNome("Bruno").ComDocumento(CpfC).Criar());
+                ClienteBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210050")).ComNome("Carlos").ComDocumento(CpfA).Criar(),
+                ClienteBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210051")).ComNome("Ana").ComDocumento(CpfB).Criar(),
+                ClienteBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210052")).ComNome("Bruno").ComDocumento(CpfC).Criar());
 
             await using var contexto = _fixture.CriarContexto();
             var repositorio = new ClienteRepository(contexto);

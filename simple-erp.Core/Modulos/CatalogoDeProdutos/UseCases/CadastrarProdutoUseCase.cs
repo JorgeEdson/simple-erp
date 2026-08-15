@@ -1,8 +1,9 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Entidades;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 {
@@ -19,7 +20,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
     ) : IRequisicao<CadastrarProdutoSaida>;
 
     public record CadastrarProdutoSaida(
-        long Id,
+        Guid Id,
         string Codigo,
         string Descricao,
         string UnidadeDeMedida,
@@ -242,7 +243,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                     Mensagem: "Falha ao persistir cadastro de produto.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ProdutoId"] = produto.Id.Valor,
+                        ["ProdutoId"] = produto.Id,
                         ["Codigo"] = produto.Codigo.Valor,
                         ["Erros"] = resultadoSaveChanges.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -261,7 +262,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                 Mensagem: "Produto cadastrado com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["ProdutoId"] = produto.Id.Valor,
+                    ["ProdutoId"] = produto.Id,
                     ["Ativo"] = produto.Ativo,
                     ["Classificacao"] = produto.Classificacao.ToString(),
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -269,7 +270,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 
             return Resultado<CadastrarProdutoSaida>.Sucesso(
                 new CadastrarProdutoSaida(
-                    Id: produto.Id.Valor,
+                    Id: produto.Id,
                     Codigo: produto.Codigo.Valor,
                     Descricao: produto.Descricao.Valor,
                     UnidadeDeMedida: produto.UnidadeDeMedida.Valor,

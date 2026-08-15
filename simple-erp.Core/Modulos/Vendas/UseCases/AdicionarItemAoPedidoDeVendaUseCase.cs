@@ -1,9 +1,8 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
-using simple_erp.Core.Compartilhado.ObjetosDeValor;
-using simple_erp.Core.Modulos.Vendas.Entidades;
 using simple_erp.Core.Modulos.Vendas.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Core.Modulos.Vendas.UseCases
 {
@@ -13,14 +12,14 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
     }
 
     public record AdicionarItemAoPedidoDeVendaEntrada(
-        long IdPedidoDeVenda,
-        long IdProduto,
+        Guid IdPedidoDeVenda,
+        Guid IdProduto,
         decimal Quantidade,
         decimal PrecoUnitario,
         decimal Desconto = 0m) : IRequisicao<AdicionarItemAoPedidoDeVendaSaida>;
 
     public record AdicionarItemAoPedidoDeVendaSaida(
-        long Id,
+        Guid Id,
         string Status,
         decimal ValorTotal,
         int QuantidadeItens);
@@ -56,18 +55,34 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
 
             #endregion
 
+            #region Validação do identificador
+
+            if (dados.IdPedidoDeVenda == Guid.Empty
+                || dados.IdProduto == Guid.Empty)
+            {
+                stopwatchUseCase.Stop();
+
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["IdPedidoDeVenda"] = dados.IdPedidoDeVenda,
+                        ["IdProduto"] = dados.IdProduto,
+                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                    }));
+
+                return Resultado<AdicionarItemAoPedidoDeVendaSaida>.Falha("ID_INVALIDO");
+            }
+
+            #endregion
+
             #region Validação da entrada
 
-            var resultadoId = Id.TentarCriar(dados.IdPedidoDeVenda);
-            var resultadoIdProduto = Id.TentarCriar(dados.IdProduto);
             var resultadoQuantidade = Quantidade.TentarCriar(dados.Quantidade);
             var resultadoPreco = Dinheiro.TentarCriar(dados.PrecoUnitario);
             var resultadoDesconto = Dinheiro.TentarCriar(dados.Desconto);
 
-            var validacao = Resultado.Combinar(
-                resultadoId,
-                resultadoIdProduto,
-                resultadoQuantidade,
+            var validacao = Resultado.Combinar(resultadoQuantidade,
                 resultadoPreco,
                 resultadoDesconto);
 
@@ -89,7 +104,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
             #region Recuperação do agregado
 
             var resultadoPedido = await _unitOfWork.PedidosDeVendaRepository
-                .ObterPorIdAsync(resultadoId.Instancia, cancellationToken);
+                .ObterPorIdAsync(dados.IdPedidoDeVenda, cancellationToken);
 
             if (resultadoPedido.EhFalha)
             {
@@ -110,7 +125,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
             #region Validação de pré-condições
 
             var produtoExiste = await _unitOfWork.ProdutosRepository.ExistePorIdAsync(
-                resultadoIdProduto.Instancia, cancellationToken);
+                dados.IdProduto, cancellationToken);
 
             if (produtoExiste.EhFalha)
             {
@@ -131,7 +146,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
                 #region Adição do item ao pedido
 
                 var resultadoItem = ItemDePedidoDeVenda.TentarCriar(
-                    resultadoIdProduto.Instancia,
+                    dados.IdProduto,
                     resultadoQuantidade.Instancia,
                     resultadoPreco.Instancia,
                     resultadoDesconto.Instancia);
@@ -151,7 +166,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
                         Mensagem: "Falha ao adicionar item ao agregado PedidoDeVenda.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["PedidoDeVendaId"] = pedido.Id.Valor,
+                            ["PedidoDeVendaId"] = pedido.Id,
                             ["Erros"] = resultadoAdicao.Erros?.ToArray(),
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                         }));
@@ -191,7 +206,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
                 Mensagem: "Item adicionado ao pedido de venda com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["PedidoDeVendaId"] = pedido.Id.Valor,
+                    ["PedidoDeVendaId"] = pedido.Id,
                     ["ValorTotal"] = pedido.ValorTotal.Valor,
                     ["QuantidadeItens"] = pedido.Itens.Count,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -199,7 +214,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
 
             return Resultado<AdicionarItemAoPedidoDeVendaSaida>.Sucesso(
                 new AdicionarItemAoPedidoDeVendaSaida(
-                    Id: pedido.Id.Valor,
+                    Id: pedido.Id,
                     Status: pedido.Status.ToString(),
                     ValorTotal: pedido.ValorTotal.Valor,
                     QuantidadeItens: pedido.Itens.Count));

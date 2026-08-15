@@ -1,10 +1,10 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
-using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Estoque.Servicos;
 using simple_erp.Core.Modulos.Producao.Entidades;
 using System.Diagnostics;
 using System.Linq;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Core.Modulos.Producao.UseCases
 {
@@ -13,10 +13,10 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
     {
     }
 
-    public record ConfirmarOrdemDeProducaoEntrada(long Id) : IRequisicao<ConfirmarOrdemDeProducaoSaida>;
+    public record ConfirmarOrdemDeProducaoEntrada(Guid Id) : IRequisicao<ConfirmarOrdemDeProducaoSaida>;
 
     public record ConfirmarOrdemDeProducaoSaida(
-        long Id,
+        Guid Id,
         string Status);
 
     public sealed class ConfirmarOrdemDeProducaoUseCase : IConfirmarOrdemDeProducaoUseCase
@@ -52,14 +52,21 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoId = Id.TentarCriar(dados.Id);
-
-            if (resultadoId.EhFalha)
+            if (dados.Id == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
-                return Resultado<ConfirmarOrdemDeProducaoSaida>.Falha(resultadoId.Erros!);
+
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["Id"] = dados.Id,
+                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                    }));
+
+                return Resultado<ConfirmarOrdemDeProducaoSaida>.Falha("ID_INVALIDO");
             }
 
             #endregion
@@ -67,7 +74,7 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
             #region Recuperação do agregado
 
             var resultadoOrdem = await _unitOfWork.OrdensDeProducaoRepository
-                .ObterPorIdAsync(resultadoId.Instancia, cancellationToken);
+                .ObterPorIdAsync(dados.Id, cancellationToken);
 
             if (resultadoOrdem.EhFalha)
             {
@@ -103,7 +110,7 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
                     Mensagem: "Confirmação bloqueada por indisponibilidade de estoque.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["OrdemDeProducaoId"] = ordem.Id.Valor,
+                        ["OrdemDeProducaoId"] = ordem.Id,
                         ["Erros"] = resultadoDisponibilidade.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -164,14 +171,14 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
                 Mensagem: "Ordem de produção confirmada com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["OrdemDeProducaoId"] = ordem.Id.Valor,
+                    ["OrdemDeProducaoId"] = ordem.Id,
                     ["Status"] = ordem.Status.ToString(),
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));
 
             return Resultado<ConfirmarOrdemDeProducaoSaida>.Sucesso(
                 new ConfirmarOrdemDeProducaoSaida(
-                    Id: ordem.Id.Valor,
+                    Id: ordem.Id,
                     Status: ordem.Status.ToString()));
 
             #endregion

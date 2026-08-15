@@ -8,7 +8,7 @@ namespace simple_erp.Testes.Compartilhado.Builders
 {
     public sealed class ProdutoBuilder
     {
-        private long? _id = 202604020001;
+        private Guid? _id = new Guid("00000000-0000-0000-0000-202604020001");
         private string _codigo = "PROD-001";
         private string _descricao = "Produto Teste";
         private string _unidadeDeMedida = "UN";
@@ -17,7 +17,7 @@ namespace simple_erp.Testes.Compartilhado.Builders
 
         public static ProdutoBuilder Novo() => new();
 
-        public ProdutoBuilder ComId(long id)
+        public ProdutoBuilder ComId(Guid id)
         {
             _id = id;
             return this;

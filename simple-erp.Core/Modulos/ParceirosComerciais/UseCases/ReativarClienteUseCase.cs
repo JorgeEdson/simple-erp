@@ -1,7 +1,8 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 {
@@ -9,10 +10,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
     {
     }
 
-    public sealed record ReativarClienteEntrada(long Id) : IRequisicao<ReativarClienteSaida>;
+    public sealed record ReativarClienteEntrada(Guid Id) : IRequisicao<ReativarClienteSaida>;
 
     public sealed record ReativarClienteSaida(
-       long Id,
+       Guid Id,
        bool Ativo);
 
     public sealed class ReativarClienteUseCase : IReativarClienteUseCase
@@ -45,24 +46,21 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoId = Id.TentarCriar(dados.Id);
-
-            if (resultadoId.EhFalha)
+            if (dados.Id == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
 
                 _logService.RegistrarLogWarning(new RegistroDeLog(
-                    Mensagem: "Falha na validação do identificador para reativação de cliente.",
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ClienteId"] = dados.Id,
-                        ["Erros"] = resultadoId.Erros?.ToArray(),
+                        ["Id"] = dados.Id,
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
 
-                return Resultado<ReativarClienteSaida>.Falha(resultadoId.Erros!);
+                return Resultado<ReativarClienteSaida>.Falha("ID_INVALIDO");
             }
 
             #endregion
@@ -72,7 +70,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
             var stopwatchObterCliente = Stopwatch.StartNew();
 
             var resultadoCliente = await _unitOfWork.ClientesRepository.ObterPorIdAsync(
-                resultadoId.Instancia,
+                dados.Id,
                 cancellationToken);
 
             stopwatchObterCliente.Stop();
@@ -93,7 +91,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Mensagem: "Falha ao obter cliente por id para reativação.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ClienteId"] = resultadoId.Instancia.Valor,
+                        ["ClienteId"] = dados.Id,
                         ["Erros"] = resultadoCliente.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -111,7 +109,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Mensagem: "Tentativa de reativação de cliente não encontrado.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ClienteId"] = resultadoId.Instancia.Valor,
+                        ["ClienteId"] = dados.Id,
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
 
@@ -146,7 +144,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                         Mensagem: "Falha ao reativar agregado Cliente.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["ClienteId"] = cliente.Id.Valor,
+                            ["ClienteId"] = cliente.Id,
                             ["Erros"] = resultadoAtivacao.Erros?.ToArray(),
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                         }));
@@ -184,7 +182,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Mensagem: "Falha ao atualizar cliente no repositório durante reativação.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ClienteId"] = cliente.Id.Valor,
+                        ["ClienteId"] = cliente.Id,
                         ["Erros"] = resultadoAtualizar.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -214,7 +212,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Mensagem: "Falha ao persistir reativação de cliente.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ClienteId"] = cliente.Id.Valor,
+                        ["ClienteId"] = cliente.Id,
                         ["Erros"] = resultadoSave.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -232,14 +230,14 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 Mensagem: "Cliente reativado com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["ClienteId"] = cliente.Id.Valor,
+                    ["ClienteId"] = cliente.Id,
                     ["Ativo"] = cliente.Ativo,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));
 
             return Resultado<ReativarClienteSaida>.Sucesso(
                 new ReativarClienteSaida(
-                    Id: cliente.Id.Valor,
+                    Id: cliente.Id,
                     Ativo: cliente.Ativo));
 
             #endregion

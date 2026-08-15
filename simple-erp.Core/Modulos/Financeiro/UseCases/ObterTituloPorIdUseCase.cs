@@ -1,7 +1,7 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
-using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Core.Modulos.Financeiro.UseCases
 {
@@ -10,18 +10,18 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
     {
     }
 
-    public record ObterTituloPorIdEntrada(long Id) : IRequisicao<ObterTituloPorIdSaida>;
+    public record ObterTituloPorIdEntrada(Guid Id) : IRequisicao<ObterTituloPorIdSaida>;
 
     public record BaixaDoTituloSaida(
         decimal Montante,
         DateTime DataUtc);
 
     public record ObterTituloPorIdSaida(
-        long Id,
+        Guid Id,
         string Tipo,
-        long IdParceiro,
+        Guid IdParceiro,
         string OrigemTipo,
-        long? OrigemIdReferencia,
+        Guid? OrigemIdReferencia,
         decimal ValorOriginal,
         decimal ValorBaixado,
         decimal SaldoDevedor,
@@ -59,14 +59,21 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoId = Id.TentarCriar(dados.Id);
-
-            if (resultadoId.EhFalha)
+            if (dados.Id == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
-                return Resultado<ObterTituloPorIdSaida>.Falha(resultadoId.Erros!);
+
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["Id"] = dados.Id,
+                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                    }));
+
+                return Resultado<ObterTituloPorIdSaida>.Falha("ID_INVALIDO");
             }
 
             #endregion
@@ -74,7 +81,7 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
             #region Recuperação do agregado
 
             var resultadoTitulo = await _unitOfWork.TitulosRepository
-                .ObterPorIdAsync(resultadoId.Instancia, cancellationToken);
+                .ObterPorIdAsync(dados.Id, cancellationToken);
 
             if (resultadoTitulo.EhFalha)
             {
@@ -115,16 +122,16 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
                 Mensagem: "Consulta de título por id concluída com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["TituloId"] = titulo.Id.Valor,
+                    ["TituloId"] = titulo.Id,
                     ["Status"] = titulo.Status.ToString(),
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));
 
             return Resultado<ObterTituloPorIdSaida>.Sucesso(
                 new ObterTituloPorIdSaida(
-                    Id: titulo.Id.Valor,
+                    Id: titulo.Id,
                     Tipo: titulo.Tipo.ToString(),
-                    IdParceiro: titulo.IdParceiro.Valor,
+                    IdParceiro: titulo.IdParceiro,
                     OrigemTipo: titulo.Origem.Tipo.ToString(),
                     OrigemIdReferencia: titulo.Origem.IdReferencia,
                     ValorOriginal: titulo.ValorOriginal,

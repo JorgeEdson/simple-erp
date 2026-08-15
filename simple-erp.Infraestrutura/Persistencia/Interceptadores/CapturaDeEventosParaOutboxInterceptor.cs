@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Dominio;
 using simple_erp.Infraestrutura.Persistencia.Outbox;
 
 namespace simple_erp.Infraestrutura.Persistencia.Interceptadores

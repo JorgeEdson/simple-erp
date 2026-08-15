@@ -1,10 +1,9 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace simple_erp.Core.Compartilhado.Eventos
+namespace simple_erp.Core.Compartilhado.Contratos.EventosDeDominio
 {
 
     public sealed class ResolvedorDeManipuladoresEmMemoria : IResolvedorDeManipuladores

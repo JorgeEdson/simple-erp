@@ -1,6 +1,5 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -41,7 +40,7 @@ namespace simple_erp.Infraestrutura.Migrations
                 schema: "parceiros",
                 columns: table => new
                 {
-                    id = table.Column<long>(type: "bigint", nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
                     data_criacao_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     data_atualizacao_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     nome = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
@@ -60,8 +59,8 @@ namespace simple_erp.Infraestrutura.Migrations
                 schema: "producao",
                 columns: table => new
                 {
-                    id = table.Column<long>(type: "bigint", nullable: false),
-                    id_produto_fabricado = table.Column<long>(type: "bigint", nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id_produto_fabricado = table.Column<Guid>(type: "uuid", nullable: false),
                     versao = table.Column<int>(type: "integer", nullable: false),
                     ativa = table.Column<bool>(type: "boolean", nullable: false),
                     itens = table.Column<string>(type: "jsonb", nullable: false),
@@ -78,7 +77,7 @@ namespace simple_erp.Infraestrutura.Migrations
                 schema: "parceiros",
                 columns: table => new
                 {
-                    id = table.Column<long>(type: "bigint", nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
                     data_criacao_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     data_atualizacao_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     nome = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
@@ -97,8 +96,8 @@ namespace simple_erp.Infraestrutura.Migrations
                 schema: "estoque",
                 columns: table => new
                 {
-                    id = table.Column<long>(type: "bigint", nullable: false),
-                    id_produto = table.Column<long>(type: "bigint", nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id_produto = table.Column<Guid>(type: "uuid", nullable: false),
                     tipo = table.Column<int>(type: "integer", nullable: false),
                     sentido = table.Column<int>(type: "integer", nullable: false),
                     quantidade = table.Column<decimal>(type: "numeric(18,4)", nullable: false),
@@ -118,9 +117,9 @@ namespace simple_erp.Infraestrutura.Migrations
                 schema: "producao",
                 columns: table => new
                 {
-                    id = table.Column<long>(type: "bigint", nullable: false),
-                    id_produto_fabricado = table.Column<long>(type: "bigint", nullable: false),
-                    id_composicao = table.Column<long>(type: "bigint", nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id_produto_fabricado = table.Column<Guid>(type: "uuid", nullable: false),
+                    id_composicao = table.Column<Guid>(type: "uuid", nullable: false),
                     quantidade_a_produzir = table.Column<decimal>(type: "numeric(18,4)", nullable: false),
                     status = table.Column<int>(type: "integer", nullable: false),
                     necessidades = table.Column<string>(type: "jsonb", nullable: false),
@@ -137,12 +136,11 @@ namespace simple_erp.Infraestrutura.Migrations
                 schema: "eventos",
                 columns: table => new
                 {
-                    id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    id_evento = table.Column<long>(type: "bigint", nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id_evento = table.Column<Guid>(type: "uuid", nullable: false),
                     nome_do_evento = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     tipo_do_evento = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    id_agregado_origem = table.Column<long>(type: "bigint", nullable: false),
+                    id_agregado_origem = table.Column<Guid>(type: "uuid", nullable: false),
                     conteudo = table.Column<string>(type: "jsonb", nullable: false),
                     ocorrido_em_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     criado_em_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -160,8 +158,8 @@ namespace simple_erp.Infraestrutura.Migrations
                 schema: "suprimentos",
                 columns: table => new
                 {
-                    id = table.Column<long>(type: "bigint", nullable: false),
-                    id_fornecedor = table.Column<long>(type: "bigint", nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id_fornecedor = table.Column<Guid>(type: "uuid", nullable: false),
                     status = table.Column<int>(type: "integer", nullable: false),
                     itens = table.Column<string>(type: "jsonb", nullable: false),
                     data_criacao_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -177,9 +175,9 @@ namespace simple_erp.Infraestrutura.Migrations
                 schema: "vendas",
                 columns: table => new
                 {
-                    id = table.Column<long>(type: "bigint", nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
                     numero = table.Column<int>(type: "integer", nullable: false),
-                    id_cliente = table.Column<long>(type: "bigint", nullable: false),
+                    id_cliente = table.Column<Guid>(type: "uuid", nullable: false),
                     status = table.Column<int>(type: "integer", nullable: false),
                     desconto_do_pedido = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
                     motivo_cancelamento = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
@@ -197,7 +195,7 @@ namespace simple_erp.Infraestrutura.Migrations
                 schema: "catalogo",
                 columns: table => new
                 {
-                    id = table.Column<long>(type: "bigint", nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
                     codigo = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     descricao = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     unidade_de_medida = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
@@ -216,8 +214,8 @@ namespace simple_erp.Infraestrutura.Migrations
                 schema: "estoque",
                 columns: table => new
                 {
-                    id = table.Column<long>(type: "bigint", nullable: false),
-                    id_produto = table.Column<long>(type: "bigint", nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id_produto = table.Column<Guid>(type: "uuid", nullable: false),
                     quantidade_atual = table.Column<decimal>(type: "numeric(18,4)", nullable: false),
                     data_criacao_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     data_atualizacao_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
@@ -232,9 +230,9 @@ namespace simple_erp.Infraestrutura.Migrations
                 schema: "financeiro",
                 columns: table => new
                 {
-                    id = table.Column<long>(type: "bigint", nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
                     tipo = table.Column<int>(type: "integer", nullable: false),
-                    id_parceiro = table.Column<long>(type: "bigint", nullable: false),
+                    id_parceiro = table.Column<Guid>(type: "uuid", nullable: false),
                     origem = table.Column<string>(type: "jsonb", nullable: false),
                     valor_original = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
                     data_vencimento_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),

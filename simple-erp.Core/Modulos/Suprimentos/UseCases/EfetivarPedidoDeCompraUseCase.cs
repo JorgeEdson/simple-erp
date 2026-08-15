@@ -1,7 +1,8 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Core.Modulos.Suprimentos.UseCases
 {
@@ -10,10 +11,10 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
     {
     }
 
-    public record EfetivarPedidoDeCompraEntrada(long Id) : IRequisicao<EfetivarPedidoDeCompraSaida>;
+    public record EfetivarPedidoDeCompraEntrada(Guid Id) : IRequisicao<EfetivarPedidoDeCompraSaida>;
 
     public record EfetivarPedidoDeCompraSaida(
-        long Id,
+        Guid Id,
         string Status,
         decimal ValorTotal,
         int QuantidadeItens);
@@ -48,24 +49,21 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoId = Id.TentarCriar(dados.Id);
-
-            if (resultadoId.EhFalha)
+            if (dados.Id == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
 
                 _logService.RegistrarLogWarning(new RegistroDeLog(
-                    Mensagem: "Falha na validação do identificador para efetivação de pedido de compra.",
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["PedidoDeCompraId"] = dados.Id,
-                        ["Erros"] = resultadoId.Erros?.ToArray(),
+                        ["Id"] = dados.Id,
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
 
-                return Resultado<EfetivarPedidoDeCompraSaida>.Falha(resultadoId.Erros!);
+                return Resultado<EfetivarPedidoDeCompraSaida>.Falha("ID_INVALIDO");
             }
 
             #endregion
@@ -75,7 +73,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
             var stopwatchObter = Stopwatch.StartNew();
 
             var resultadoPedido = await _unitOfWork.PedidosDeCompraRepository.ObterPorIdAsync(
-                resultadoId.Instancia,
+                dados.Id,
                 cancellationToken);
 
             stopwatchObter.Stop();
@@ -136,7 +134,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
                         Mensagem: "Falha ao efetivar agregado PedidoDeCompra.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["PedidoDeCompraId"] = pedido.Id.Valor,
+                            ["PedidoDeCompraId"] = pedido.Id,
                             ["Status"] = pedido.Status.ToString(),
                             ["Erros"] = resultadoEfetivacao.Erros?.ToArray(),
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -175,7 +173,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
                     Mensagem: "Falha ao atualizar pedido de compra no repositório durante efetivação.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["PedidoDeCompraId"] = pedido.Id.Valor,
+                        ["PedidoDeCompraId"] = pedido.Id,
                         ["Erros"] = resultadoAtualizar.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -205,7 +203,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
                     Mensagem: "Falha ao persistir efetivação de pedido de compra.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["PedidoDeCompraId"] = pedido.Id.Valor,
+                        ["PedidoDeCompraId"] = pedido.Id,
                         ["Erros"] = resultadoSave.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -232,7 +230,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
                 Mensagem: "Pedido de compra efetivado com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["PedidoDeCompraId"] = pedido.Id.Valor,
+                    ["PedidoDeCompraId"] = pedido.Id,
                     ["Status"] = pedido.Status.ToString(),
                     ["ValorTotal"] = pedido.ValorTotal.Valor,
                     ["QuantidadeItens"] = pedido.Itens.Count,
@@ -241,7 +239,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
 
             return Resultado<EfetivarPedidoDeCompraSaida>.Sucesso(
                 new EfetivarPedidoDeCompraSaida(
-                    Id: pedido.Id.Valor,
+                    Id: pedido.Id,
                     Status: pedido.Status.ToString(),
                     ValorTotal: pedido.ValorTotal.Valor,
                     QuantidadeItens: pedido.Itens.Count));

@@ -7,7 +7,7 @@ namespace simple_erp.Core.Modulos.Financeiro.Eventos
     public sealed class TituloBaixado : EventoDeDominio
     {
         public TituloBaixado(
-            Id idTitulo,
+            Guid idTitulo,
             decimal valorBaixa,
             decimal valorBaixadoAcumulado,
             decimal saldoDevedor)
@@ -19,7 +19,7 @@ namespace simple_erp.Core.Modulos.Financeiro.Eventos
             SaldoDevedor = saldoDevedor;
         }
 
-        public Id IdTitulo { get; }
+        public Guid IdTitulo { get; }
         public decimal ValorBaixa { get; }
         public decimal ValorBaixadoAcumulado { get; }
         public decimal SaldoDevedor { get; }

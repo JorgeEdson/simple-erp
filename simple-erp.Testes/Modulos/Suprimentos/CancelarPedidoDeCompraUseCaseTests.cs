@@ -1,12 +1,13 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Suprimentos.Entidades;
 using simple_erp.Core.Modulos.Suprimentos.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.Suprimentos.UseCases;
 using simple_erp.Testes.Compartilhado.Builders;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.Suprimentos
 {
@@ -34,10 +35,10 @@ namespace simple_erp.Testes.Modulos.Suprimentos
             var pedido = PedidoDeCompraBuilder.Novo().Concluido().Criar();
 
             _pedidosRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<PedidoDeCompra?>.Sucesso(pedido));
 
-            var resultado = await _useCase.ExecutarAsync(new CancelarPedidoDeCompraEntrada(pedido.Id.Valor));
+            var resultado = await _useCase.ExecutarAsync(new CancelarPedidoDeCompraEntrada(pedido.Id));
 
             resultado.EhFalha.Should().BeTrue();
             resultado.Erros.Should().Contain("PEDIDO_DE_COMPRA_CONCLUIDO_NAO_PODE_SER_CANCELADO");
@@ -53,7 +54,7 @@ namespace simple_erp.Testes.Modulos.Suprimentos
             var pedido = PedidoDeCompraBuilder.Novo().Criar();
 
             _pedidosRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<PedidoDeCompra?>.Sucesso(pedido));
 
             _pedidosRepository
@@ -64,7 +65,7 @@ namespace simple_erp.Testes.Modulos.Suprimentos
                 .SaveChangesAsync(Arg.Any<CancellationToken>())
                 .Returns(Resultado<int>.Sucesso(1));
 
-            var resultado = await _useCase.ExecutarAsync(new CancelarPedidoDeCompraEntrada(pedido.Id.Valor));
+            var resultado = await _useCase.ExecutarAsync(new CancelarPedidoDeCompraEntrada(pedido.Id));
 
             resultado.EhSucesso.Should().BeTrue();
             resultado.Instancia.Status.Should().Be("Cancelada");

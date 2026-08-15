@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Infraestrutura.Persistencia.Contexto;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.EventosDeDominio;
 
 namespace simple_erp.Infraestrutura.Persistencia.Outbox
 {
@@ -78,7 +80,7 @@ namespace simple_erp.Infraestrutura.Persistencia.Outbox
         /// escopo, e trazer as entidades aqui só as deixaria presas a um contexto que
         /// será descartado.
         /// </summary>
-        private async Task<Resultado<IReadOnlyList<long>>> ObterPendentesAsync(
+        private async Task<Resultado<IReadOnlyList<Guid>>> ObterPendentesAsync(
             int tamanhoDoLote, CancellationToken cancellationToken)
         {
             try
@@ -99,16 +101,16 @@ namespace simple_erp.Infraestrutura.Persistencia.Outbox
                     .Select(linha => linha.Id)
                     .ToListAsync(cancellationToken);
 
-                return Resultado<IReadOnlyList<long>>.Sucesso(ids);
+                return Resultado<IReadOnlyList<Guid>>.Sucesso(ids);
             }
             catch (Exception ex)
             {
-                return Resultado<IReadOnlyList<long>>.Falha(ex.InnerException?.Message ?? ex.Message);
+                return Resultado<IReadOnlyList<Guid>>.Falha(ex.InnerException?.Message ?? ex.Message);
             }
         }
 
         /// <summary>Processa um evento. Devolve true apenas quando o despacho foi confirmado.</summary>
-        private async Task<bool> ProcessarEventoAsync(long idDaLinha, CancellationToken cancellationToken)
+        private async Task<bool> ProcessarEventoAsync(Guid idDaLinha, CancellationToken cancellationToken)
         {
             await using var escopo = _fabricaDeEscopos.CreateAsyncScope();
             var provedor = escopo.ServiceProvider;
@@ -226,7 +228,7 @@ namespace simple_erp.Infraestrutura.Persistencia.Outbox
         /// sempre do teto de <see cref="MaximoDeTentativas"/>.
         /// </summary>
         private async Task RegistrarFalhaAsync(
-            long idDaLinha, string erro, CancellationToken cancellationToken)
+            Guid idDaLinha, string erro, CancellationToken cancellationToken)
         {
             try
             {

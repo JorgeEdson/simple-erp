@@ -1,7 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Estoque.Entidades;
 using simple_erp.Core.Modulos.Estoque.Interfaces.Repositorios;
@@ -10,6 +9,8 @@ using simple_erp.Core.Modulos.Estoque.UseCases;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.Estoque
 {
@@ -57,8 +58,8 @@ namespace simple_erp.Testes.Modulos.Estoque
         [Fact]
         public async Task ExecutarAsync_DeveRetornarExtratoMapeado_QuandoParametrosForemValidos()
         {
-            var idProduto = Id.TentarCriar(202604020001).Instancia;
-            var origem = OrigemDaMovimentacao.TentarCriar(TipoOrigemMovimentacao.Compra, 500).Instancia;
+            var idProduto = new Guid("00000000-0000-0000-0000-202604020001");
+            var origem = OrigemDaMovimentacao.TentarCriar(TipoOrigemMovimentacao.Compra, new Guid("00000000-0000-0000-0000-000000000500")).Instancia;
             var quantidade = Quantidade.TentarCriar(5m).Instancia;
 
             var movimentacao = MovimentacaoDeEstoque.Criar(
@@ -85,7 +86,7 @@ namespace simple_erp.Testes.Modulos.Estoque
             var entrada = new ConsultarExtratoDeMovimentacoesPaginadoEntrada(
                 NumeroPagina: 1,
                 TamanhoPagina: 10,
-                IdProduto: 202604020001,
+                IdProduto: new Guid("00000000-0000-0000-0000-202604020001"),
                 Tipo: TipoDeMovimentacao.EntradaPorCompra);
 
             var resultado = await _useCase.ExecutarAsync(entrada);
@@ -95,12 +96,12 @@ namespace simple_erp.Testes.Modulos.Estoque
             resultado.Instancia.Itens.Should().ContainSingle();
 
             var item = resultado.Instancia.Itens.First();
-            item.IdProduto.Should().Be(202604020001);
+            item.IdProduto.Should().Be(new Guid("00000000-0000-0000-0000-202604020001"));
             item.Tipo.Should().Be("EntradaPorCompra");
             item.Sentido.Should().Be("Entrada");
             item.SaldoResultante.Should().Be(5m);
             item.OrigemTipo.Should().Be("Compra");
-            item.OrigemIdReferencia.Should().Be(500);
+            item.OrigemIdReferencia.Should().Be(new Guid("00000000-0000-0000-0000-000000000500"));
         }
     }
 }

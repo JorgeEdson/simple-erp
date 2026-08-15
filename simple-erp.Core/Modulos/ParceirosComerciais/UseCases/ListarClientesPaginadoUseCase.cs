@@ -1,6 +1,7 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 {
@@ -29,7 +30,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
        IReadOnlyCollection<ListarClientesPaginadoItemSaida> Itens);
 
     public sealed record ListarClientesPaginadoItemSaida(
-        long Id,
+        Guid Id,
         string Nome,
         string Documento,
         string Email,
@@ -165,7 +166,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
             var itens = pagina.Itens
                 .Select(cliente => new ListarClientesPaginadoItemSaida(
-                    Id: cliente.Id.Valor,
+                    Id: cliente.Id,
                     Nome: cliente.Nome.Valor,
                     Documento: cliente.Documento.Valor,
                     Email: cliente.Email.Valor,

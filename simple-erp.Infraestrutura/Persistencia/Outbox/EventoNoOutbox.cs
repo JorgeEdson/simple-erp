@@ -27,10 +27,10 @@ namespace simple_erp.Infraestrutura.Persistencia.Outbox
         }
 
         private EventoNoOutbox(
-            long idEvento,
+            Guid idEvento,
             string nomeDoEvento,
             string tipoDoEvento,
-            long idAgregadoOrigem,
+            Guid idAgregadoOrigem,
             string conteudo,
             DateTime ocorridoEmUtc)
         {
@@ -45,10 +45,10 @@ namespace simple_erp.Infraestrutura.Persistencia.Outbox
         }
 
         /// <summary>Chave da linha, gerada pelo banco (sequência).</summary>
-        public long Id { get; private set; }
+        public Guid Id { get; private set; }
 
         /// <summary>Identificador do evento no domínio, preservado do original.</summary>
-        public long IdEvento { get; private set; }
+        public Guid IdEvento { get; private set; }
 
         /// <summary>Nome curto do evento (ex.: "PedidoDeCompraEfetivado"), para leitura e filtro.</summary>
         public string NomeDoEvento { get; private set; }
@@ -57,7 +57,7 @@ namespace simple_erp.Infraestrutura.Persistencia.Outbox
         public string TipoDoEvento { get; private set; }
 
         /// <summary>Agregado que originou o evento.</summary>
-        public long IdAgregadoOrigem { get; private set; }
+        public Guid IdAgregadoOrigem { get; private set; }
 
         /// <summary>Payload do evento em JSON (coluna jsonb).</summary>
         public string Conteudo { get; private set; }
@@ -79,10 +79,10 @@ namespace simple_erp.Infraestrutura.Persistencia.Outbox
             ArgumentNullException.ThrowIfNull(evento);
 
             return new EventoNoOutbox(
-                idEvento: evento.IdEvento.Valor,
+                idEvento: evento.IdEvento,
                 nomeDoEvento: evento.GetType().Name,
                 tipoDoEvento: evento.GetType().FullName!,
-                idAgregadoOrigem: evento.IdAgregadoOrigem.Valor,
+                idAgregadoOrigem: evento.IdAgregadoOrigem,
                 conteudo: SerializadorDeEventos.Serializar(evento),
                 ocorridoEmUtc: evento.DataOcorrenciaUtc);
         }

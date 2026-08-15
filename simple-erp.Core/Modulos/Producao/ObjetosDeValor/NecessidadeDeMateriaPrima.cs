@@ -20,13 +20,13 @@ namespace simple_erp.Core.Modulos.Producao.ObjetosDeValor
         }
 
         public static Resultado<NecessidadeDeMateriaPrima> TentarCriar(
-            Id idInsumo,
+            Guid idInsumo,
             Quantidade quantidadeNecessaria,
             IConfiguracaoObjetoDeValor? configuracao = null)
         {
             var erros = new List<string>();
 
-            if (idInsumo is null)
+            if (idInsumo == Guid.Empty)
                 erros.Add("INSUMO_OBRIGATORIO");
 
             if (quantidadeNecessaria is null)
@@ -36,14 +36,14 @@ namespace simple_erp.Core.Modulos.Producao.ObjetosDeValor
                 return Resultado<NecessidadeDeMateriaPrima>.Falha(erros);
 
             var propriedades = new PropriedadesNecessidadeDeMateriaPrima(
-                IdInsumo: idInsumo!.Valor,
+                IdInsumo: idInsumo,
                 QuantidadeNecessaria: quantidadeNecessaria!.Valor);
 
             return Resultado<NecessidadeDeMateriaPrima>.Sucesso(
                 new NecessidadeDeMateriaPrima(propriedades, configuracao));
         }
 
-        public long IdInsumo => Valor.IdInsumo;
+        public Guid IdInsumo => Valor.IdInsumo;
         public decimal QuantidadeNecessaria => Valor.QuantidadeNecessaria;
 
         public override string ToString()
@@ -53,6 +53,6 @@ namespace simple_erp.Core.Modulos.Producao.ObjetosDeValor
     }
 
     public record PropriedadesNecessidadeDeMateriaPrima(
-        long IdInsumo,
+        Guid IdInsumo,
         decimal QuantidadeNecessaria);
 }

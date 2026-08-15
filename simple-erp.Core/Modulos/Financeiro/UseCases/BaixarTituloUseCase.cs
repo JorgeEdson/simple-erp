@@ -1,8 +1,8 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
-using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Financeiro.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Core.Modulos.Financeiro.UseCases
 {
@@ -11,10 +11,10 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
     {
     }
 
-    public record BaixarTituloEntrada(long Id, decimal Valor) : IRequisicao<BaixarTituloSaida>;
+    public record BaixarTituloEntrada(Guid Id, decimal Valor) : IRequisicao<BaixarTituloSaida>;
 
     public record BaixarTituloSaida(
-        long Id,
+        Guid Id,
         string Status,
         decimal ValorBaixado,
         decimal SaldoDevedor);
@@ -50,12 +50,30 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
 
             #endregion
 
+            #region Validação do identificador
+
+            if (dados.Id == Guid.Empty)
+            {
+                stopwatchUseCase.Stop();
+
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["Id"] = dados.Id,
+                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                    }));
+
+                return Resultado<BaixarTituloSaida>.Falha("ID_INVALIDO");
+            }
+
+            #endregion
+
             #region Validação da entrada
 
-            var resultadoId = Id.TentarCriar(dados.Id);
             var resultadoValor = Dinheiro.TentarCriar(dados.Valor);
 
-            var validacao = Resultado.Combinar(resultadoId, resultadoValor);
+            var validacao = Resultado.Combinar(resultadoValor);
 
             if (validacao.EhFalha)
             {
@@ -68,7 +86,7 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
             #region Recuperação do agregado
 
             var resultadoTitulo = await _unitOfWork.TitulosRepository
-                .ObterPorIdAsync(resultadoId.Instancia, cancellationToken);
+                .ObterPorIdAsync(dados.Id, cancellationToken);
 
             if (resultadoTitulo.EhFalha)
             {
@@ -106,7 +124,7 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
                         Mensagem: "Falha ao baixar o agregado Titulo.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["TituloId"] = titulo.Id.Valor,
+                            ["TituloId"] = titulo.Id,
                             ["Status"] = titulo.Status.ToString(),
                             ["Erros"] = resultadoBaixa.Erros?.ToArray(),
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -154,7 +172,7 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
                 Mensagem: "Título baixado com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["TituloId"] = titulo.Id.Valor,
+                    ["TituloId"] = titulo.Id,
                     ["Status"] = titulo.Status.ToString(),
                     ["SaldoDevedor"] = titulo.SaldoDevedor,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -162,7 +180,7 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
 
             return Resultado<BaixarTituloSaida>.Sucesso(
                 new BaixarTituloSaida(
-                    Id: titulo.Id.Valor,
+                    Id: titulo.Id,
                     Status: titulo.Status.ToString(),
                     ValorBaixado: titulo.ValorBaixado,
                     SaldoDevedor: titulo.SaldoDevedor));

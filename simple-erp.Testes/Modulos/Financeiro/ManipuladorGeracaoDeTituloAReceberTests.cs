@@ -1,20 +1,20 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Financeiro.Handlers;
 using simple_erp.Core.Modulos.Financeiro.UseCases;
 using simple_erp.Core.Modulos.Vendas.Eventos;
 using System;
 using System.Collections.Generic;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.Financeiro
 {
     public sealed class ManipuladorGeracaoDeTituloAReceberTests
     {
-        private const long IdPedido = 202604020500;
-        private const long IdCliente = 202604020001;
+        private static readonly Guid IdPedido = new Guid("00000000-0000-0000-0000-202604020500");
+        private static readonly Guid IdCliente = new Guid("00000000-0000-0000-0000-202604020001");
 
         private readonly IEmitirTituloAReceberUseCase _emitir =
             Substitute.For<IEmitirTituloAReceberUseCase>();
@@ -28,12 +28,12 @@ namespace simple_erp.Testes.Modulos.Financeiro
 
         private static PedidoDeVendaAprovado Evento(decimal valorTotal = 150.00m) =>
             new(
-                Id.TentarCriar(IdPedido).Instancia,
-                Id.TentarCriar(IdCliente).Instancia,
+                IdPedido,
+                IdCliente,
                 valorTotal: valorTotal,
                 itens: new List<ItemVendaAprovado>
                 {
-                    new(202604020010, 3m)
+                    new(new Guid("00000000-0000-0000-0000-202604020010"), 3m)
                 });
 
         [Fact]
@@ -42,7 +42,7 @@ namespace simple_erp.Testes.Modulos.Financeiro
             _emitir
                 .ExecutarAsync(Arg.Any<EmitirTituloAReceberEntrada>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<EmitirTituloAReceberSaida>.Sucesso(
-                    new EmitirTituloAReceberSaida(1, "AReceber", IdCliente, 150.00m, 150.00m, "EmAberto", DateTime.UtcNow.AddDays(30))));
+                    new EmitirTituloAReceberSaida(new Guid("00000000-0000-0000-0000-000000000001"), "AReceber", IdCliente, 150.00m, 150.00m, "EmAberto", DateTime.UtcNow.AddDays(30))));
 
             var resultado = await _handler.ManipularAsync(Evento(150.00m));
 

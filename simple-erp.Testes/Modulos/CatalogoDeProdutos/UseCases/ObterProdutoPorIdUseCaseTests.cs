@@ -1,12 +1,13 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Entidades;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases;
 using simple_erp.Testes.Compartilhado.Builders;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
 {
@@ -36,7 +37,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoIdForInvalido()
         {
             // Arrange
-            var entrada = new ObterProdutoPorIdEntrada(0);
+            var entrada = new ObterProdutoPorIdEntrada(Guid.Empty);
 
             // Act
             var resultado = await _useCase.ExecutarAsync(entrada);
@@ -47,17 +48,17 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
 
             await _produtosRepository
                 .DidNotReceive()
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>());
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
         }
 
         [Fact]
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoOcorrerErroAoObterProdutoPorId()
         {
             // Arrange
-            var entrada = new ObterProdutoPorIdEntrada(123456);
+            var entrada = new ObterProdutoPorIdEntrada(new Guid("00000000-0000-0000-0000-000000123456"));
 
             _produtosRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Produto>.Falha("ERRO_AO_OBTER_PRODUTO"));
 
             // Act
@@ -70,7 +71,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
             await _produtosRepository
                 .Received(1)
                 .ObterPorIdAsync(
-                    Arg.Is<Id>(id => id.Valor == entrada.Id),
+                    Arg.Is<Guid>(id => id == entrada.Id),
                     Arg.Any<CancellationToken>());
         }
 
@@ -78,10 +79,10 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoProdutoNaoForEncontrado()
         {
             // Arrange
-            var entrada = new ObterProdutoPorIdEntrada(123456);
+            var entrada = new ObterProdutoPorIdEntrada(new Guid("00000000-0000-0000-0000-000000123456"));
 
             _produtosRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Produto>.Falha("PRODUTO_NAO_ENCONTRADO"));
 
             // Act
@@ -94,7 +95,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
             await _produtosRepository
                 .Received(1)
                 .ObterPorIdAsync(
-                    Arg.Is<Id>(id => id.Valor == entrada.Id),
+                    Arg.Is<Guid>(id => id == entrada.Id),
                     Arg.Any<CancellationToken>());
         }
 
@@ -103,14 +104,14 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
         {
             // Arrange
             var produto = ProdutoBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .ComoFabricado()
                 .Criar();
 
-            var entrada = new ObterProdutoPorIdEntrada(produto.Id.Valor);
+            var entrada = new ObterProdutoPorIdEntrada(produto.Id);
 
             _produtosRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Produto>.Sucesso(produto));
 
             // Act
@@ -118,7 +119,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
 
             // Assert
             resultado.EhSucesso.Should().BeTrue();
-            resultado.Instancia.Id.Should().Be(produto.Id.Valor);
+            resultado.Instancia.Id.Should().Be(produto.Id);
             resultado.Instancia.Codigo.Should().Be(produto.Codigo.Valor);
             resultado.Instancia.Descricao.Should().Be(produto.Descricao.Valor);
             resultado.Instancia.UnidadeDeMedida.Should().Be(produto.UnidadeDeMedida.Valor);
@@ -130,7 +131,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
             await _produtosRepository
                 .Received(1)
                 .ObterPorIdAsync(
-                    Arg.Is<Id>(id => id.Valor == produto.Id.Valor),
+                    Arg.Is<Guid>(id => id == produto.Id),
                     Arg.Any<CancellationToken>());
         }
     }

@@ -6,9 +6,9 @@ namespace simple_erp.Core.Modulos.Producao.Eventos
     public sealed class OrdemDeProducaoCriada : EventoDeDominio
     {
         public OrdemDeProducaoCriada(
-            Id idOrdemDeProducao,
-            Id idProdutoFabricado,
-            Id idComposicao,
+            Guid idOrdemDeProducao,
+            Guid idProdutoFabricado,
+            Guid idComposicao,
             decimal quantidadeAProduzir)
             : base(idOrdemDeProducao)
         {
@@ -18,9 +18,9 @@ namespace simple_erp.Core.Modulos.Producao.Eventos
             QuantidadeAProduzir = quantidadeAProduzir;
         }
 
-        public Id IdOrdemDeProducao { get; }
-        public Id IdProdutoFabricado { get; }
-        public Id IdComposicao { get; }
+        public Guid IdOrdemDeProducao { get; }
+        public Guid IdProdutoFabricado { get; }
+        public Guid IdComposicao { get; }
         public decimal QuantidadeAProduzir { get; }
     }
 }

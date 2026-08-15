@@ -1,10 +1,11 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
 using simple_erp.Core.Modulos.ParceirosComerciais.Especificacoes;
 using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 {
@@ -14,7 +15,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
     }
 
     public record EditarFornecedorEntrada(
-        long Id,
+        Guid Id,
         string Documento,
         string Nome,
         string Email,
@@ -29,7 +30,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
     ) : IRequisicao<EditarFornecedorSaida>;
 
     public record EditarFornecedorSaida(
-        long Id,
+        Guid Id,
         string Documento,
         string Nome,
         string Email,
@@ -68,9 +69,27 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
             #endregion
 
+            #region Validação do identificador
+
+            if (dados.Id == Guid.Empty)
+            {
+                stopwatchUseCase.Stop();
+
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["Id"] = dados.Id,
+                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                    }));
+
+                return Resultado<EditarFornecedorSaida>.Falha("ID_INVALIDO");
+            }
+
+            #endregion
+
             #region Validação da entrada
 
-            var resultadoId = Id.TentarCriar(dados.Id);
             var resultadoDocumento = Documento.TentarCriar(dados.Documento);
             var resultadoNome = Nome.TentarCriar(dados.Nome);
             var resultadoEmail = Email.TentarCriar(dados.Email);
@@ -85,9 +104,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     dados.Cep,
                     dados.Pais));
 
-            var validacaoCampos = Resultado.Combinar(
-                resultadoId,
-                resultadoDocumento,
+            var validacaoCampos = Resultado.Combinar(resultadoDocumento,
                 resultadoNome,
                 resultadoEmail,
                 resultadoEndereco);
@@ -114,7 +131,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
             var stopwatchObterFornecedor = Stopwatch.StartNew();
 
             var resultadoFornecedor = await _unitOfWork.FornecedoresRepository.ObterPorIdAsync(
-                resultadoId.Instancia,
+                dados.Id,
                 cancellationToken);
 
             stopwatchObterFornecedor.Stop();
@@ -135,7 +152,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Mensagem: "Falha ao obter fornecedor por id para edição.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["FornecedorId"] = resultadoId.Instancia.Valor,
+                        ["FornecedorId"] = dados.Id,
                         ["Erros"] = resultadoFornecedor.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -153,7 +170,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Mensagem: "Tentativa de edição de fornecedor não encontrado.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["FornecedorId"] = resultadoId.Instancia.Valor,
+                        ["FornecedorId"] = dados.Id,
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
 
@@ -199,7 +216,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                         Mensagem: "Falha ao verificar duplicidade de documento na edição de fornecedor.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["FornecedorId"] = fornecedor.Id.Valor,
+                            ["FornecedorId"] = fornecedor.Id,
                             ["Documento"] = resultadoDocumento.Instancia.Formatado,
                             ["Erros"] = resultadoExisteOutroDocumento.Erros?.ToArray(),
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -216,7 +233,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                         Mensagem: "Tentativa de edição de fornecedor com documento já cadastrado para outro fornecedor.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["FornecedorId"] = fornecedor.Id.Valor,
+                            ["FornecedorId"] = fornecedor.Id,
                             ["Documento"] = resultadoDocumento.Instancia.Formatado,
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                         }));
@@ -250,7 +267,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                         Mensagem: "Falha ao aplicar alterações no agregado Fornecedor.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["FornecedorId"] = fornecedor.Id.Valor,
+                            ["FornecedorId"] = fornecedor.Id,
                             ["Erros"] = resultadoAlteracoes.Erros?.ToArray(),
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                         }));
@@ -288,7 +305,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Mensagem: "Falha ao atualizar fornecedor no repositório.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["FornecedorId"] = fornecedor.Id.Valor,
+                        ["FornecedorId"] = fornecedor.Id,
                         ["Erros"] = resultadoAtualizar.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -318,7 +335,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Mensagem: "Falha ao persistir edição de fornecedor.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["FornecedorId"] = fornecedor.Id.Valor,
+                        ["FornecedorId"] = fornecedor.Id,
                         ["Erros"] = resultadoSave.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -336,14 +353,14 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 Mensagem: "Fornecedor editado com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["FornecedorId"] = fornecedor.Id.Valor,
+                    ["FornecedorId"] = fornecedor.Id,
                     ["Ativo"] = fornecedor.Ativo,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));
 
             return Resultado<EditarFornecedorSaida>.Sucesso(
                 new EditarFornecedorSaida(
-                    Id: fornecedor.Id.Valor,
+                    Id: fornecedor.Id,
                     Documento: fornecedor.Documento.Formatado,
                     Nome: fornecedor.Nome.Valor,
                     Email: fornecedor.Email.Valor,

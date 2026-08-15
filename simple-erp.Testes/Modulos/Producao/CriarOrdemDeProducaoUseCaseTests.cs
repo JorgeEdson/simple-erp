@@ -1,7 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Entidades;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Interfaces.Repositorios;
@@ -11,12 +10,14 @@ using simple_erp.Core.Modulos.Producao.Entidades;
 using simple_erp.Core.Modulos.Producao.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.Producao.UseCases;
 using simple_erp.Testes.Compartilhado.Builders;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.Producao
 {
     public sealed class CriarOrdemDeProducaoUseCaseTests
     {
-        private const long IdFabricado = 202604020001;
+        private static readonly Guid IdFabricado = new Guid("00000000-0000-0000-0000-202604020001");
 
         private readonly IUnitOfWork _unitOfWork;
         private readonly IOrdemDeProducaoRepository _ordensRepository;
@@ -42,7 +43,7 @@ namespace simple_erp.Testes.Modulos.Producao
 
         private void RetornarProdutoFabricado() =>
             _produtosRepository
-                .ObterPorIdAsync(Arg.Is<Id>(i => i.Valor == IdFabricado), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Is<Guid>(i => i == IdFabricado), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Produto>.Sucesso(
                     ProdutoBuilder.Novo().ComId(IdFabricado).ComoFabricado().Criar()));
 
@@ -52,7 +53,7 @@ namespace simple_erp.Testes.Modulos.Producao
             RetornarProdutoFabricado();
 
             _composicoesRepository
-                .ExisteAtivaPorProdutoAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ExisteAtivaPorProdutoAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(false));
 
             var resultado = await _useCase.ExecutarAsync(new CriarOrdemDeProducaoEntrada(IdFabricado, 5m));
@@ -69,7 +70,7 @@ namespace simple_erp.Testes.Modulos.Producao
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoProdutoNaoForFabricado()
         {
             _produtosRepository
-                .ObterPorIdAsync(Arg.Is<Id>(i => i.Valor == IdFabricado), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Is<Guid>(i => i == IdFabricado), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Produto>.Sucesso(
                     ProdutoBuilder.Novo().ComId(IdFabricado).SemClassificacao().Criar()));
 
@@ -87,16 +88,16 @@ namespace simple_erp.Testes.Modulos.Producao
             var composicao = ComposicaoDeProdutoBuilder.Novo()
                 .ComIdProdutoFabricado(IdFabricado)
                 .SemItens()
-                .ComItem(202604020010, 2m)
-                .ComItem(202604020011, 3m)
+                .ComItem(new Guid("00000000-0000-0000-0000-202604020010"), 2m)
+                .ComItem(new Guid("00000000-0000-0000-0000-202604020011"), 3m)
                 .Ativa()
                 .Criar();
 
             _composicoesRepository
-                .ExisteAtivaPorProdutoAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ExisteAtivaPorProdutoAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(true));
             _composicoesRepository
-                .ObterAtivaPorProdutoAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterAtivaPorProdutoAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<ComposicaoDeProduto?>.Sucesso(composicao));
             _ordensRepository
                 .AdicionarAsync(Arg.Any<OrdemDeProducao>(), Arg.Any<CancellationToken>())
@@ -109,8 +110,8 @@ namespace simple_erp.Testes.Modulos.Producao
 
             resultado.EhSucesso.Should().BeTrue();
             resultado.Instancia.Status.Should().Be("Criada");
-            resultado.Instancia.Necessidades.Should().ContainSingle(n => n.IdInsumo == 202604020010 && n.QuantidadeNecessaria == 10m);
-            resultado.Instancia.Necessidades.Should().ContainSingle(n => n.IdInsumo == 202604020011 && n.QuantidadeNecessaria == 15m);
+            resultado.Instancia.Necessidades.Should().ContainSingle(n => n.IdInsumo == new Guid("00000000-0000-0000-0000-202604020010") && n.QuantidadeNecessaria == 10m);
+            resultado.Instancia.Necessidades.Should().ContainSingle(n => n.IdInsumo == new Guid("00000000-0000-0000-0000-202604020011") && n.QuantidadeNecessaria == 15m);
 
             await _ordensRepository
                 .Received(1)

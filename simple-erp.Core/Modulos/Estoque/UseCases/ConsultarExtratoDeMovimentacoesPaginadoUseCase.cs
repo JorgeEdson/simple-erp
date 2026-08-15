@@ -1,7 +1,8 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Modulos.Estoque.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Core.Modulos.Estoque.UseCases
 {
@@ -13,7 +14,7 @@ namespace simple_erp.Core.Modulos.Estoque.UseCases
     public sealed record ConsultarExtratoDeMovimentacoesPaginadoEntrada(
         int NumeroPagina,
         int TamanhoPagina,
-        long? IdProduto = null,
+        Guid? IdProduto = null,
         TipoDeMovimentacao? Tipo = null,
         TipoOrigemMovimentacao? OrigemTipo = null,
         DateTime? DataInicio = null,
@@ -27,18 +28,18 @@ namespace simple_erp.Core.Modulos.Estoque.UseCases
         IReadOnlyCollection<ExtratoDeMovimentacaoItemSaida> Itens);
 
     public sealed record ExtratoDeMovimentacaoItemSaida(
-        long IdMovimentacao,
-        long IdProduto,
+        Guid IdMovimentacao,
+        Guid IdProduto,
         string Tipo,
         string Sentido,
         decimal Quantidade,
         decimal SaldoResultante,
         string OrigemTipo,
-        long? OrigemIdReferencia,
+        Guid? OrigemIdReferencia,
         DateTime DataMovimentacaoUtc);
 
     public sealed record ListarMovimentacoesDeEstoqueFiltros(
-        long? IdProduto = null,
+        Guid? IdProduto = null,
         TipoDeMovimentacao? Tipo = null,
         TipoOrigemMovimentacao? OrigemTipo = null,
         DateTime? DataInicio = null,
@@ -168,8 +169,8 @@ namespace simple_erp.Core.Modulos.Estoque.UseCases
 
             var itens = pagina.Itens
                 .Select(movimentacao => new ExtratoDeMovimentacaoItemSaida(
-                    IdMovimentacao: movimentacao.Id.Valor,
-                    IdProduto: movimentacao.IdProduto.Valor,
+                    IdMovimentacao: movimentacao.Id,
+                    IdProduto: movimentacao.IdProduto,
                     Tipo: movimentacao.Tipo.ToString(),
                     Sentido: movimentacao.Sentido.ToString(),
                     Quantidade: movimentacao.Quantidade,

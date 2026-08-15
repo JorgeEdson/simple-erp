@@ -12,8 +12,8 @@ namespace simple_erp.Core.Modulos.Estoque.Eventos
     public sealed class SaldoDeEstoqueMovimentado : EventoDeDominio
     {
         public SaldoDeEstoqueMovimentado(
-            Id idSaldoDeEstoque,
-            Id idProduto,
+            Guid idSaldoDeEstoque,
+            Guid idProduto,
             TipoDeMovimentacao tipo,
             SentidoDaMovimentacao sentido,
             decimal quantidade,
@@ -28,8 +28,8 @@ namespace simple_erp.Core.Modulos.Estoque.Eventos
             SaldoResultante = saldoResultante;
         }
 
-        public Id IdSaldoDeEstoque { get; }
-        public Id IdProduto { get; }
+        public Guid IdSaldoDeEstoque { get; }
+        public Guid IdProduto { get; }
         public TipoDeMovimentacao Tipo { get; }
         public SentidoDaMovimentacao Sentido { get; }
         public decimal Quantidade { get; }

@@ -1,9 +1,11 @@
 using simple_erp.Api.Eventos;
 using simple_erp.Api.Mediador;
 using simple_erp.Api.Servicos;
-using simple_erp.Core.Compartilhado.Eventos;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Modulos.ParceirosComerciais.UseCases;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Dominio;
+using simple_erp.Core.Compartilhado.Contratos.EventosDeDominio;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Api.Configuracao
 {   

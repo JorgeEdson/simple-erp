@@ -1,9 +1,10 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Financeiro.Entidades;
 using simple_erp.Core.Modulos.Financeiro.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Core.Modulos.Financeiro.UseCases
 {
@@ -13,15 +14,15 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
     }
 
     public record EmitirTituloAPagarEntrada(
-        long IdFornecedor,
+        Guid IdFornecedor,
         decimal Valor,
         DateTime DataVencimento,
-        long? IdPedidoDeCompra = null) : IRequisicao<EmitirTituloAPagarSaida>;
+        Guid? IdPedidoDeCompra = null) : IRequisicao<EmitirTituloAPagarSaida>;
 
     public record EmitirTituloAPagarSaida(
-        long Id,
+        Guid Id,
         string Tipo,
-        long IdParceiro,
+        Guid IdParceiro,
         decimal ValorOriginal,
         decimal SaldoDevedor,
         string Status,
@@ -58,13 +59,31 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
 
             #endregion
 
+            #region Validação do identificador
+
+            if (dados.IdFornecedor == Guid.Empty)
+            {
+                stopwatchUseCase.Stop();
+
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["IdFornecedor"] = dados.IdFornecedor,
+                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                    }));
+
+                return Resultado<EmitirTituloAPagarSaida>.Falha("ID_INVALIDO");
+            }
+
+            #endregion
+
             #region Validação da entrada
 
-            var resultadoIdFornecedor = Id.TentarCriar(dados.IdFornecedor);
             var resultadoValor = Dinheiro.TentarCriar(dados.Valor);
             var resultadoOrigem = OrigemDoTitulo.TentarCriar(TipoOrigemTitulo.Compra, dados.IdPedidoDeCompra);
 
-            var validacao = Resultado.Combinar(resultadoIdFornecedor, resultadoValor, resultadoOrigem);
+            var validacao = Resultado.Combinar(resultadoValor, resultadoOrigem);
 
             if (validacao.EhFalha)
             {
@@ -84,7 +103,7 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
             #region Validação de pré-condições
 
             var fornecedorExiste = await _unitOfWork.FornecedoresRepository.ExistePorIdAsync(
-                resultadoIdFornecedor.Instancia, cancellationToken);
+                dados.IdFornecedor, cancellationToken);
 
             if (fornecedorExiste.EhFalha)
             {
@@ -113,7 +132,7 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
 
                 var resultadoTitulo = Titulo.Criar(
                     TipoDeTitulo.APagar,
-                    resultadoIdFornecedor.Instancia,
+                    dados.IdFornecedor,
                     resultadoOrigem.Instancia,
                     resultadoValor.Instancia,
                     dados.DataVencimento);
@@ -166,16 +185,16 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
                 Mensagem: "Título a pagar emitido com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["TituloId"] = titulo.Id.Valor,
+                    ["TituloId"] = titulo.Id,
                     ["ValorOriginal"] = titulo.ValorOriginal,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));
 
             return Resultado<EmitirTituloAPagarSaida>.Sucesso(
                 new EmitirTituloAPagarSaida(
-                    Id: titulo.Id.Valor,
+                    Id: titulo.Id,
                     Tipo: titulo.Tipo.ToString(),
-                    IdParceiro: titulo.IdParceiro.Valor,
+                    IdParceiro: titulo.IdParceiro,
                     ValorOriginal: titulo.ValorOriginal,
                     SaldoDevedor: titulo.SaldoDevedor,
                     Status: titulo.Status.ToString(),

@@ -1,14 +1,15 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Especificacoes;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
 using simple_erp.Core.Modulos.ParceirosComerciais.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.UseCases;
 using simple_erp.Testes.Compartilhado.Builders;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Dominio;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 {
@@ -33,7 +34,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
         {
             // Arrange
             var entrada = new EditarFornecedorEntrada(
-                Id: 0,
+                Id: Guid.Empty,
                 Documento: "123",
                 Nome: "",
                 Email: "email-invalido",
@@ -55,7 +56,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 
             await _fornecedoresRepository
                 .DidNotReceive()
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>());
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
 
             await _fornecedoresRepository
                 .DidNotReceive()
@@ -79,7 +80,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
             var entrada = CriarEntradaValida();
 
             _fornecedoresRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Fornecedor>.Falha("ERRO_AO_OBTER_FORNECEDOR"));
 
             // Act
@@ -105,7 +106,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
             var entrada = CriarEntradaValida();
 
             _fornecedoresRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Fornecedor>.Falha("FORNECEDOR_NAO_ENCONTRADO"));
 
             // Act
@@ -129,16 +130,16 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
         {
             // Arrange
             var fornecedor = FornecedorBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .ComDocumento("11222333000181")
                 .Criar();
 
             var entrada = CriarEntradaValida(
-                id: fornecedor.Id.Valor,
+                id: fornecedor.Id,
                 documento: "99888777000166");
 
             _fornecedoresRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Fornecedor>.Sucesso(fornecedor));
 
             _fornecedoresRepository
@@ -170,16 +171,16 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
         {
             // Arrange
             var fornecedor = FornecedorBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .ComDocumento("11222333000181")
                 .Criar();
 
             var entrada = CriarEntradaValida(
-                id: fornecedor.Id.Valor,
+                id: fornecedor.Id,
                 documento: "99888777000166");
 
             _fornecedoresRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Fornecedor>.Sucesso(fornecedor));
 
             _fornecedoresRepository
@@ -215,13 +216,13 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
         {
             // Arrange
             var fornecedor = FornecedorBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .Criar();
 
-            var entrada = CriarEntradaValida(id: fornecedor.Id.Valor);
+            var entrada = CriarEntradaValida(id: fornecedor.Id);
 
             _fornecedoresRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Fornecedor>.Sucesso(fornecedor));
 
             _fornecedoresRepository
@@ -251,13 +252,13 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
         {
             // Arrange
             var fornecedor = FornecedorBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .Criar();
 
-            var entrada = CriarEntradaValida(id: fornecedor.Id.Valor);
+            var entrada = CriarEntradaValida(id: fornecedor.Id);
 
             _fornecedoresRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Fornecedor>.Sucesso(fornecedor));
 
             _fornecedoresRepository
@@ -295,18 +296,18 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
         {
             // Arrange
             var fornecedor = FornecedorBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .ComDocumento("11222333000181")
                 .Criar();
 
             var entrada = CriarEntradaValida(
-                id: fornecedor.Id.Valor,
+                id: fornecedor.Id,
                 documento: "99888777000166",
                 nome: "Fornecedor Atualizado",
                 email: "fornecedor.atualizado@teste.com");
 
             _fornecedoresRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Fornecedor>.Sucesso(fornecedor));
 
             _fornecedoresRepository
@@ -328,7 +329,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 
             // Assert
             resultado.EhSucesso.Should().BeTrue();
-            resultado.Instancia.Id.Should().Be(fornecedor.Id.Valor);
+            resultado.Instancia.Id.Should().Be(fornecedor.Id);
             resultado.Instancia.Nome.Should().Be("Fornecedor Atualizado");
             resultado.Instancia.Email.Should().Be("fornecedor.atualizado@teste.com");
             resultado.Instancia.Ativo.Should().BeTrue();
@@ -343,7 +344,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
                 .Received(1)
                 .AtualizarAsync(
                     Arg.Is<Fornecedor>(f =>
-                        f.Id.Valor == fornecedor.Id.Valor &&
+                        f.Id == fornecedor.Id &&
                         f.Documento.Valor == entrada.Documento &&
                         f.Nome.Valor == entrada.Nome &&
                         f.Email.Valor == entrada.Email &&
@@ -363,7 +364,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
         }
 
         private static EditarFornecedorEntrada CriarEntradaValida(
-            long id = 123456,
+            Guid? id = null,
             string documento = "99888777000166",
             string nome = "Fornecedor Editado",
             string email = "fornecedor.editado@teste.com")
@@ -371,7 +372,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
             var endereco = EnderecoBuilder.Novo().Criar();
 
             return new EditarFornecedorEntrada(
-                Id: id,
+                Id: id ?? new Guid("00000000-0000-0000-0000-000000123456"),
                 Documento: documento,
                 Nome: nome,
                 Email: email,

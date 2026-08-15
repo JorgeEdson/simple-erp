@@ -1,7 +1,8 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Modulos.Suprimentos.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Core.Modulos.Suprimentos.UseCases
 {
@@ -13,7 +14,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
     public sealed record ListarPedidosDeCompraPaginadoEntrada(
         int NumeroPagina,
         int TamanhoPagina,
-        long? IdFornecedor = null,
+        Guid? IdFornecedor = null,
         StatusPedidoDeCompra? Status = null,
         DateTime? DataInicio = null,
         DateTime? DataFim = null) : IRequisicao<ListarPedidosDeCompraPaginadoSaida>;
@@ -26,15 +27,15 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
         IReadOnlyCollection<ListarPedidosDeCompraPaginadoItemSaida> Itens);
 
     public sealed record ListarPedidosDeCompraPaginadoItemSaida(
-        long Id,
-        long IdFornecedor,
+        Guid Id,
+        Guid IdFornecedor,
         string Status,
         decimal ValorTotal,
         int QuantidadeItens,
         DateTime DataCriacaoUtc);
 
     public sealed record ListarPedidosDeCompraFiltros(
-        long? IdFornecedor = null,
+        Guid? IdFornecedor = null,
         StatusPedidoDeCompra? Status = null,
         DateTime? DataInicio = null,
         DateTime? DataFim = null);
@@ -160,8 +161,8 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
 
             var itens = pagina.Itens
                 .Select(pedido => new ListarPedidosDeCompraPaginadoItemSaida(
-                    Id: pedido.Id.Valor,
-                    IdFornecedor: pedido.IdFornecedor.Valor,
+                    Id: pedido.Id,
+                    IdFornecedor: pedido.IdFornecedor,
                     Status: pedido.Status.ToString(),
                     ValorTotal: pedido.ValorTotal.Valor,
                     QuantidadeItens: pedido.Itens.Count,

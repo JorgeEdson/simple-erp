@@ -1,7 +1,8 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Modulos.Vendas.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Core.Modulos.Vendas.UseCases
 {
@@ -13,7 +14,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
     public sealed record ListarPedidosDeVendaPaginadoEntrada(
         int NumeroPagina,
         int TamanhoPagina,
-        long? IdCliente = null,
+        Guid? IdCliente = null,
         StatusPedidoDeVenda? Status = null,
         DateTime? DataInicio = null,
         DateTime? DataFim = null) : IRequisicao<ListarPedidosDeVendaPaginadoSaida>;
@@ -26,16 +27,16 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
         IReadOnlyCollection<ListarPedidosDeVendaItemSaida> Itens);
 
     public sealed record ListarPedidosDeVendaItemSaida(
-        long Id,
+        Guid Id,
         int Numero,
-        long IdCliente,
+        Guid IdCliente,
         string Status,
         decimal ValorTotal,
         int QuantidadeItens,
         DateTime DataCriacaoUtc);
 
     public sealed record ListarPedidosDeVendaFiltros(
-        long? IdCliente = null,
+        Guid? IdCliente = null,
         StatusPedidoDeVenda? Status = null,
         DateTime? DataInicio = null,
         DateTime? DataFim = null);
@@ -144,9 +145,9 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
 
             var itens = pagina.Itens
                 .Select(pedido => new ListarPedidosDeVendaItemSaida(
-                    Id: pedido.Id.Valor,
+                    Id: pedido.Id,
                     Numero: pedido.Numero,
-                    IdCliente: pedido.IdCliente.Valor,
+                    IdCliente: pedido.IdCliente,
                     Status: pedido.Status.ToString(),
                     ValorTotal: pedido.ValorTotal.Valor,
                     QuantidadeItens: pedido.Itens.Count,

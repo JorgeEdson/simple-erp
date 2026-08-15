@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using simple_erp.Api.Comum;
 using simple_erp.Api.Modelos.Financeiro;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.EventosDeDominio;
 using simple_erp.Core.Modulos.Financeiro.ObjetosDeValor;
 using simple_erp.Core.Modulos.Financeiro.UseCases;
 
@@ -25,11 +25,11 @@ namespace simple_erp.Api.Controllers
             _dispatcher = dispatcher;
         }
 
-        [HttpGet("{id:long}")]
+        [HttpGet("{id:guid}")]
         [ProducesResponseType(typeof(ObterTituloPorIdSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> ObterPorId(long id, CancellationToken cancellationToken)
+        public async Task<IActionResult> ObterPorId(Guid id, CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
                 new ObterTituloPorIdEntrada(id), cancellationToken);
@@ -45,7 +45,7 @@ namespace simple_erp.Api.Controllers
             [FromQuery] int tamanhoPagina = 10,
             [FromQuery] string? tipo = null,
             [FromQuery] string? status = null,
-            [FromQuery] long? idParceiro = null,
+            [FromQuery] Guid? idParceiro = null,
             [FromQuery] DateTime? vencimentoInicio = null,
             [FromQuery] DateTime? vencimentoFim = null)
         {
@@ -76,12 +76,12 @@ namespace simple_erp.Api.Controllers
         /// Liquidado). Por isso a rota é uma coleção — cada POST acrescenta uma baixa,
         /// não substitui a anterior.
         /// </remarks>
-        [HttpPost("{id:long}/baixas")]
+        [HttpPost("{id:guid}/baixas")]
         [ProducesResponseType(typeof(BaixarTituloSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Baixar(
-            long id,
+            Guid id,
             [FromBody] BaixarTituloRequest requisicao,
             CancellationToken cancellationToken)
         {
@@ -90,11 +90,11 @@ namespace simple_erp.Api.Controllers
             return Responder(resultado);
         }
 
-        [HttpPost("{id:long}/cancelar")]
+        [HttpPost("{id:guid}/cancelar")]
         [ProducesResponseType(typeof(CancelarTituloSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Cancelar(long id, CancellationToken cancellationToken)
+        public async Task<IActionResult> Cancelar(Guid id, CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
                 new CancelarTituloEntrada(id), cancellationToken);

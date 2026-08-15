@@ -1,18 +1,16 @@
-﻿using simple_erp.Core.Compartilhado.ObjetosDeValor;
-
 namespace simple_erp.Core.Compartilhado.Base
 {
     public abstract class EventoDeDominio
     {
-        public Id IdEvento { get; }
+        public Guid IdEvento { get; }
 
-        public Id IdAgregadoOrigem { get; }
+        public Guid IdAgregadoOrigem { get; }
 
         public DateTime DataOcorrenciaUtc { get; }
 
-        protected EventoDeDominio(Id idAgregadoOrigem)
+        protected EventoDeDominio(Guid idAgregadoOrigem)
         {
-            IdEvento = Id.TentarCriar().Instancia;
+            IdEvento = Guid.NewGuid();
             IdAgregadoOrigem = idAgregadoOrigem;
             DataOcorrenciaUtc = DateTime.UtcNow;
         }

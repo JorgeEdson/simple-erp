@@ -12,8 +12,8 @@ namespace simple_erp.Core.Modulos.Producao.Eventos
     public sealed class OrdemDeProducaoConcluida : EventoDeDominio
     {
         public OrdemDeProducaoConcluida(
-            Id idOrdemDeProducao,
-            Id idProdutoFabricado,
+            Guid idOrdemDeProducao,
+            Guid idProdutoFabricado,
             decimal quantidadeProduzida,
             IReadOnlyCollection<InsumoConsumido> insumosConsumidos)
             : base(idOrdemDeProducao)
@@ -24,11 +24,11 @@ namespace simple_erp.Core.Modulos.Producao.Eventos
             InsumosConsumidos = insumosConsumidos;
         }
 
-        public Id IdOrdemDeProducao { get; }
-        public Id IdProdutoFabricado { get; }
+        public Guid IdOrdemDeProducao { get; }
+        public Guid IdProdutoFabricado { get; }
         public decimal QuantidadeProduzida { get; }
         public IReadOnlyCollection<InsumoConsumido> InsumosConsumidos { get; }
     }
 
-    public sealed record InsumoConsumido(long IdInsumo, decimal Quantidade);
+    public sealed record InsumoConsumido(Guid IdInsumo, decimal Quantidade);
 }

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using simple_erp.Api.Comum;
 using simple_erp.Api.Modelos.Producao;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.EventosDeDominio;
 using simple_erp.Core.Modulos.Producao.ObjetosDeValor;
 using simple_erp.Core.Modulos.Producao.UseCases;
 
@@ -47,11 +47,11 @@ namespace simple_erp.Api.Controllers
         // Nome de rota único na aplicação (usado pelo CreatedAtRoute do POST).
         private const string RotaObterPorId = "ObterOrdemDeProducaoPorId";
 
-        [HttpGet("{id:long}", Name = RotaObterPorId)]
+        [HttpGet("{id:guid}", Name = RotaObterPorId)]
         [ProducesResponseType(typeof(ObterOrdemDeProducaoPorIdSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> ObterPorId(long id, CancellationToken cancellationToken)
+        public async Task<IActionResult> ObterPorId(Guid id, CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
                 new ObterOrdemDeProducaoPorIdEntrada(id), cancellationToken);
@@ -65,7 +65,7 @@ namespace simple_erp.Api.Controllers
             CancellationToken cancellationToken,
             [FromQuery] int numeroPagina = 1,
             [FromQuery] int tamanhoPagina = 10,
-            [FromQuery] long? idProdutoFabricado = null,
+            [FromQuery] Guid? idProdutoFabricado = null,
             [FromQuery] string? status = null,
             [FromQuery] DateTime? dataInicio = null,
             [FromQuery] DateTime? dataFim = null)
@@ -86,11 +86,11 @@ namespace simple_erp.Api.Controllers
             return Responder(resultado);
         }
 
-        [HttpPost("{id:long}/confirmar")]
+        [HttpPost("{id:guid}/confirmar")]
         [ProducesResponseType(typeof(ConfirmarOrdemDeProducaoSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Confirmar(long id, CancellationToken cancellationToken)
+        public async Task<IActionResult> Confirmar(Guid id, CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
                 new ConfirmarOrdemDeProducaoEntrada(id), cancellationToken);
@@ -104,22 +104,22 @@ namespace simple_erp.Api.Controllers
         /// produto acabado. Como o despacho é pelo outbox, o 200 confirma a ordem
         /// concluída, não o estoque já movimentado.
         /// </remarks>
-        [HttpPost("{id:long}/concluir")]
+        [HttpPost("{id:guid}/concluir")]
         [ProducesResponseType(typeof(ConcluirOrdemDeProducaoSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Concluir(long id, CancellationToken cancellationToken)
+        public async Task<IActionResult> Concluir(Guid id, CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
                 new ConcluirOrdemDeProducaoEntrada(id), cancellationToken);
             return Responder(resultado);
         }
 
-        [HttpPost("{id:long}/cancelar")]
+        [HttpPost("{id:guid}/cancelar")]
         [ProducesResponseType(typeof(CancelarOrdemDeProducaoSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Cancelar(long id, CancellationToken cancellationToken)
+        public async Task<IActionResult> Cancelar(Guid id, CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
                 new CancelarOrdemDeProducaoEntrada(id), cancellationToken);

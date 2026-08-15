@@ -1,8 +1,9 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 {
@@ -12,14 +13,14 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
     }
 
     public record EditarProdutoEntrada(
-        long Id,
+        Guid Id,
         string Codigo,
         string Descricao,
         string UnidadeDeMedida
     ) : IRequisicao<EditarProdutoSaida>;
 
     public record EditarProdutoSaida(
-        long Id,
+        Guid Id,
         string Codigo,
         string Descricao,
         string UnidadeDeMedida,
@@ -60,16 +61,32 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 
             #endregion
 
+            #region Validação do identificador
+
+            if (dados.Id == Guid.Empty)
+            {
+                stopwatchUseCase.Stop();
+
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["Id"] = dados.Id,
+                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                    }));
+
+                return Resultado<EditarProdutoSaida>.Falha("ID_INVALIDO");
+            }
+
+            #endregion
+
             #region Validação da entrada
 
-            var resultadoId = Id.TentarCriar(dados.Id);
             var resultadoCodigo = CodigoProduto.TentarCriar(dados.Codigo);
             var resultadoDescricao = DescricaoProduto.TentarCriar(dados.Descricao);
             var resultadoUnidade = UnidadeDeMedida.TentarCriar(dados.UnidadeDeMedida);
 
-            var validacaoCampos = Resultado.Combinar(
-                resultadoId,
-                resultadoCodigo,
+            var validacaoCampos = Resultado.Combinar(resultadoCodigo,
                 resultadoDescricao,
                 resultadoUnidade);
 
@@ -95,7 +112,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
             var stopwatchObterProduto = Stopwatch.StartNew();
 
             var resultadoProduto = await _unitOfWork.ProdutosRepository.ObterPorIdAsync(
-                resultadoId.Instancia,
+                dados.Id,
                 cancellationToken);
 
             stopwatchObterProduto.Stop();
@@ -116,7 +133,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                     Mensagem: "Falha ao obter produto por id para edição.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ProdutoId"] = resultadoId.Instancia.Valor,
+                        ["ProdutoId"] = dados.Id,
                         ["Erros"] = resultadoProduto.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -134,7 +151,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                     Mensagem: "Tentativa de edição de produto não encontrado.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ProdutoId"] = resultadoId.Instancia.Valor,
+                        ["ProdutoId"] = dados.Id,
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
 
@@ -174,7 +191,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                         Mensagem: "Falha ao verificar duplicidade de código na edição de produto.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["ProdutoId"] = produto.Id.Valor,
+                            ["ProdutoId"] = produto.Id,
                             ["Codigo"] = resultadoCodigo.Instancia.Valor,
                             ["Erros"] = resultadoExisteCodigo.Erros?.ToArray(),
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -191,7 +208,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                         Mensagem: "Tentativa de edição de produto com código já cadastrado para outro produto.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["ProdutoId"] = produto.Id.Valor,
+                            ["ProdutoId"] = produto.Id,
                             ["Codigo"] = resultadoCodigo.Instancia.Valor,
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                         }));
@@ -223,7 +240,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                         Mensagem: "Falha ao aplicar alterações no agregado Produto.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["ProdutoId"] = produto.Id.Valor,
+                            ["ProdutoId"] = produto.Id,
                             ["Erros"] = resultadoAlteracoes.Erros?.ToArray(),
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                         }));
@@ -261,7 +278,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                     Mensagem: "Falha ao atualizar produto no repositório.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ProdutoId"] = produto.Id.Valor,
+                        ["ProdutoId"] = produto.Id,
                         ["Erros"] = resultadoAtualizar.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -291,7 +308,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                     Mensagem: "Falha ao persistir edição de produto.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ProdutoId"] = produto.Id.Valor,
+                        ["ProdutoId"] = produto.Id,
                         ["Erros"] = resultadoSave.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -309,14 +326,14 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                 Mensagem: "Produto editado com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["ProdutoId"] = produto.Id.Valor,
+                    ["ProdutoId"] = produto.Id,
                     ["Ativo"] = produto.Ativo,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));
 
             return Resultado<EditarProdutoSaida>.Sucesso(
                 new EditarProdutoSaida(
-                    Id: produto.Id.Valor,
+                    Id: produto.Id,
                     Codigo: produto.Codigo.Valor,
                     Descricao: produto.Descricao.Valor,
                     UnidadeDeMedida: produto.UnidadeDeMedida.Valor,

@@ -62,7 +62,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Financeiro
         }
 
         public async Task<Resultado<Titulo?>> ObterPorIdAsync(
-            Id id, CancellationToken cancellationToken = default)
+            Guid id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -79,7 +79,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Financeiro
         }
 
         public async Task<Resultado<bool>> ExistePorIdAsync(
-            Id id, CancellationToken cancellationToken = default)
+            Guid id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -112,7 +112,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Financeiro
 
                 var itens = await consulta
                     .AsNoTracking()
-                    // Extrato por vencimento (mais próximos primeiro); Id como desempate.
+                    // Extrato por vencimento (mais próximos primeiro); Guid como desempate.
                     .OrderBy(t => t.DataVencimentoUtc)
                     .ThenBy(t => t.Id)
                     .Skip((pagina - 1) * tamanho)
@@ -140,7 +140,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Financeiro
                 SELECT * FROM {TabelaComSchema}
                 WHERE (@tipo::int IS NULL OR tipo = @tipo)
                   AND (@status::int IS NULL OR status = @status)
-                  AND (@id_parceiro::bigint IS NULL OR id_parceiro = @id_parceiro)
+                  AND (@id_parceiro::uuid IS NULL OR id_parceiro = @id_parceiro)
                   AND (@venc_inicio::timestamptz IS NULL OR data_vencimento_utc >= @venc_inicio)
                   AND (@venc_fim::timestamptz IS NULL OR data_vencimento_utc <= @venc_fim)
                 """;
@@ -149,7 +149,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Financeiro
                 sql,
                 CriarParametro("tipo", NpgsqlDbType.Integer, (int?)filtro?.Tipo),
                 CriarParametro("status", NpgsqlDbType.Integer, (int?)filtro?.Status),
-                CriarParametro("id_parceiro", NpgsqlDbType.Bigint, filtro?.IdParceiro),
+                CriarParametro("id_parceiro", NpgsqlDbType.Uuid, filtro?.IdParceiro),
                 CriarParametro("venc_inicio", NpgsqlDbType.TimestampTz, NormalizarUtc(filtro?.VencimentoInicio)),
                 CriarParametro("venc_fim", NpgsqlDbType.TimestampTz, NormalizarUtc(filtro?.VencimentoFim)));
         }

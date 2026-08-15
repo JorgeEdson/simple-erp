@@ -1,4 +1,4 @@
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.EventosDeDominio;
 
 namespace simple_erp.Api.Eventos
 {   

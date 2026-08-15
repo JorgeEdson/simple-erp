@@ -5,7 +5,7 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.Eventos
 {
     public sealed class ComposicaoDeProdutoAtivada : EventoDeDominio
     {
-        public ComposicaoDeProdutoAtivada(Id idComposicao, Id idProdutoFabricado, int versao)
+        public ComposicaoDeProdutoAtivada(Guid idComposicao, Guid idProdutoFabricado, int versao)
             : base(idComposicao)
         {
             IdComposicao = idComposicao;
@@ -13,8 +13,8 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.Eventos
             Versao = versao;
         }
 
-        public Id IdComposicao { get; }
-        public Id IdProdutoFabricado { get; }
+        public Guid IdComposicao { get; }
+        public Guid IdProdutoFabricado { get; }
         public int Versao { get; }
     }
 }

@@ -1,4 +1,4 @@
-using simple_erp.Core.Compartilhado.Especificacoes;
+using simple_erp.Core.Compartilhado.Contratos.Dominio.Especificacoes;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
 using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
 using System.Linq.Expressions;

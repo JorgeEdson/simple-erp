@@ -58,7 +58,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Vendas
         }
 
         public async Task<Resultado<PedidoDeVenda?>> ObterPorIdAsync(
-            Id id, CancellationToken cancellationToken = default)
+            Guid id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -75,7 +75,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Vendas
         }
 
         public async Task<Resultado<bool>> ExistePorIdAsync(
-            Id id, CancellationToken cancellationToken = default)
+            Guid id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -151,7 +151,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Vendas
         {
             const string sql = $"""
                 SELECT * FROM {TabelaComSchema}
-                WHERE (@id_cliente::bigint IS NULL OR id_cliente = @id_cliente)
+                WHERE (@id_cliente::uuid IS NULL OR id_cliente = @id_cliente)
                   AND (@status::int IS NULL OR status = @status)
                   AND (@data_inicio::timestamptz IS NULL OR data_criacao_utc >= @data_inicio)
                   AND (@data_fim::timestamptz IS NULL OR data_criacao_utc <= @data_fim)
@@ -159,7 +159,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Vendas
 
             return _contexto.Set<PedidoDeVenda>().FromSqlRaw(
                 sql,
-                CriarParametro("id_cliente", NpgsqlDbType.Bigint, filtro?.IdCliente),
+                CriarParametro("id_cliente", NpgsqlDbType.Uuid, filtro?.IdCliente),
                 CriarParametro("status", NpgsqlDbType.Integer, (int?)filtro?.Status),
                 CriarParametro("data_inicio", NpgsqlDbType.TimestampTz, NormalizarUtc(filtro?.DataInicio)),
                 CriarParametro("data_fim", NpgsqlDbType.TimestampTz, NormalizarUtc(filtro?.DataFim)));

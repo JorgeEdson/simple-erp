@@ -1,5 +1,6 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.EventosDeDominio;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Modulos.Financeiro.UseCases;
 using simple_erp.Core.Modulos.Vendas.Eventos;
 using System;
@@ -31,15 +32,15 @@ namespace simple_erp.Core.Modulos.Financeiro.Handlers
                 Propriedades: new Dictionary<string, object?>
                 {
                     ["Handler"] = nameof(GeracaoDeTituloAReceberHandler),
-                    ["PedidoDeVendaId"] = evento.IdPedidoDeVenda.Valor,
+                    ["PedidoDeVendaId"] = evento.IdPedidoDeVenda,
                     ["ValorTotal"] = evento.ValorTotal
                 }));
 
             var entrada = new EmitirTituloAReceberEntrada(
-                IdCliente: evento.IdCliente.Valor,
+                IdCliente: evento.IdCliente,
                 Valor: evento.ValorTotal,
                 DataVencimento: DateTime.UtcNow.AddDays(PrazoPadraoDeVencimentoEmDias),
-                IdPedidoDeVenda: evento.IdPedidoDeVenda.Valor);
+                IdPedidoDeVenda: evento.IdPedidoDeVenda);
 
             var resultado = await _emitirTituloAReceber.ExecutarAsync(entrada, cancellationToken);
 

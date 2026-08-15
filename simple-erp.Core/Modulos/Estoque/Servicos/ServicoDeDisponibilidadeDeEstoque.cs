@@ -26,15 +26,10 @@ namespace simple_erp.Core.Modulos.Estoque.Servicos
 
             foreach (var requisicao in requisicoes)
             {
-                var resultadoIdProduto = Id.TentarCriar(requisicao.IdProduto);
-
-                if (resultadoIdProduto.EhFalha)
-                    return Resultado<VerificacaoDeDisponibilidade>.Falha(resultadoIdProduto.Erros!);
-
                 var disponivel = 0m;
 
                 var existeSaldo = await _saldosDeEstoqueRepository
-                    .ExistePorProdutoAsync(resultadoIdProduto.Instancia, cancellationToken);
+                    .ExistePorProdutoAsync(requisicao.IdProduto, cancellationToken);
 
                 if (existeSaldo.EhFalha)
                     return Resultado<VerificacaoDeDisponibilidade>.Falha(existeSaldo.Erros!);
@@ -42,7 +37,7 @@ namespace simple_erp.Core.Modulos.Estoque.Servicos
                 if (existeSaldo.Instancia)
                 {
                     var resultadoSaldo = await _saldosDeEstoqueRepository
-                        .ObterPorProdutoAsync(resultadoIdProduto.Instancia, cancellationToken);
+                        .ObterPorProdutoAsync(requisicao.IdProduto, cancellationToken);
 
                     if (resultadoSaldo.EhFalha)
                         return Resultado<VerificacaoDeDisponibilidade>.Falha(resultadoSaldo.Erros!);

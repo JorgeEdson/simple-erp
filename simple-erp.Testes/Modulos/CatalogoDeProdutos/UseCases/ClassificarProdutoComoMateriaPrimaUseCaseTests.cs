@@ -1,13 +1,14 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Entidades;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.ObjetosDeValor;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases;
 using simple_erp.Testes.Compartilhado.Builders;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
 {
@@ -37,7 +38,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoIdForInvalido()
         {
             // Arrange
-            var entrada = new ClassificarProdutoComoMateriaPrimaEntrada(0);
+            var entrada = new ClassificarProdutoComoMateriaPrimaEntrada(Guid.Empty);
 
             // Act
             var resultado = await _useCase.ExecutarAsync(entrada);
@@ -48,7 +49,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
 
             await _produtosRepository
                 .DidNotReceive()
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>());
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
 
             await _produtosRepository
                 .DidNotReceive()
@@ -63,10 +64,10 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoOcorrerErroAoObterProdutoPorId()
         {
             // Arrange
-            var entrada = new ClassificarProdutoComoMateriaPrimaEntrada(123456);
+            var entrada = new ClassificarProdutoComoMateriaPrimaEntrada(new Guid("00000000-0000-0000-0000-000000123456"));
 
             _produtosRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Produto?>.Falha("ERRO_AO_OBTER_PRODUTO"));
 
             // Act
@@ -89,10 +90,10 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoProdutoNaoForEncontrado()
         {
             // Arrange
-            var entrada = new ClassificarProdutoComoMateriaPrimaEntrada(123456);
+            var entrada = new ClassificarProdutoComoMateriaPrimaEntrada(new Guid("00000000-0000-0000-0000-000000123456"));
 
             _produtosRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Produto?>.Falha("PRODUTO_NAO_ENCONTRADO"));
 
             // Act
@@ -116,14 +117,14 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
         {
             // Arrange
             var produto = ProdutoBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .Inativo()
                 .Criar();
 
-            var entrada = new ClassificarProdutoComoMateriaPrimaEntrada(produto.Id.Valor);
+            var entrada = new ClassificarProdutoComoMateriaPrimaEntrada(produto.Id);
 
             _produtosRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Produto?>.Sucesso(produto));
 
             // Act
@@ -147,13 +148,13 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
         {
             // Arrange
             var produto = ProdutoBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .Criar();
 
-            var entrada = new ClassificarProdutoComoMateriaPrimaEntrada(produto.Id.Valor);
+            var entrada = new ClassificarProdutoComoMateriaPrimaEntrada(produto.Id);
 
             _produtosRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Produto?>.Sucesso(produto));
 
             _produtosRepository
@@ -177,13 +178,13 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
         {
             // Arrange
             var produto = ProdutoBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .Criar();
 
-            var entrada = new ClassificarProdutoComoMateriaPrimaEntrada(produto.Id.Valor);
+            var entrada = new ClassificarProdutoComoMateriaPrimaEntrada(produto.Id);
 
             _produtosRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Produto?>.Sucesso(produto));
 
             _produtosRepository
@@ -205,7 +206,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
                 .Received(1)
                 .AtualizarAsync(
                     Arg.Is<Produto>(p =>
-                        p.Id.Valor == produto.Id.Valor &&
+                        p.Id == produto.Id &&
                         p.Classificacao == ClassificacaoProduto.MateriaPrima),
                     Arg.Any<CancellationToken>());
 
@@ -219,14 +220,14 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
         {
             // Arrange
             var produto = ProdutoBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .SemClassificacao()
                 .Criar();
 
-            var entrada = new ClassificarProdutoComoMateriaPrimaEntrada(produto.Id.Valor);
+            var entrada = new ClassificarProdutoComoMateriaPrimaEntrada(produto.Id);
 
             _produtosRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Produto?>.Sucesso(produto));
 
             _produtosRepository
@@ -242,21 +243,21 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
 
             // Assert
             resultado.EhSucesso.Should().BeTrue();
-            resultado.Instancia.Id.Should().Be(produto.Id.Valor);
+            resultado.Instancia.Id.Should().Be(produto.Id);
             resultado.Instancia.Classificacao.Should().Be(ClassificacaoProduto.MateriaPrima.ToString());
             resultado.Instancia.Ativo.Should().BeTrue();
 
             await _produtosRepository
                 .Received(1)
                 .ObterPorIdAsync(
-                    Arg.Is<Id>(id => id.Valor == produto.Id.Valor),
+                    Arg.Is<Guid>(id => id == produto.Id),
                     Arg.Any<CancellationToken>());
 
             await _produtosRepository
                 .Received(1)
                 .AtualizarAsync(
                     Arg.Is<Produto>(p =>
-                        p.Id.Valor == produto.Id.Valor &&
+                        p.Id == produto.Id &&
                         p.Classificacao == ClassificacaoProduto.MateriaPrima),
                     Arg.Any<CancellationToken>());
 

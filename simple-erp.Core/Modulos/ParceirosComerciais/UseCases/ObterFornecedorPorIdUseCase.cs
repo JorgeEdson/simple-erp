@@ -1,7 +1,7 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
-using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 {
@@ -10,10 +10,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
     {
     }
 
-    public record ObterFornecedorPorIdEntrada(long Id) : IRequisicao<ObterFornecedorPorIdSaida>;
+    public record ObterFornecedorPorIdEntrada(Guid Id) : IRequisicao<ObterFornecedorPorIdSaida>;
 
     public record ObterFornecedorPorIdSaida(
-        long Id,
+        Guid Id,
         string Nome,
         string Documento,
         string Email,
@@ -64,24 +64,21 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoId = Id.TentarCriar(dados.Id);
-
-            if (resultadoId.EhFalha)
+            if (dados.Id == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
 
                 _logService.RegistrarLogWarning(new RegistroDeLog(
-                    Mensagem: "Falha na validação do identificador para obtenção de fornecedor por id.",
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["FornecedorId"] = dados.Id,
-                        ["Erros"] = resultadoId.Erros?.ToArray(),
+                        ["Id"] = dados.Id,
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
 
-                return Resultado<ObterFornecedorPorIdSaida>.Falha(resultadoId.Erros!);
+                return Resultado<ObterFornecedorPorIdSaida>.Falha("ID_INVALIDO");
             }
 
             #endregion
@@ -91,7 +88,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
             var stopwatchObterFornecedor = Stopwatch.StartNew();
 
             var resultadoFornecedor = await _unitOfWork.FornecedoresRepository.ObterPorIdAsync(
-                resultadoId.Instancia,
+                dados.Id,
                 cancellationToken);
 
             stopwatchObterFornecedor.Stop();
@@ -112,7 +109,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Mensagem: "Falha ao obter fornecedor por id no repositório.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["FornecedorId"] = resultadoId.Instancia.Valor,
+                        ["FornecedorId"] = dados.Id,
                         ["Erros"] = resultadoFornecedor.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -130,7 +127,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Mensagem: "Tentativa de obtenção de fornecedor não encontrado por id.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["FornecedorId"] = resultadoId.Instancia.Valor,
+                        ["FornecedorId"] = dados.Id,
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
 
@@ -144,7 +141,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
             var stopwatchMapeamento = Stopwatch.StartNew();
 
             var saida = new ObterFornecedorPorIdSaida(
-                Id: fornecedor.Id.Valor,
+                Id: fornecedor.Id,
                 Nome: fornecedor.Nome.Valor,
                 Documento: fornecedor.Documento.Valor,
                 Email: fornecedor.Email.Valor,
@@ -181,7 +178,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 Mensagem: "Fornecedor obtido por id com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["FornecedorId"] = fornecedor.Id.Valor,
+                    ["FornecedorId"] = fornecedor.Id,
                     ["Ativo"] = fornecedor.Ativo,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));

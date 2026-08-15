@@ -1,9 +1,10 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Suprimentos.Entidades;
 using simple_erp.Core.Modulos.Suprimentos.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Core.Modulos.Suprimentos.UseCases
 {
@@ -13,23 +14,23 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
     }
 
     public record ItemPedidoDeCompraEntrada(
-        long IdProduto,
+        Guid IdProduto,
         decimal Quantidade,
         decimal CustoUnitario);
 
     public record CriarPedidoDeCompraEntrada(
-        long IdFornecedor,
+        Guid IdFornecedor,
         IReadOnlyCollection<ItemPedidoDeCompraEntrada> Itens) : IRequisicao<CriarPedidoDeCompraSaida>;
 
     public record ItemPedidoDeCompraSaida(
-        long IdProduto,
+        Guid IdProduto,
         decimal Quantidade,
         decimal CustoUnitario,
         decimal Subtotal);
 
     public record CriarPedidoDeCompraSaida(
-        long Id,
-        long IdFornecedor,
+        Guid Id,
+        Guid IdFornecedor,
         string Status,
         decimal ValorTotal,
         IReadOnlyCollection<ItemPedidoDeCompraSaida> Itens);
@@ -65,25 +66,26 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoIdFornecedor = Id.TentarCriar(dados.IdFornecedor);
-
-            if (resultadoIdFornecedor.EhFalha)
+            if (dados.IdFornecedor == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
 
                 _logService.RegistrarLogWarning(new RegistroDeLog(
-                    Mensagem: "Falha na validação do fornecedor para criação de pedido de compra.",
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["Erros"] = resultadoIdFornecedor.Erros?.ToArray(),
+                        ["IdFornecedor"] = dados.IdFornecedor,
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
 
-                return Resultado<CriarPedidoDeCompraSaida>.Falha(resultadoIdFornecedor.Erros!);
+                return Resultado<CriarPedidoDeCompraSaida>.Falha("ID_INVALIDO");
             }
 
+            #endregion
+
+            #region Validação da entrada
             #region Conversão e Validação dos Itens
 
             var itens = new List<ItemDePedidoDeCompra>();
@@ -93,14 +95,11 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
             {
                 foreach (var itemEntrada in dados.Itens)
                 {
-                    var resultadoIdProduto = Id.TentarCriar(itemEntrada.IdProduto);
                     var resultadoQuantidade = Quantidade.TentarCriar(itemEntrada.Quantidade);
                     var resultadoCusto = Dinheiro.TentarCriar(itemEntrada.CustoUnitario);
 
-                    var validacaoItem = Resultado.Combinar(
-                        resultadoIdProduto,
-                        resultadoQuantidade,
-                        resultadoCusto);
+                    var validacaoItem = Resultado.Combinar(resultadoQuantidade,
+                resultadoCusto);
 
                     if (validacaoItem.EhFalha)
                     {
@@ -109,7 +108,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
                     }
 
                     var resultadoItem = ItemDePedidoDeCompra.TentarCriar(
-                        resultadoIdProduto.Instancia,
+                        itemEntrada.IdProduto,
                         resultadoQuantidade.Instancia,
                         resultadoCusto.Instancia);
 
@@ -147,7 +146,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
             var stopwatchExisteFornecedor = Stopwatch.StartNew();
 
             var fornecedorExiste = await _unitOfWork.FornecedoresRepository.ExistePorIdAsync(
-                resultadoIdFornecedor.Instancia,
+                dados.IdFornecedor,
                 cancellationToken);
 
             stopwatchExisteFornecedor.Stop();
@@ -199,16 +198,8 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
 
             foreach (var idProduto in idsProdutos)
             {
-                var resultadoIdProd = Id.TentarCriar(idProduto);
-
-                if (resultadoIdProd.EhFalha)
-                {
-                    stopwatchUseCase.Stop();
-                    return Resultado<CriarPedidoDeCompraSaida>.Falha(resultadoIdProd.Erros!);
-                }
-
                 var existeProduto = await _unitOfWork.ProdutosRepository.ExistePorIdAsync(
-                    resultadoIdProd.Instancia,
+                    idProduto,
                     cancellationToken);
 
                 if (existeProduto.EhFalha)
@@ -244,7 +235,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
             var stopwatchCriarAgregado = Stopwatch.StartNew();
 
             var resultadoPedido = PedidoDeCompra.Criar(
-                resultadoIdFornecedor.Instancia,
+                dados.IdFornecedor,
                 itens);
 
             stopwatchCriarAgregado.Stop();
@@ -316,7 +307,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
                     Mensagem: "Falha ao persistir criação de pedido de compra.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["PedidoDeCompraId"] = pedido.Id.Valor,
+                        ["PedidoDeCompraId"] = pedido.Id,
                         ["Erros"] = resultadoSave.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -334,7 +325,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
                 Mensagem: "Pedido de compra criado com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["PedidoDeCompraId"] = pedido.Id.Valor,
+                    ["PedidoDeCompraId"] = pedido.Id,
                     ["Status"] = pedido.Status.ToString(),
                     ["ValorTotal"] = pedido.ValorTotal.Valor,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -350,8 +341,8 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
 
             return Resultado<CriarPedidoDeCompraSaida>.Sucesso(
                 new CriarPedidoDeCompraSaida(
-                    Id: pedido.Id.Valor,
-                    IdFornecedor: pedido.IdFornecedor.Valor,
+                    Id: pedido.Id,
+                    IdFornecedor: pedido.IdFornecedor,
                     Status: pedido.Status.ToString(),
                     ValorTotal: pedido.ValorTotal.Valor,
                     Itens: itensSaida));

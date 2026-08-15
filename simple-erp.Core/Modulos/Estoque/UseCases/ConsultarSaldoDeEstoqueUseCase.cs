@@ -1,7 +1,7 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
-using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Core.Modulos.Estoque.UseCases
 {
@@ -10,10 +10,10 @@ namespace simple_erp.Core.Modulos.Estoque.UseCases
     {
     }
 
-    public record ConsultarSaldoDeEstoqueEntrada(long IdProduto) : IRequisicao<ConsultarSaldoDeEstoqueSaida>;
+    public record ConsultarSaldoDeEstoqueEntrada(Guid IdProduto) : IRequisicao<ConsultarSaldoDeEstoqueSaida>;
 
     public record ConsultarSaldoDeEstoqueSaida(
-        long IdProduto,
+        Guid IdProduto,
         decimal QuantidadeAtual,
         bool PossuiRegistroDeSaldo);
 
@@ -47,24 +47,21 @@ namespace simple_erp.Core.Modulos.Estoque.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoId = Id.TentarCriar(dados.IdProduto);
-
-            if (resultadoId.EhFalha)
+            if (dados.IdProduto == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
 
                 _logService.RegistrarLogWarning(new RegistroDeLog(
-                    Mensagem: "Falha na validação do produto para consulta de saldo de estoque.",
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
                     Propriedades: new Dictionary<string, object?>
                     {
                         ["IdProduto"] = dados.IdProduto,
-                        ["Erros"] = resultadoId.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
 
-                return Resultado<ConsultarSaldoDeEstoqueSaida>.Falha(resultadoId.Erros!);
+                return Resultado<ConsultarSaldoDeEstoqueSaida>.Falha("ID_INVALIDO");
             }
 
             #endregion
@@ -74,7 +71,7 @@ namespace simple_erp.Core.Modulos.Estoque.UseCases
             var stopwatchExiste = Stopwatch.StartNew();
 
             var saldoExiste = await _unitOfWork.SaldosDeEstoqueRepository.ExistePorProdutoAsync(
-                resultadoId.Instancia,
+                dados.IdProduto,
                 cancellationToken);
 
             stopwatchExiste.Stop();
@@ -108,7 +105,7 @@ namespace simple_erp.Core.Modulos.Estoque.UseCases
             if (possuiRegistro)
             {
                 var resultadoSaldo = await _unitOfWork.SaldosDeEstoqueRepository.ObterPorProdutoAsync(
-                    resultadoId.Instancia,
+                    dados.IdProduto,
                     cancellationToken);
 
                 if (resultadoSaldo.EhFalha)

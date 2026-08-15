@@ -1,4 +1,4 @@
-﻿using simple_erp.Core.Compartilhado.ObjetosDeValor;
+using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
 using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
 using System;
@@ -9,7 +9,7 @@ namespace simple_erp.Testes.Compartilhado.Builders
 {
     public sealed class ClienteBuilder
     {
-        private long? _id = 202604020001;
+        private Guid? _id = new Guid("00000000-0000-0000-0000-202604020001");
         private string _nome = "Cliente Teste";
         private string _documento = "12345678909";
         private string _email = "cliente@teste.com";
@@ -18,7 +18,7 @@ namespace simple_erp.Testes.Compartilhado.Builders
 
         public static ClienteBuilder Novo() => new();
 
-        public ClienteBuilder ComId(long id)
+        public ClienteBuilder ComId(Guid id)
         {
             _id = id;
             return this;

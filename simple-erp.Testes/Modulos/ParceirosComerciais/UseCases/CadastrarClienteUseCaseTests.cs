@@ -1,12 +1,13 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Especificacoes;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
 using simple_erp.Core.Modulos.ParceirosComerciais.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.UseCases;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Dominio;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 
 namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
@@ -183,7 +184,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
             resultado.Instancia.Nome.Should().Be(entrada.Nome);
             resultado.Instancia.Email.Should().Be(entrada.Email);
             resultado.Instancia.Ativo.Should().BeTrue();
-            resultado.Instancia.Id.Should().BeGreaterThan(0);
+            resultado.Instancia.Id.Should().NotBeEmpty();
 
             await _clientesRepository
                 .Received(1)

@@ -29,9 +29,6 @@ namespace simple_erp.Infraestrutura.Persistencia.Configuracoes.Financeiro
 
             builder
                 .Property(titulo => titulo.IdParceiro)
-                .HasConversion(
-                    ConversoresDeObjetosDeValor.IdParaLong,
-                    ConversoresDeObjetosDeValor.ComparadorDeId)
                 .HasColumnName("id_parceiro")
                 .IsRequired();
 

@@ -14,14 +14,14 @@ namespace simple_erp.Testes.Modulos.Financeiro.Repositories
         [Fact]
         public void OrigemParaJson_DeveSerializarEDesserializar()
         {
-            var original = OrigemDoTitulo.TentarCriar(TipoOrigemTitulo.Venda, 987).Instancia!;
+            var original = OrigemDoTitulo.TentarCriar(TipoOrigemTitulo.Venda, new Guid("00000000-0000-0000-0000-000000000987")).Instancia!;
 
             var paraBanco = ConversoresDeFinanceiro.OrigemParaJson.ConvertToProviderExpression.Compile();
             var doBanco = ConversoresDeFinanceiro.OrigemParaJson.ConvertFromProviderExpression.Compile();
 
             var rehidratado = doBanco(paraBanco(original));
             rehidratado.Tipo.Should().Be(TipoOrigemTitulo.Venda);
-            rehidratado.IdReferencia.Should().Be(987);
+            rehidratado.IdReferencia.Should().Be(new Guid("00000000-0000-0000-0000-000000000987"));
         }
 
         [Fact]

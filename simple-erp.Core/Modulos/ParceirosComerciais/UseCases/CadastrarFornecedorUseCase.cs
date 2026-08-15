@@ -1,10 +1,11 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
 using simple_erp.Core.Modulos.ParceirosComerciais.Especificacoes;
 using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 {
@@ -28,7 +29,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
     ) : IRequisicao<CadastrarFornecedorSaida>;
 
     public record CadastrarFornecedorSaida(
-        long Id,
+        Guid Id,
         string Documento,
         string Nome,
         string Email,
@@ -243,7 +244,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Mensagem: "Falha ao persistir cadastro de fornecedor.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["FornecedorId"] = fornecedor.Id.Valor,
+                        ["FornecedorId"] = fornecedor.Id,
                         ["Documento"] = fornecedor.Documento.Formatado,
                         ["Erros"] = resultadoSaveChanges.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -262,14 +263,14 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 Mensagem: "Fornecedor cadastrado com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["FornecedorId"] = fornecedor.Id.Valor,
+                    ["FornecedorId"] = fornecedor.Id,
                     ["Ativo"] = fornecedor.Ativo,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));
 
             return Resultado<CadastrarFornecedorSaida>.Sucesso(
                 new CadastrarFornecedorSaida(
-                    Id: fornecedor.Id.Valor,
+                    Id: fornecedor.Id,
                     Documento: fornecedor.Documento.Formatado,
                     Nome: fornecedor.Nome.Valor,
                     Email: fornecedor.Email.Valor,

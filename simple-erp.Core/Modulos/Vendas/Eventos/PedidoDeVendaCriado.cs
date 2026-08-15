@@ -5,7 +5,7 @@ namespace simple_erp.Core.Modulos.Vendas.Eventos
 {
     public sealed class PedidoDeVendaCriado : EventoDeDominio
     {
-        public PedidoDeVendaCriado(Id idPedidoDeVenda, Id idCliente, int numero)
+        public PedidoDeVendaCriado(Guid idPedidoDeVenda, Guid idCliente, int numero)
             : base(idPedidoDeVenda)
         {
             IdPedidoDeVenda = idPedidoDeVenda;
@@ -13,8 +13,8 @@ namespace simple_erp.Core.Modulos.Vendas.Eventos
             Numero = numero;
         }
 
-        public Id IdPedidoDeVenda { get; }
-        public Id IdCliente { get; }
+        public Guid IdPedidoDeVenda { get; }
+        public Guid IdCliente { get; }
         public int Numero { get; }
     }
 }

@@ -13,7 +13,7 @@ namespace simple_erp.Testes.Modulos.Estoque.Repositories
         public void OrigemParaJson_DeveSerializarEDesserializarComReferencia()
         {
             var original = OrigemDaMovimentacao.TentarCriar(
-                TipoOrigemMovimentacao.Compra, idReferencia: 12345).Instancia!;
+                TipoOrigemMovimentacao.Compra, idReferencia: new Guid("00000000-0000-0000-0000-000000012345")).Instancia!;
 
             var paraBanco = ConversoresDeEstoque.OrigemParaJson.ConvertToProviderExpression.Compile();
             var doBanco = ConversoresDeEstoque.OrigemParaJson.ConvertFromProviderExpression.Compile();
@@ -24,7 +24,7 @@ namespace simple_erp.Testes.Modulos.Estoque.Repositories
 
             var rehidratado = doBanco(json);
             rehidratado.Tipo.Should().Be(TipoOrigemMovimentacao.Compra);
-            rehidratado.IdReferencia.Should().Be(12345);
+            rehidratado.IdReferencia.Should().Be(new Guid("00000000-0000-0000-0000-000000012345"));
         }
 
         [Fact]

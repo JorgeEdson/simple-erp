@@ -26,9 +26,6 @@ namespace simple_erp.Infraestrutura.Persistencia.Configuracoes.Producao
 
             builder
                 .Property(composicao => composicao.IdProdutoFabricado)
-                .HasConversion(
-                    ConversoresDeObjetosDeValor.IdParaLong,
-                    ConversoresDeObjetosDeValor.ComparadorDeId)
                 .HasColumnName("id_produto_fabricado")
                 .IsRequired();
 

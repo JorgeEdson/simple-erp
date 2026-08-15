@@ -1,4 +1,4 @@
-namespace simple_erp.Core.Compartilhado.Interfaces
+namespace simple_erp.Core.Compartilhado.Contratos.Dominio
 {
     /// <summary>
     /// Interface marcadora (marker interface) que identifica um <b>Serviço de Domínio</b>

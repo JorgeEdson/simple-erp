@@ -6,7 +6,7 @@ namespace simple_erp.Api.Modelos.Vendas
     /// do cliente permitiria um total inconsistente com os itens.
     /// </summary>
     public sealed record ItemDePedidoDeVendaRequest(
-        long IdProduto,
+        Guid IdProduto,
         decimal Quantidade,
         decimal PrecoUnitario,
         decimal Desconto = 0m);
@@ -16,7 +16,7 @@ namespace simple_erp.Api.Modelos.Vendas
     /// e atribuído pelo domínio.
     /// </summary>
     public sealed record CriarPedidoDeVendaRequest(
-        long IdCliente,
+        Guid IdCliente,
         IReadOnlyCollection<ItemDePedidoDeVendaRequest>? Itens,
         decimal DescontoDoPedido = 0m);
 
@@ -25,7 +25,7 @@ namespace simple_erp.Api.Modelos.Vendas
     /// rota, então só os dados do item entram aqui.
     /// </summary>
     public sealed record AdicionarItemAoPedidoDeVendaRequest(
-        long IdProduto,
+        Guid IdProduto,
         decimal Quantidade,
         decimal PrecoUnitario,
         decimal Desconto = 0m);

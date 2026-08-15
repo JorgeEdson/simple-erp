@@ -9,15 +9,15 @@ namespace simple_erp.Testes.Compartilhado.Builders
 {
     public sealed class PedidoDeVendaBuilder
     {
-        private long? _id = 202604020500;
+        private Guid? _id = new Guid("00000000-0000-0000-0000-202604020500");
         private int _numero = 1;
-        private long _idCliente = 202604020002;
+        private Guid _idCliente = new Guid("00000000-0000-0000-0000-202604020002");
         private decimal _descontoDoPedido = 0m;
 
         // (IdProduto, Quantidade, PrecoUnitario, Desconto)
-        private readonly List<(long, decimal, decimal, decimal)> _itens = new()
+        private readonly List<(Guid, decimal, decimal, decimal)> _itens = new()
         {
-            (202604020001, 2m, 10.00m, 0m)
+            (new Guid("00000000-0000-0000-0000-202604020001"), 2m, 10.00m, 0m)
         };
 
         private StatusPedidoDeVenda _statusAlvo = StatusPedidoDeVenda.EmEdicao;
@@ -25,7 +25,7 @@ namespace simple_erp.Testes.Compartilhado.Builders
 
         public static PedidoDeVendaBuilder Novo() => new();
 
-        public PedidoDeVendaBuilder ComId(long id)
+        public PedidoDeVendaBuilder ComId(Guid id)
         {
             _id = id;
             return this;
@@ -37,7 +37,7 @@ namespace simple_erp.Testes.Compartilhado.Builders
             return this;
         }
 
-        public PedidoDeVendaBuilder ComIdCliente(long idCliente)
+        public PedidoDeVendaBuilder ComIdCliente(Guid idCliente)
         {
             _idCliente = idCliente;
             return this;
@@ -55,7 +55,7 @@ namespace simple_erp.Testes.Compartilhado.Builders
             return this;
         }
 
-        public PedidoDeVendaBuilder ComItem(long idProduto, decimal quantidade, decimal precoUnitario, decimal desconto = 0m)
+        public PedidoDeVendaBuilder ComItem(Guid idProduto, decimal quantidade, decimal precoUnitario, decimal desconto = 0m)
         {
             _itens.Add((idProduto, quantidade, precoUnitario, desconto));
             return this;
@@ -87,11 +87,11 @@ namespace simple_erp.Testes.Compartilhado.Builders
 
         public PedidoDeVenda Criar()
         {
-            var idCliente = Id.TentarCriar(_idCliente).Instancia;
+            var idCliente = _idCliente;
 
             var itens = _itens
                 .Select(item => ItemDePedidoDeVenda.TentarCriar(
-                    Id.TentarCriar(item.Item1).Instancia,
+                    item.Item1,
                     Quantidade.TentarCriar(item.Item2).Instancia,
                     Dinheiro.TentarCriar(item.Item3).Instancia,
                     Dinheiro.TentarCriar(item.Item4).Instancia).Instancia)

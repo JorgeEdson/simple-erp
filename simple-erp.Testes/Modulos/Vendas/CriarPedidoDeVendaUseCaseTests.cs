@@ -1,7 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.ParceirosComerciais.Interfaces.Repositorios;
@@ -9,6 +8,8 @@ using simple_erp.Core.Modulos.Vendas.Entidades;
 using simple_erp.Core.Modulos.Vendas.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.Vendas.UseCases;
 using System.Collections.Generic;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.Vendas
 {
@@ -37,13 +38,13 @@ namespace simple_erp.Testes.Modulos.Vendas
         }
 
         private static CriarPedidoDeVendaEntrada EntradaValida() =>
-            new(202604020002, new List<ItemPedidoDeVendaEntrada> { new(202604020001, 2m, 10.00m) });
+            new(new Guid("00000000-0000-0000-0000-202604020002"), new List<ItemPedidoDeVendaEntrada> { new(new Guid("00000000-0000-0000-0000-202604020001"), 2m, 10.00m) });
 
         private void ConfigurarExistencias(bool cliente = true, bool produto = true)
         {
-            _clientesRepository.ExistePorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+            _clientesRepository.ExistePorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(cliente));
-            _produtosRepository.ExistePorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+            _produtosRepository.ExistePorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(produto));
         }
 

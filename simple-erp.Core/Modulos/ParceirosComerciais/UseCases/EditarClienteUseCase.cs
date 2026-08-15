@@ -1,10 +1,11 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
 using simple_erp.Core.Modulos.ParceirosComerciais.Especificacoes;
 using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 {
@@ -14,7 +15,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
     }
 
     public record EditarClienteEntrada(
-        long Id,
+        Guid Id,
         string Documento,
         string Nome,
         string Email,
@@ -29,7 +30,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
     ) : IRequisicao<EditarClienteSaida>;
 
     public record EditarClienteSaida(
-        long Id,
+        Guid Id,
         string Documento,
         string Nome,
         string Email,
@@ -68,9 +69,27 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
             #endregion
 
+            #region Validação do identificador
+
+            if (dados.Id == Guid.Empty)
+            {
+                stopwatchUseCase.Stop();
+
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["Id"] = dados.Id,
+                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                    }));
+
+                return Resultado<EditarClienteSaida>.Falha("ID_INVALIDO");
+            }
+
+            #endregion
+
             #region Validação da entrada
 
-            var resultadoId = Id.TentarCriar(dados.Id);
             var resultadoDocumento = Documento.TentarCriar(dados.Documento);
             var resultadoNome = Nome.TentarCriar(dados.Nome);
             var resultadoEmail = Email.TentarCriar(dados.Email);
@@ -85,9 +104,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     dados.Cep,
                     dados.Pais));
 
-            var validacaoCampos = Resultado.Combinar(
-                resultadoId,
-                resultadoDocumento,
+            var validacaoCampos = Resultado.Combinar(resultadoDocumento,
                 resultadoNome,
                 resultadoEmail,
                 resultadoEndereco);
@@ -114,7 +131,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
             var stopwatchObterCliente = Stopwatch.StartNew();
 
             var resultadoCliente = await _unitOfWork.ClientesRepository.ObterPorIdAsync(
-                resultadoId.Instancia,
+                dados.Id,
                 cancellationToken);
 
             stopwatchObterCliente.Stop();
@@ -135,7 +152,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Mensagem: "Falha ao obter cliente por id para edição.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ClienteId"] = resultadoId.Instancia.Valor,
+                        ["ClienteId"] = dados.Id,
                         ["Erros"] = resultadoCliente.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -153,7 +170,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Mensagem: "Tentativa de edição de cliente não encontrado.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ClienteId"] = resultadoId.Instancia.Valor,
+                        ["ClienteId"] = dados.Id,
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
 
@@ -199,7 +216,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                         Mensagem: "Falha ao verificar duplicidade de documento na edição de cliente.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["ClienteId"] = cliente.Id.Valor,
+                            ["ClienteId"] = cliente.Id,
                             ["Documento"] = resultadoDocumento.Instancia.Formatado,
                             ["Erros"] = resultadoExisteDocumento.Erros?.ToArray(),
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -216,7 +233,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                         Mensagem: "Tentativa de edição de cliente com documento já cadastrado para outro cliente.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["ClienteId"] = cliente.Id.Valor,
+                            ["ClienteId"] = cliente.Id,
                             ["Documento"] = resultadoDocumento.Instancia.Formatado,
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                         }));
@@ -250,7 +267,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                         Mensagem: "Falha ao aplicar alterações no agregado Cliente.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["ClienteId"] = cliente.Id.Valor,
+                            ["ClienteId"] = cliente.Id,
                             ["Erros"] = resultadoAlteracoes.Erros?.ToArray(),
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                         }));
@@ -288,7 +305,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Mensagem: "Falha ao atualizar cliente no repositório.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ClienteId"] = cliente.Id.Valor,
+                        ["ClienteId"] = cliente.Id,
                         ["Erros"] = resultadoAtualizar.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -318,7 +335,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Mensagem: "Falha ao persistir edição de cliente.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ClienteId"] = cliente.Id.Valor,
+                        ["ClienteId"] = cliente.Id,
                         ["Erros"] = resultadoSave.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -336,14 +353,14 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 Mensagem: "Cliente editado com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["ClienteId"] = cliente.Id.Valor,
+                    ["ClienteId"] = cliente.Id,
                     ["Ativo"] = cliente.Ativo,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));
 
             return Resultado<EditarClienteSaida>.Sucesso(
                 new EditarClienteSaida(
-                    Id: cliente.Id.Valor,
+                    Id: cliente.Id,
                     Documento: cliente.Documento.Formatado,
                     Nome: cliente.Nome.Valor,
                     Email: cliente.Email.Valor,

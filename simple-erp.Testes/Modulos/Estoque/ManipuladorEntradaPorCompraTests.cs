@@ -1,20 +1,20 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Estoque.Handlers;
 using simple_erp.Core.Modulos.Estoque.ObjetosDeValor;
 using simple_erp.Core.Modulos.Estoque.UseCases;
 using simple_erp.Core.Modulos.Suprimentos.Eventos;
 using System.Collections.Generic;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.Estoque
 {
     public sealed class ManipuladorEntradaPorCompraTests
     {
-        private const long IdPedido = 202604020003;
-        private const long IdFornecedor = 202604020002;
+        private static readonly Guid IdPedido = new Guid("00000000-0000-0000-0000-202604020003");
+        private static readonly Guid IdFornecedor = new Guid("00000000-0000-0000-0000-202604020002");
 
         private readonly IRegistrarMovimentacaoDeEstoqueUseCase _registrar =
             Substitute.For<IRegistrarMovimentacaoDeEstoqueUseCase>();
@@ -28,20 +28,20 @@ namespace simple_erp.Testes.Modulos.Estoque
 
         private static PedidoDeCompraEfetivado EventoComDoisItens() =>
             new(
-                Id.TentarCriar(IdPedido).Instancia,
-                Id.TentarCriar(IdFornecedor).Instancia,
+                IdPedido,
+                IdFornecedor,
                 valorTotal: 22.00m,
                 itens: new List<ItemPedidoDeCompraEfetivado>
                 {
-                    new(202604020010, 5m, 2.00m),
-                    new(202604020011, 3m, 4.00m)
+                    new(new Guid("00000000-0000-0000-0000-202604020010"), 5m, 2.00m),
+                    new(new Guid("00000000-0000-0000-0000-202604020011"), 3m, 4.00m)
                 });
 
         private void ConfigurarSucesso() =>
             _registrar
                 .ExecutarAsync(Arg.Any<RegistrarMovimentacaoDeEstoqueEntrada>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<RegistrarMovimentacaoDeEstoqueSaida>.Sucesso(
-                    new RegistrarMovimentacaoDeEstoqueSaida(1, 1, "EntradaPorCompra", "Entrada", 1m, 1m)));
+                    new RegistrarMovimentacaoDeEstoqueSaida(new Guid("00000000-0000-0000-0000-000000000001"), new Guid("00000000-0000-0000-0000-000000000001"), "EntradaPorCompra", "Entrada", 1m, 1m)));
 
         [Fact]
         public async Task ManipularAsync_DeveRegistrarUmaEntradaPorItem_ComOrigemNoPedido()
@@ -60,7 +60,7 @@ namespace simple_erp.Testes.Modulos.Estoque
                 .Received(1)
                 .ExecutarAsync(
                     Arg.Is<RegistrarMovimentacaoDeEstoqueEntrada>(e =>
-                        e.IdProduto == 202604020010 &&
+                        e.IdProduto == new Guid("00000000-0000-0000-0000-202604020010") &&
                         e.Quantidade == 5m &&
                         e.Tipo == TipoDeMovimentacao.EntradaPorCompra &&
                         e.OrigemTipo == TipoOrigemMovimentacao.Compra &&

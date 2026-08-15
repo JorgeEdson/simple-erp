@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore.Storage;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.Estoque.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.Financeiro.Interfaces.Repositorios;
@@ -10,6 +9,7 @@ using simple_erp.Core.Modulos.Producao.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.Suprimentos.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.Vendas.Interfaces.Repositorios;
 using simple_erp.Infraestrutura.Persistencia.Contexto;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Infraestrutura.Persistencia
 {   

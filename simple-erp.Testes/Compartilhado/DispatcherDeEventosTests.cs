@@ -1,11 +1,11 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Eventos;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.EventosDeDominio;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Suprimentos.Eventos;
 using System.Collections.Generic;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Compartilhado
 {
@@ -13,8 +13,8 @@ namespace simple_erp.Testes.Compartilhado
     {
         private readonly ILogService _logService = Substitute.For<ILogService>();
 
-        private static PedidoDeCompraCancelado Evento(long id = 202604020003) =>
-            new(Id.TentarCriar(id).Instancia);
+        private static PedidoDeCompraCancelado Evento(Guid? id = null) =>
+            new(id ?? new Guid("00000000-0000-0000-0000-202604020003"));
 
         /// <summary>Handler concreto (spy) para exercitar o double-dispatch real do dispatcher.</summary>
         private sealed class HandlerEspiao : IManipuladorDeEventoDeDominio<PedidoDeCompraCancelado>

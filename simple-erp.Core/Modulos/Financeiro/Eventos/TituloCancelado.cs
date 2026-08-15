@@ -5,12 +5,12 @@ namespace simple_erp.Core.Modulos.Financeiro.Eventos
 {
     public sealed class TituloCancelado : EventoDeDominio
     {
-        public TituloCancelado(Id idTitulo)
+        public TituloCancelado(Guid idTitulo)
             : base(idTitulo)
         {
             IdTitulo = idTitulo;
         }
 
-        public Id IdTitulo { get; }
+        public Guid IdTitulo { get; }
     }
 }

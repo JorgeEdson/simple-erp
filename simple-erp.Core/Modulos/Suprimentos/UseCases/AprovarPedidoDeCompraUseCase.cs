@@ -1,7 +1,7 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
-using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Core.Modulos.Suprimentos.UseCases
 {
@@ -10,10 +10,10 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
     {
     }
 
-    public record AprovarPedidoDeCompraEntrada(long Id) : IRequisicao<AprovarPedidoDeCompraSaida>;
+    public record AprovarPedidoDeCompraEntrada(Guid Id) : IRequisicao<AprovarPedidoDeCompraSaida>;
 
     public record AprovarPedidoDeCompraSaida(
-        long Id,
+        Guid Id,
         string Status,
         decimal ValorTotal);
 
@@ -47,24 +47,21 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoId = Id.TentarCriar(dados.Id);
-
-            if (resultadoId.EhFalha)
+            if (dados.Id == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
 
                 _logService.RegistrarLogWarning(new RegistroDeLog(
-                    Mensagem: "Falha na validação do identificador para aprovação de pedido de compra.",
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["PedidoDeCompraId"] = dados.Id,
-                        ["Erros"] = resultadoId.Erros?.ToArray(),
+                        ["Id"] = dados.Id,
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
 
-                return Resultado<AprovarPedidoDeCompraSaida>.Falha(resultadoId.Erros!);
+                return Resultado<AprovarPedidoDeCompraSaida>.Falha("ID_INVALIDO");
             }
 
             #endregion
@@ -74,7 +71,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
             var stopwatchObter = Stopwatch.StartNew();
 
             var resultadoPedido = await _unitOfWork.PedidosDeCompraRepository.ObterPorIdAsync(
-                resultadoId.Instancia,
+                dados.Id,
                 cancellationToken);
 
             stopwatchObter.Stop();
@@ -135,7 +132,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
                         Mensagem: "Falha ao aprovar agregado PedidoDeCompra.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["PedidoDeCompraId"] = pedido.Id.Valor,
+                            ["PedidoDeCompraId"] = pedido.Id,
                             ["Status"] = pedido.Status.ToString(),
                             ["Erros"] = resultadoAprovacao.Erros?.ToArray(),
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -174,7 +171,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
                     Mensagem: "Falha ao atualizar pedido de compra no repositório durante aprovação.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["PedidoDeCompraId"] = pedido.Id.Valor,
+                        ["PedidoDeCompraId"] = pedido.Id,
                         ["Erros"] = resultadoAtualizar.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -204,7 +201,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
                     Mensagem: "Falha ao persistir aprovação de pedido de compra.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["PedidoDeCompraId"] = pedido.Id.Valor,
+                        ["PedidoDeCompraId"] = pedido.Id,
                         ["Erros"] = resultadoSave.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -222,7 +219,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
                 Mensagem: "Pedido de compra aprovado com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["PedidoDeCompraId"] = pedido.Id.Valor,
+                    ["PedidoDeCompraId"] = pedido.Id,
                     ["Status"] = pedido.Status.ToString(),
                     ["ValorTotal"] = pedido.ValorTotal.Valor,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -230,7 +227,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
 
             return Resultado<AprovarPedidoDeCompraSaida>.Sucesso(
                 new AprovarPedidoDeCompraSaida(
-                    Id: pedido.Id.Valor,
+                    Id: pedido.Id,
                     Status: pedido.Status.ToString(),
                     ValorTotal: pedido.ValorTotal.Valor));
 

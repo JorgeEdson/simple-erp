@@ -10,20 +10,20 @@ namespace simple_erp.Testes.Modulos.Producao
 {
     public sealed class OrdemDeProducaoTests
     {
-        private static NecessidadeDeMateriaPrima Necessidade(long idInsumo, decimal quantidade) =>
+        private static NecessidadeDeMateriaPrima Necessidade(Guid idInsumo, decimal quantidade) =>
             NecessidadeDeMateriaPrima.TentarCriar(
-                Id.TentarCriar(idInsumo).Instancia,
+                idInsumo,
                 Quantidade.TentarCriar(quantidade).Instancia).Instancia;
 
         [Fact]
         public void Criar_DeveNascerCriadaEEmitirEvento()
         {
-            var idProduto = Id.TentarCriar(202604020001).Instancia;
-            var idComposicao = Id.TentarCriar(202604020300).Instancia;
+            var idProduto = new Guid("00000000-0000-0000-0000-202604020001");
+            var idComposicao = new Guid("00000000-0000-0000-0000-202604020300");
             var quantidade = Quantidade.TentarCriar(5m).Instancia;
 
             var resultado = OrdemDeProducao.Criar(
-                idProduto, idComposicao, quantidade, new[] { Necessidade(202604020010, 10m) });
+                idProduto, idComposicao, quantidade, new[] { Necessidade(new Guid("00000000-0000-0000-0000-202604020010"), 10m) });
 
             resultado.EhSucesso.Should().BeTrue();
             resultado.Instancia.EstaCriada.Should().BeTrue();
@@ -33,8 +33,8 @@ namespace simple_erp.Testes.Modulos.Producao
         [Fact]
         public void Criar_DeveFalhar_QuandoNaoHouverNecessidades()
         {
-            var idProduto = Id.TentarCriar(202604020001).Instancia;
-            var idComposicao = Id.TentarCriar(202604020300).Instancia;
+            var idProduto = new Guid("00000000-0000-0000-0000-202604020001");
+            var idComposicao = new Guid("00000000-0000-0000-0000-202604020300");
             var quantidade = Quantidade.TentarCriar(5m).Instancia;
 
             var resultado = OrdemDeProducao.Criar(
@@ -72,7 +72,7 @@ namespace simple_erp.Testes.Modulos.Producao
         {
             var ordem = OrdemDeProducaoBuilder.Novo()
                 .SemNecessidades()
-                .ComNecessidade(202604020010, 10m)
+                .ComNecessidade(new Guid("00000000-0000-0000-0000-202604020010"), 10m)
                 .Confirmada()
                 .Criar();
 
@@ -82,7 +82,7 @@ namespace simple_erp.Testes.Modulos.Producao
             ordem.EstaConcluida.Should().BeTrue();
 
             var evento = ordem.EventosDeDominio.OfType<OrdemDeProducaoConcluida>().Should().ContainSingle().Subject;
-            evento.InsumosConsumidos.Should().ContainSingle(i => i.IdInsumo == 202604020010 && i.Quantidade == 10m);
+            evento.InsumosConsumidos.Should().ContainSingle(i => i.IdInsumo == new Guid("00000000-0000-0000-0000-202604020010") && i.Quantidade == 10m);
         }
 
         [Fact]

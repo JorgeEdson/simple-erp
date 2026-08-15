@@ -13,14 +13,14 @@ namespace simple_erp.Testes.Modulos.Producao.Repositories
     /// </summary>
     public sealed class ConversoresDeProducaoTests
     {
-        private static NecessidadeDeMateriaPrima Necessidade(long idInsumo, decimal quantidade) =>
+        private static NecessidadeDeMateriaPrima Necessidade(Guid idInsumo, decimal quantidade) =>
             NecessidadeDeMateriaPrima.TentarCriar(
-                Id.TentarCriar(idInsumo).Instancia,
+                idInsumo,
                 Quantidade.TentarCriar(quantidade).Instancia).Instancia!;
 
-        private static ItemDeComposicao ItemComposicao(long idInsumo, decimal quantidade) =>
+        private static ItemDeComposicao ItemComposicao(Guid idInsumo, decimal quantidade) =>
             ItemDeComposicao.TentarCriar(
-                Id.TentarCriar(idInsumo).Instancia,
+                idInsumo,
                 Quantidade.TentarCriar(quantidade).Instancia).Instancia!;
 
         [Fact]
@@ -28,8 +28,8 @@ namespace simple_erp.Testes.Modulos.Producao.Repositories
         {
             var necessidades = new List<NecessidadeDeMateriaPrima>
             {
-                Necessidade(202607210010, 2m),
-                Necessidade(202607210011, 5.25m)
+                Necessidade(new Guid("00000000-0000-0000-0000-202607210010"), 2m),
+                Necessidade(new Guid("00000000-0000-0000-0000-202607210011"), 5.25m)
             };
 
             var paraBanco = ConversoresDeProducao.NecessidadesParaJson.ConvertToProviderExpression.Compile();
@@ -38,7 +38,7 @@ namespace simple_erp.Testes.Modulos.Producao.Repositories
             var rehidratado = doBanco(paraBanco(necessidades));
 
             rehidratado.Should().HaveCount(2);
-            rehidratado[1].IdInsumo.Should().Be(202607210011);
+            rehidratado[1].IdInsumo.Should().Be(new Guid("00000000-0000-0000-0000-202607210011"));
             rehidratado[1].QuantidadeNecessaria.Should().Be(5.25m);
         }
 
@@ -47,8 +47,8 @@ namespace simple_erp.Testes.Modulos.Producao.Repositories
         {
             var itens = new List<ItemDeComposicao>
             {
-                ItemComposicao(202607210010, 2m),
-                ItemComposicao(202607210011, 0.75m)
+                ItemComposicao(new Guid("00000000-0000-0000-0000-202607210010"), 2m),
+                ItemComposicao(new Guid("00000000-0000-0000-0000-202607210011"), 0.75m)
             };
 
             var paraBanco = ConversoresDeProducao.ItensDeComposicaoParaJson.ConvertToProviderExpression.Compile();
@@ -57,20 +57,20 @@ namespace simple_erp.Testes.Modulos.Producao.Repositories
             var rehidratado = doBanco(paraBanco(itens));
 
             rehidratado.Should().HaveCount(2);
-            rehidratado[1].IdInsumo.Should().Be(202607210011);
+            rehidratado[1].IdInsumo.Should().Be(new Guid("00000000-0000-0000-0000-202607210011"));
             rehidratado[1].QuantidadePorUnidade.Should().Be(0.75m);
         }
 
         [Fact]
         public void Comparadores_DevemIgualarColecoesComMesmoConteudo()
         {
-            var necessidadesA = new List<NecessidadeDeMateriaPrima> { Necessidade(202607210010, 2m) };
-            var necessidadesB = new List<NecessidadeDeMateriaPrima> { Necessidade(202607210010, 2m) };
+            var necessidadesA = new List<NecessidadeDeMateriaPrima> { Necessidade(new Guid("00000000-0000-0000-0000-202607210010"), 2m) };
+            var necessidadesB = new List<NecessidadeDeMateriaPrima> { Necessidade(new Guid("00000000-0000-0000-0000-202607210010"), 2m) };
             ConversoresDeProducao.ComparadorDeNecessidades.Equals(necessidadesA, necessidadesB)
                 .Should().BeTrue();
 
-            var itensA = new List<ItemDeComposicao> { ItemComposicao(202607210010, 2m) };
-            var itensB = new List<ItemDeComposicao> { ItemComposicao(202607210010, 2m) };
+            var itensA = new List<ItemDeComposicao> { ItemComposicao(new Guid("00000000-0000-0000-0000-202607210010"), 2m) };
+            var itensB = new List<ItemDeComposicao> { ItemComposicao(new Guid("00000000-0000-0000-0000-202607210010"), 2m) };
             ConversoresDeProducao.ComparadorDeItensDeComposicao.Equals(itensA, itensB)
                 .Should().BeTrue();
         }

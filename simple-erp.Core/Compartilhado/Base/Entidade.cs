@@ -1,4 +1,4 @@
-﻿using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Dominio;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 
 namespace simple_erp.Core.Compartilhado.Base
@@ -7,16 +7,16 @@ namespace simple_erp.Core.Compartilhado.Base
     {
         private readonly List<EventoDeDominio> _eventosDeDominio = new();
         protected Entidade(
-            long? id = null,
+            Guid? id = null,
             DateTime? dataCriacaoUtc = null,
             DateTime? dataAtualizacaoUtc = null)
         {
-            Id = Id.TentarCriar(id).Instancia;
+            Id = id ?? Guid.NewGuid();
             DataCriacaoUtc = dataCriacaoUtc ?? DateTime.UtcNow;
-            DataAtualizacaoUtc = dataAtualizacaoUtc ?? DateTime.UtcNow;            
+            DataAtualizacaoUtc = dataAtualizacaoUtc ?? DateTime.UtcNow;
         }
 
-        public Id Id { get; protected set; }
+        public Guid Id { get; protected set; }
         public DateTime DataCriacaoUtc { get; protected set; }
         public DateTime DataAtualizacaoUtc { get; protected set; }
         public IReadOnlyCollection<EventoDeDominio> EventosDeDominio =>
@@ -24,7 +24,7 @@ namespace simple_erp.Core.Compartilhado.Base
 
         public bool IgualA(Entidade<TEntidade> entidade)
         {
-            return Id.IgualA(entidade.Id);
+            return entidade is not null && Id == entidade.Id;
         }
 
         public bool DiferenteDe(Entidade<TEntidade> entidade)
@@ -64,7 +64,7 @@ namespace simple_erp.Core.Compartilhado.Base
 
         public override string ToString()
         {
-            return $"{typeof(TEntidade).Name} [{Id.Valor}]";
+            return $"{typeof(TEntidade).Name} [{Id}]";
         }
     }
 }

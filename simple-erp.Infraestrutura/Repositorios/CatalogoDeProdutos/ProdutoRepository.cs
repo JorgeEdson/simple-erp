@@ -53,7 +53,7 @@ namespace simple_erp.Infraestrutura.Repositorios.CatalogoDeProdutos
         }
 
         public async Task<Resultado<Produto>> ObterPorIdAsync(
-            Id id, CancellationToken cancellationToken = default)
+            Guid id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -88,7 +88,7 @@ namespace simple_erp.Infraestrutura.Repositorios.CatalogoDeProdutos
         }
 
         public async Task<Resultado<bool>> ExistePorIdAsync(
-            Id id, CancellationToken cancellationToken = default)
+            Guid id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -122,7 +122,7 @@ namespace simple_erp.Infraestrutura.Repositorios.CatalogoDeProdutos
         }
 
         public async Task<Resultado<bool>> ExisteOutroPorCodigoAsync(
-            Id idProduto, CodigoProduto codigo, CancellationToken cancellationToken = default)
+            Guid idProduto, CodigoProduto codigo, CancellationToken cancellationToken = default)
         {
             try
             {

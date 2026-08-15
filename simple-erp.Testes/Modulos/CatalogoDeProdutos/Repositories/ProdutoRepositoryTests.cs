@@ -39,7 +39,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.Repositories
         public async Task AdicionarEObterPorId_DevePersistirERecuperarTodosOsValueObjects()
         {
             var produto = ProdutoBuilder.Novo()
-                .ComId(202607210001)
+                .ComId(new Guid("00000000-0000-0000-0000-202607210001"))
                 .ComCodigo("PROD-001")
                 .ComDescricao("Parafuso sextavado M8")
                 .ComUnidadeDeMedida("PC")
@@ -52,10 +52,10 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.Repositories
             var repositorio = new ProdutoRepository(contexto);
 
             var recuperado = (await repositorio.ObterPorIdAsync(
-                Id.TentarCriar(202607210001).Instancia)).Instancia;
+                new Guid("00000000-0000-0000-0000-202607210001"))).Instancia;
 
             recuperado.Should().NotBeNull();
-            recuperado!.Id.Valor.Should().Be(202607210001);
+            recuperado!.Id.Should().Be(new Guid("00000000-0000-0000-0000-202607210001"));
             recuperado.Codigo.Valor.Should().Be("PROD-001");
             recuperado.Descricao.Valor.Should().Be("Parafuso sextavado M8");
             recuperado.UnidadeDeMedida.Valor.Should().Be("PC");
@@ -70,7 +70,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.Repositories
             await using var contexto = _fixture.CriarContexto();
             var repositorio = new ProdutoRepository(contexto);
 
-            var resultado = await repositorio.ObterPorIdAsync(Id.TentarCriar(999999999999).Instancia);
+            var resultado = await repositorio.ObterPorIdAsync(new Guid("00000000-0000-0000-0000-999999999999"));
 
             resultado.EhSucesso.Should().BeTrue();
             resultado.Instancia.Should().BeNull();
@@ -79,7 +79,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.Repositories
         [Fact]
         public async Task ObterPorCodigoAsync_DeveNormalizarParaMaiusculas()
         {
-            await SalvarAsync(ProdutoBuilder.Novo().ComId(202607210010).ComCodigo("ABC-123").Criar());
+            await SalvarAsync(ProdutoBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210010")).ComCodigo("ABC-123").Criar());
 
             await using var contexto = _fixture.CriarContexto();
             var repositorio = new ProdutoRepository(contexto);
@@ -90,7 +90,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.Repositories
 
             resultado.EhSucesso.Should().BeTrue();
             resultado.Instancia.Should().NotBeNull();
-            resultado.Instancia!.Id.Valor.Should().Be(202607210010);
+            resultado.Instancia!.Id.Should().Be(new Guid("00000000-0000-0000-0000-202607210010"));
 
             (await repositorio.ExistePorCodigoAsync(Codigo("ABC-123"))).Instancia.Should().BeTrue();
             (await repositorio.ExistePorCodigoAsync(Codigo("NAO-EXISTE"))).Instancia.Should().BeFalse();
@@ -100,29 +100,29 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.Repositories
         public async Task ExisteOutroPorCodigoAsync_DeveIgnorarOProprioProduto()
         {
             await SalvarAsync(
-                ProdutoBuilder.Novo().ComId(202607210020).ComCodigo("COD-A").Criar(),
-                ProdutoBuilder.Novo().ComId(202607210021).ComCodigo("COD-B").Criar());
+                ProdutoBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210020")).ComCodigo("COD-A").Criar(),
+                ProdutoBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210021")).ComCodigo("COD-B").Criar());
 
             await using var contexto = _fixture.CriarContexto();
             var repositorio = new ProdutoRepository(contexto);
             var codigo = Codigo("COD-A");
 
             (await repositorio.ExisteOutroPorCodigoAsync(
-                Id.TentarCriar(202607210020).Instancia, codigo)).Instancia.Should().BeFalse();
+                new Guid("00000000-0000-0000-0000-202607210020"), codigo)).Instancia.Should().BeFalse();
             (await repositorio.ExisteOutroPorCodigoAsync(
-                Id.TentarCriar(202607210021).Instancia, codigo)).Instancia.Should().BeTrue();
+                new Guid("00000000-0000-0000-0000-202607210021"), codigo)).Instancia.Should().BeTrue();
         }
 
         [Fact]
         public async Task AtualizarAsync_DevePersistirAlteracoesDaEntidadeRastreada()
         {
-            await SalvarAsync(ProdutoBuilder.Novo().ComId(202607210030).ComCodigo("EDIT-1").Criar());
+            await SalvarAsync(ProdutoBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210030")).ComCodigo("EDIT-1").Criar());
 
             await using (var contexto = _fixture.CriarContexto())
             {
                 var repositorio = new ProdutoRepository(contexto);
                 var produto = (await repositorio.ObterPorIdAsync(
-                    Id.TentarCriar(202607210030).Instancia)).Instancia!;
+                    new Guid("00000000-0000-0000-0000-202607210030"))).Instancia!;
 
                 produto.AlterarDescricao(DescricaoProduto.TentarCriar("Descrição Editada").Instancia);
                 produto.ClassificarComoFabricado();
@@ -133,7 +133,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.Repositories
 
             await using var contextoLeitura = _fixture.CriarContexto();
             var recuperado = (await new ProdutoRepository(contextoLeitura).ObterPorIdAsync(
-                Id.TentarCriar(202607210030).Instancia)).Instancia!;
+                new Guid("00000000-0000-0000-0000-202607210030"))).Instancia!;
 
             recuperado.Descricao.Valor.Should().Be("Descrição Editada");
             recuperado.Classificacao.Should().Be(ClassificacaoProduto.Fabricado);
@@ -143,11 +143,11 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.Repositories
         public async Task ListarPaginadoAsync_DeveFiltrarNoBanco_PorTodosOsCampos()
         {
             await SalvarAsync(
-                ProdutoBuilder.Novo().ComId(202607210040).ComCodigo("MP-001").ComDescricao("Aço laminado")
+                ProdutoBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210040")).ComCodigo("MP-001").ComDescricao("Aço laminado")
                     .ComUnidadeDeMedida("KG").ComoMateriaPrima().Criar(),
-                ProdutoBuilder.Novo().ComId(202607210041).ComCodigo("MP-002").ComDescricao("Aço inox")
+                ProdutoBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210041")).ComCodigo("MP-002").ComDescricao("Aço inox")
                     .ComUnidadeDeMedida("KG").ComoMateriaPrima().Inativo().Criar(),
-                ProdutoBuilder.Novo().ComId(202607210042).ComCodigo("FAB-001").ComDescricao("Cadeira montada")
+                ProdutoBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210042")).ComCodigo("FAB-001").ComDescricao("Cadeira montada")
                     .ComUnidadeDeMedida("UN").ComoFabricado().Criar());
 
             await using var contexto = _fixture.CriarContexto();
@@ -185,9 +185,9 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.Repositories
         public async Task ListarPaginadoAsync_DevePaginarOrdenandoPorCodigo()
         {
             await SalvarAsync(
-                ProdutoBuilder.Novo().ComId(202607210050).ComCodigo("C-003").Criar(),
-                ProdutoBuilder.Novo().ComId(202607210051).ComCodigo("C-001").Criar(),
-                ProdutoBuilder.Novo().ComId(202607210052).ComCodigo("C-002").Criar());
+                ProdutoBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210050")).ComCodigo("C-003").Criar(),
+                ProdutoBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210051")).ComCodigo("C-001").Criar(),
+                ProdutoBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210052")).ComCodigo("C-002").Criar());
 
             await using var contexto = _fixture.CriarContexto();
             var repositorio = new ProdutoRepository(contexto);

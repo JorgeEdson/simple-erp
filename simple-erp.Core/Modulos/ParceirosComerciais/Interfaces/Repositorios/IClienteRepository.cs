@@ -1,6 +1,5 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Especificacoes;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Dominio;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
 using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
@@ -13,10 +12,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.Interfaces.Repositorios
         Task<Resultado<bool>> AdicionarAsync(Cliente cliente, CancellationToken cancellationToken = default);
         Task<Resultado<bool>> AtualizarAsync(Cliente cliente, CancellationToken cancellationToken = default);
 
-        Task<Resultado<Cliente>> ObterPorIdAsync(Id id, CancellationToken cancellationToken = default);
+        Task<Resultado<Cliente>> ObterPorIdAsync(Guid id, CancellationToken cancellationToken = default);
         Task<Resultado<Cliente?>> ObterPorDocumentoAsync(Documento documento, CancellationToken cancellationToken = default);
 
-        Task<Resultado<bool>> ExistePorIdAsync(Id id, CancellationToken cancellationToken = default);
+        Task<Resultado<bool>> ExistePorIdAsync(Guid id, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Indica se existe algum cliente que satisfaça a especificação. Substitui os antigos

@@ -1,5 +1,6 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.EventosDeDominio;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Modulos.Financeiro.UseCases;
 using simple_erp.Core.Modulos.Suprimentos.Eventos;
 using System;
@@ -31,15 +32,15 @@ namespace simple_erp.Core.Modulos.Financeiro.Handlers
                 Propriedades: new Dictionary<string, object?>
                 {
                     ["Handler"] = nameof(GeracaoDeTituloAPagarHandler),
-                    ["PedidoDeCompraId"] = evento.IdPedidoDeCompra.Valor,
+                    ["PedidoDeCompraId"] = evento.IdPedidoDeCompra,
                     ["ValorTotal"] = evento.ValorTotal
                 }));
 
             var entrada = new EmitirTituloAPagarEntrada(
-                IdFornecedor: evento.IdFornecedor.Valor,
+                IdFornecedor: evento.IdFornecedor,
                 Valor: evento.ValorTotal,
                 DataVencimento: DateTime.UtcNow.AddDays(PrazoPadraoDeVencimentoEmDias),
-                IdPedidoDeCompra: evento.IdPedidoDeCompra.Valor);
+                IdPedidoDeCompra: evento.IdPedidoDeCompra);
 
             var resultado = await _emitirTituloAPagar.ExecutarAsync(entrada, cancellationToken);
 

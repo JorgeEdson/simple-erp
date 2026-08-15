@@ -17,14 +17,14 @@ namespace simple_erp.Core.Modulos.Suprimentos.ObjetosDeValor
         }
 
         public static Resultado<ItemDePedidoDeCompra> TentarCriar(
-            Id idProduto,
+            Guid idProduto,
             Quantidade quantidade,
             Dinheiro custoUnitario,
             IConfiguracaoObjetoDeValor? configuracao = null)
         {
             var erros = new List<string>();
 
-            if (idProduto is null)
+            if (idProduto == Guid.Empty)
                 erros.Add("PRODUTO_OBRIGATORIO");
 
             if (quantidade is null)
@@ -37,7 +37,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.ObjetosDeValor
                 return Resultado<ItemDePedidoDeCompra>.Falha(erros);
 
             var propriedades = new PropriedadesItemDePedidoDeCompra(
-                IdProduto: idProduto!.Valor,
+                IdProduto: idProduto,
                 Quantidade: quantidade!.Valor,
                 CustoUnitario: custoUnitario!.Valor);
 
@@ -45,12 +45,12 @@ namespace simple_erp.Core.Modulos.Suprimentos.ObjetosDeValor
                 new ItemDePedidoDeCompra(propriedades, configuracao));
         }
 
-        public long IdProduto => Valor.IdProduto;
+        public Guid IdProduto => Valor.IdProduto;
         public decimal Quantidade => Valor.Quantidade;
         public decimal CustoUnitario => Valor.CustoUnitario;
         public decimal Subtotal => Valor.Quantidade * Valor.CustoUnitario;
 
-        public bool RefereProduto(long idProduto) => Valor.IdProduto == idProduto;
+        public bool RefereProduto(Guid idProduto) => Valor.IdProduto == idProduto;
 
         public override string ToString()
         {
@@ -59,7 +59,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.ObjetosDeValor
     }
 
     public record PropriedadesItemDePedidoDeCompra(
-        long IdProduto,
+        Guid IdProduto,
         decimal Quantidade,
         decimal CustoUnitario);
 }

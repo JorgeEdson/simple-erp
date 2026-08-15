@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using simple_erp.Api.Comum;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.EventosDeDominio;
 using simple_erp.Core.Modulos.Estoque.ObjetosDeValor;
 using simple_erp.Core.Modulos.Estoque.UseCases;
 
@@ -27,11 +27,11 @@ namespace simple_erp.Api.Controllers
         /// <c>PossuiRegistroDeSaldo = false</c> e quantidade zero. "Nunca movimentou"
         /// é uma resposta válida sobre o estoque, não ausência do recurso.
         /// </remarks>
-        [HttpGet("produtos/{idProduto:long}/saldo")]
+        [HttpGet("produtos/{idProduto:guid}/saldo")]
         [ProducesResponseType(typeof(ConsultarSaldoDeEstoqueSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> ConsultarSaldo(
-            long idProduto,
+            Guid idProduto,
             CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
@@ -46,7 +46,7 @@ namespace simple_erp.Api.Controllers
             CancellationToken cancellationToken,
             [FromQuery] int numeroPagina = 1,
             [FromQuery] int tamanhoPagina = 10,
-            [FromQuery] long? idProduto = null,
+            [FromQuery] Guid? idProduto = null,
             [FromQuery] string? tipo = null,
             [FromQuery] string? origemTipo = null,
             [FromQuery] DateTime? dataInicio = null,

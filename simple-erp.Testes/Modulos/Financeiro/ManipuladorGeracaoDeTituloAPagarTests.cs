@@ -1,20 +1,20 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Financeiro.Handlers;
 using simple_erp.Core.Modulos.Financeiro.UseCases;
 using simple_erp.Core.Modulos.Suprimentos.Eventos;
 using System;
 using System.Collections.Generic;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.Financeiro
 {
     public sealed class ManipuladorGeracaoDeTituloAPagarTests
     {
-        private const long IdPedido = 202604020003;
-        private const long IdFornecedor = 202604020002;
+        private static readonly Guid IdPedido = new Guid("00000000-0000-0000-0000-202604020003");
+        private static readonly Guid IdFornecedor = new Guid("00000000-0000-0000-0000-202604020002");
 
         private readonly IEmitirTituloAPagarUseCase _emitir =
             Substitute.For<IEmitirTituloAPagarUseCase>();
@@ -28,12 +28,12 @@ namespace simple_erp.Testes.Modulos.Financeiro
 
         private static PedidoDeCompraEfetivado Evento(decimal valorTotal = 44.00m) =>
             new(
-                Id.TentarCriar(IdPedido).Instancia,
-                Id.TentarCriar(IdFornecedor).Instancia,
+                IdPedido,
+                IdFornecedor,
                 valorTotal: valorTotal,
                 itens: new List<ItemPedidoDeCompraEfetivado>
                 {
-                    new(202604020010, 2m, 22.00m)
+                    new(new Guid("00000000-0000-0000-0000-202604020010"), 2m, 22.00m)
                 });
 
         [Fact]
@@ -42,7 +42,7 @@ namespace simple_erp.Testes.Modulos.Financeiro
             _emitir
                 .ExecutarAsync(Arg.Any<EmitirTituloAPagarEntrada>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<EmitirTituloAPagarSaida>.Sucesso(
-                    new EmitirTituloAPagarSaida(1, "APagar", IdFornecedor, 44.00m, 44.00m, "EmAberto", DateTime.UtcNow.AddDays(30))));
+                    new EmitirTituloAPagarSaida(new Guid("00000000-0000-0000-0000-000000000001"), "APagar", IdFornecedor, 44.00m, 44.00m, "EmAberto", DateTime.UtcNow.AddDays(30))));
 
             var resultado = await _handler.ManipularAsync(Evento(44.00m));
 

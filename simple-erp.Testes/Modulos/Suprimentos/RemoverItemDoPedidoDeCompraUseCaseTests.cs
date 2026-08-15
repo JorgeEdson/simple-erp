@@ -1,12 +1,13 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Suprimentos.Entidades;
 using simple_erp.Core.Modulos.Suprimentos.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.Suprimentos.UseCases;
 using simple_erp.Testes.Compartilhado.Builders;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.Suprimentos
 {
@@ -33,15 +34,15 @@ namespace simple_erp.Testes.Modulos.Suprimentos
         {
             var pedido = PedidoDeCompraBuilder.Novo()
                 .SemItens()
-                .ComItem(202604020001, 10m, 5.00m)
+                .ComItem(new Guid("00000000-0000-0000-0000-202604020001"), 10m, 5.00m)
                 .Criar();
 
             _pedidosRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<PedidoDeCompra?>.Sucesso(pedido));
 
             var resultado = await _useCase.ExecutarAsync(
-                new RemoverItemDoPedidoDeCompraEntrada(pedido.Id.Valor, IdProduto: 999888777));
+                new RemoverItemDoPedidoDeCompraEntrada(pedido.Id, IdProduto: new Guid("00000000-0000-0000-0000-000999888777")));
 
             resultado.EhFalha.Should().BeTrue();
             resultado.Erros.Should().Contain("ITEM_NAO_ENCONTRADO");
@@ -56,12 +57,12 @@ namespace simple_erp.Testes.Modulos.Suprimentos
         {
             var pedido = PedidoDeCompraBuilder.Novo()
                 .SemItens()
-                .ComItem(202604020001, 10m, 5.00m)
-                .ComItem(202604020010, 4m, 2.00m)
+                .ComItem(new Guid("00000000-0000-0000-0000-202604020001"), 10m, 5.00m)
+                .ComItem(new Guid("00000000-0000-0000-0000-202604020010"), 4m, 2.00m)
                 .Criar();
 
             _pedidosRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<PedidoDeCompra?>.Sucesso(pedido));
 
             _pedidosRepository
@@ -73,7 +74,7 @@ namespace simple_erp.Testes.Modulos.Suprimentos
                 .Returns(Resultado<int>.Sucesso(1));
 
             var resultado = await _useCase.ExecutarAsync(
-                new RemoverItemDoPedidoDeCompraEntrada(pedido.Id.Valor, IdProduto: 202604020010));
+                new RemoverItemDoPedidoDeCompraEntrada(pedido.Id, IdProduto: new Guid("00000000-0000-0000-0000-202604020010")));
 
             resultado.EhSucesso.Should().BeTrue();
             resultado.Instancia.QuantidadeItens.Should().Be(1);

@@ -1,21 +1,22 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Producao.Composicao.Entidades;
 using simple_erp.Core.Modulos.Producao.Composicao.Eventos;
 using simple_erp.Core.Modulos.Producao.Composicao.Handlers;
 using simple_erp.Core.Modulos.Producao.Composicao.Interfaces.Repositorios;
 using simple_erp.Testes.Compartilhado.Builders;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.Producao
 {
     public sealed class ManipuladorUnicidadeDeReceitaAtivaTests
     {
-        private const long IdComposicaoNova = 202604020301;
-        private const long IdComposicaoAntiga = 202604020300;
-        private const long IdProdutoFabricado = 202604020050;
+        private static readonly Guid IdComposicaoNova = new Guid("00000000-0000-0000-0000-202604020301");
+        private static readonly Guid IdComposicaoAntiga = new Guid("00000000-0000-0000-0000-202604020300");
+        private static readonly Guid IdProdutoFabricado = new Guid("00000000-0000-0000-0000-202604020050");
 
         private readonly IUnitOfWork _unitOfWork;
         private readonly IComposicaoDeProdutoRepository _composicoesRepository;
@@ -35,8 +36,8 @@ namespace simple_erp.Testes.Modulos.Producao
 
         private static ComposicaoDeProdutoAtivada Evento(int versao = 2) =>
             new(
-                Id.TentarCriar(IdComposicaoNova).Instancia,
-                Id.TentarCriar(IdProdutoFabricado).Instancia,
+                IdComposicaoNova,
+                IdProdutoFabricado,
                 versao);
 
         [Fact]
@@ -50,10 +51,10 @@ namespace simple_erp.Testes.Modulos.Producao
                 .Criar();
 
             _composicoesRepository
-                .ExisteAtivaPorProdutoAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ExisteAtivaPorProdutoAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(true));
             _composicoesRepository
-                .ObterAtivaPorProdutoAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterAtivaPorProdutoAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<ComposicaoDeProduto?>.Sucesso(versaoAntiga));
             _composicoesRepository
                 .AtualizarAsync(Arg.Any<ComposicaoDeProduto>(), Arg.Any<CancellationToken>())
@@ -70,7 +71,7 @@ namespace simple_erp.Testes.Modulos.Producao
             await _composicoesRepository
                 .Received(1)
                 .AtualizarAsync(
-                    Arg.Is<ComposicaoDeProduto>(c => c.Id.Valor == IdComposicaoAntiga && !c.Ativa),
+                    Arg.Is<ComposicaoDeProduto>(c => c.Id == IdComposicaoAntiga && !c.Ativa),
                     Arg.Any<CancellationToken>());
         }
 
@@ -78,7 +79,7 @@ namespace simple_erp.Testes.Modulos.Producao
         public async Task ManipularAsync_NaoDeveFazerNada_QuandoNaoHouverOutraVersaoAtiva()
         {
             _composicoesRepository
-                .ExisteAtivaPorProdutoAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ExisteAtivaPorProdutoAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(false));
 
             var resultado = await _handler.ManipularAsync(Evento());
@@ -101,10 +102,10 @@ namespace simple_erp.Testes.Modulos.Producao
                 .Criar();
 
             _composicoesRepository
-                .ExisteAtivaPorProdutoAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ExisteAtivaPorProdutoAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(true));
             _composicoesRepository
-                .ObterAtivaPorProdutoAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterAtivaPorProdutoAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<ComposicaoDeProduto?>.Sucesso(propria));
 
             var resultado = await _handler.ManipularAsync(Evento());

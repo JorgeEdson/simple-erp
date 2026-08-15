@@ -35,7 +35,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
         public async Task AdicionarEObterPorId_DevePersistirFornecedorComCnpj()
         {
             var fornecedor = FornecedorBuilder.Novo()
-                .ComId(202607210100)
+                .ComId(new Guid("00000000-0000-0000-0000-202607210100"))
                 .ComDocumento(CnpjA)
                 .Criar();
 
@@ -50,7 +50,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
             var repositorioLeitura = new FornecedorRepository(contextoLeitura);
 
             var recuperado = (await repositorioLeitura.ObterPorIdAsync(
-                Id.TentarCriar(202607210100).Instancia)).Instancia;
+                new Guid("00000000-0000-0000-0000-202607210100"))).Instancia;
 
             recuperado.Should().NotBeNull();
             recuperado!.Documento.Valor.Should().Be(CnpjA);
@@ -64,9 +64,9 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
             {
                 var repositorio = new FornecedorRepository(contexto);
                 await repositorio.AdicionarAsync(
-                    FornecedorBuilder.Novo().ComId(202607210110).ComDocumento(CnpjA).Criar());
+                    FornecedorBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210110")).ComDocumento(CnpjA).Criar());
                 await repositorio.AdicionarAsync(
-                    FornecedorBuilder.Novo().ComId(202607210111).ComDocumento(CnpjB).Criar());
+                    FornecedorBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210111")).ComDocumento(CnpjB).Criar());
                 await contexto.SaveChangesAsync();
             }
 
@@ -89,7 +89,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
             {
                 var fornecedores = new FornecedorRepository(contexto);
                 await fornecedores.AdicionarAsync(
-                    FornecedorBuilder.Novo().ComId(202607210120).ComDocumento(CnpjA).Criar());
+                    FornecedorBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210120")).ComDocumento(CnpjA).Criar());
                 await contexto.SaveChangesAsync();
             }
 

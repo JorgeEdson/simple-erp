@@ -12,7 +12,7 @@ namespace simple_erp.Testes.Modulos.Financeiro.Repositories
     public sealed class TituloRepositoryTests
         : IClassFixture<PostgresFinanceiroFixture>, IAsyncLifetime
     {
-        private const long IdParceiro = 202607210002;
+        private static readonly Guid IdParceiro = new Guid("00000000-0000-0000-0000-202607210002");
 
         private readonly PostgresFinanceiroFixture _fixture;
 
@@ -24,7 +24,7 @@ namespace simple_erp.Testes.Modulos.Financeiro.Repositories
         public Task InitializeAsync() => _fixture.LimparAsync();
         public Task DisposeAsync() => Task.CompletedTask;
 
-        private static Id IdDe(long valor) => Id.TentarCriar(valor).Instancia;
+        private static Guid IdDe(Guid valor) => valor;
 
         private async Task SalvarAsync(params Titulo[] titulos)
         {
@@ -41,7 +41,7 @@ namespace simple_erp.Testes.Modulos.Financeiro.Repositories
         public async Task AdicionarEObterPorId_DevePersistirERecuperarOTituloComOrigem()
         {
             var titulo = TituloBuilder.Novo()
-                .ComId(202607210700)
+                .ComId(new Guid("00000000-0000-0000-0000-202607210700"))
                 .ComoAPagar()
                 .ComIdParceiro(IdParceiro)
                 .ComValorOriginal(500m)
@@ -51,11 +51,11 @@ namespace simple_erp.Testes.Modulos.Financeiro.Repositories
 
             await using var contexto = _fixture.CriarContexto();
             var recuperado = (await new TituloRepository(contexto)
-                .ObterPorIdAsync(IdDe(202607210700))).Instancia;
+                .ObterPorIdAsync(IdDe(new Guid("00000000-0000-0000-0000-202607210700")))).Instancia;
 
             recuperado.Should().NotBeNull();
             recuperado!.Tipo.Should().Be(TipoDeTitulo.APagar);
-            recuperado.IdParceiro.Valor.Should().Be(IdParceiro);
+            recuperado.IdParceiro.Should().Be(IdParceiro);
             recuperado.ValorOriginal.Should().Be(500m);
             recuperado.Status.Should().Be(StatusTitulo.EmAberto);
             // A origem (VO composto) volta íntegra do jsonb.
@@ -69,11 +69,11 @@ namespace simple_erp.Testes.Modulos.Financeiro.Repositories
             await using var contexto = _fixture.CriarContexto();
             var repositorio = new TituloRepository(contexto);
 
-            var resultado = await repositorio.ObterPorIdAsync(IdDe(999999999999));
+            var resultado = await repositorio.ObterPorIdAsync(IdDe(new Guid("00000000-0000-0000-0000-999999999999")));
 
             resultado.EhSucesso.Should().BeTrue();
             resultado.Instancia.Should().BeNull();
-            (await repositorio.ExistePorIdAsync(IdDe(999999999999))).Instancia.Should().BeFalse();
+            (await repositorio.ExistePorIdAsync(IdDe(new Guid("00000000-0000-0000-0000-999999999999")))).Instancia.Should().BeFalse();
         }
 
         [Fact]
@@ -81,7 +81,7 @@ namespace simple_erp.Testes.Modulos.Financeiro.Repositories
         {
             // Título com uma baixa parcial aplicada no builder.
             var titulo = TituloBuilder.Novo()
-                .ComId(202607210710)
+                .ComId(new Guid("00000000-0000-0000-0000-202607210710"))
                 .ComoAReceber()
                 .ComIdParceiro(IdParceiro)
                 .ComValorOriginal(300m)
@@ -92,7 +92,7 @@ namespace simple_erp.Testes.Modulos.Financeiro.Repositories
 
             await using var contexto = _fixture.CriarContexto();
             var recuperado = (await new TituloRepository(contexto)
-                .ObterPorIdAsync(IdDe(202607210710))).Instancia!;
+                .ObterPorIdAsync(IdDe(new Guid("00000000-0000-0000-0000-202607210710")))).Instancia!;
 
             // A coleção de VOs (histórico de baixas) volta do jsonb com valores íntegros.
             recuperado.Baixas.Should().HaveCount(1);
@@ -106,14 +106,14 @@ namespace simple_erp.Testes.Modulos.Financeiro.Repositories
         public async Task Baixar_ViaEntidadeRastreada_DeveAcrescentarAoHistoricoEPersistir()
         {
             await SalvarAsync(TituloBuilder.Novo()
-                .ComId(202607210720).ComoAReceber().ComIdParceiro(IdParceiro)
+                .ComId(new Guid("00000000-0000-0000-0000-202607210720")).ComoAReceber().ComIdParceiro(IdParceiro)
                 .ComValorOriginal(200m).Criar());
 
             // Fluxo real: obter (rastreado) → Baixar → Atualizar → SaveChanges.
             await using (var contexto = _fixture.CriarContexto())
             {
                 var repositorio = new TituloRepository(contexto);
-                var titulo = (await repositorio.ObterPorIdAsync(IdDe(202607210720))).Instancia!;
+                var titulo = (await repositorio.ObterPorIdAsync(IdDe(new Guid("00000000-0000-0000-0000-202607210720")))).Instancia!;
 
                 titulo.Baixar(Dinheiro.TentarCriar(80m).Instancia).EhSucesso.Should().BeTrue();
                 titulo.Baixar(Dinheiro.TentarCriar(120m).Instancia).EhSucesso.Should().BeTrue();
@@ -124,7 +124,7 @@ namespace simple_erp.Testes.Modulos.Financeiro.Repositories
 
             await using var contextoLeitura = _fixture.CriarContexto();
             var recuperado = (await new TituloRepository(contextoLeitura)
-                .ObterPorIdAsync(IdDe(202607210720))).Instancia!;
+                .ObterPorIdAsync(IdDe(new Guid("00000000-0000-0000-0000-202607210720")))).Instancia!;
 
             recuperado.Baixas.Should().HaveCount(2);
             recuperado.ValorBaixado.Should().Be(200m);
@@ -136,11 +136,11 @@ namespace simple_erp.Testes.Modulos.Financeiro.Repositories
         public async Task ListarPaginadoAsync_DeveFiltrarPorTipoStatusEParceiro()
         {
             await SalvarAsync(
-                TituloBuilder.Novo().ComId(202607210730).ComoAPagar().ComIdParceiro(IdParceiro)
+                TituloBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210730")).ComoAPagar().ComIdParceiro(IdParceiro)
                     .ComValorOriginal(100m).Criar(),
-                TituloBuilder.Novo().ComId(202607210731).ComoAReceber().ComIdParceiro(IdParceiro)
+                TituloBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210731")).ComoAReceber().ComIdParceiro(IdParceiro)
                     .ComValorOriginal(100m).ComBaixaInicial(40m).Criar(),
-                TituloBuilder.Novo().ComId(202607210732).ComoAReceber().ComIdParceiro(202607219999)
+                TituloBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210732")).ComoAReceber().ComIdParceiro(new Guid("00000000-0000-0000-0000-202607219999"))
                     .ComValorOriginal(100m).Criar());
 
             await using var contexto = _fixture.CriarContexto();
@@ -165,9 +165,9 @@ namespace simple_erp.Testes.Modulos.Financeiro.Repositories
             var hoje = DateTime.UtcNow.Date;
 
             await SalvarAsync(
-                TituloBuilder.Novo().ComId(202607210740).ComoAPagar().ComIdParceiro(IdParceiro)
+                TituloBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210740")).ComoAPagar().ComIdParceiro(IdParceiro)
                     .ComValorOriginal(100m).ComVencimento(hoje.AddDays(10)).Criar(),
-                TituloBuilder.Novo().ComId(202607210741).ComoAPagar().ComIdParceiro(IdParceiro)
+                TituloBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210741")).ComoAPagar().ComIdParceiro(IdParceiro)
                     .ComValorOriginal(100m).ComVencimento(hoje.AddDays(60)).Criar());
 
             await using var contexto = _fixture.CriarContexto();

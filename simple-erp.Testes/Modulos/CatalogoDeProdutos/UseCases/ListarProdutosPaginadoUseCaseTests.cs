@@ -1,12 +1,13 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Entidades;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.ObjetosDeValor;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases;
 using simple_erp.Testes.Compartilhado.Builders;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
 {
@@ -223,13 +224,13 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
             var entrada = CriarEntradaValida();
 
             var produto1 = ProdutoBuilder.Novo()
-                .ComId(1001)
+                .ComId(new Guid("00000000-0000-0000-0000-000000001001"))
                 .ComCodigo("PROD-001")
                 .ComoFabricado()
                 .Criar();
 
             var produto2 = ProdutoBuilder.Novo()
-                .ComId(1002)
+                .ComId(new Guid("00000000-0000-0000-0000-000000001002"))
                 .ComCodigo("PROD-002")
                 .ComoMateriaPrima()
                 .Criar();
@@ -260,7 +261,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
             resultado.Instancia.Itens.Should().HaveCount(2);
 
             var item1 = resultado.Instancia.Itens.ElementAt(0);
-            item1.Id.Should().Be(produto1.Id.Valor);
+            item1.Id.Should().Be(produto1.Id);
             item1.Codigo.Should().Be(produto1.Codigo.Valor);
             item1.Descricao.Should().Be(produto1.Descricao.Valor);
             item1.UnidadeDeMedida.Should().Be(produto1.UnidadeDeMedida.Valor);
@@ -268,7 +269,7 @@ namespace simple_erp.Testes.Modulos.CatalogoDeProdutos.UseCases
             item1.Ativo.Should().Be(produto1.Ativo);
 
             var item2 = resultado.Instancia.Itens.ElementAt(1);
-            item2.Id.Should().Be(produto2.Id.Valor);
+            item2.Id.Should().Be(produto2.Id);
             item2.Codigo.Should().Be(produto2.Codigo.Valor);
             item2.Descricao.Should().Be(produto2.Descricao.Valor);
             item2.UnidadeDeMedida.Should().Be(produto2.UnidadeDeMedida.Valor);

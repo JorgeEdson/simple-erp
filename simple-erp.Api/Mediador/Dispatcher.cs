@@ -1,5 +1,6 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.EventosDeDominio;
 
 namespace simple_erp.Api.Mediador
 {   

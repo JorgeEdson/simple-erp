@@ -19,8 +19,8 @@ namespace simple_erp.Testes.Modulos.Financeiro
         [Fact]
         public void Criar_DeveNascerEmAbertoEEmitirEvento()
         {
-            var idParceiro = Id.TentarCriar(202604020002).Instancia;
-            var origem = OrigemDoTitulo.TentarCriar(TipoOrigemTitulo.Compra, 10).Instancia;
+            var idParceiro = new Guid("00000000-0000-0000-0000-202604020002");
+            var origem = OrigemDoTitulo.TentarCriar(TipoOrigemTitulo.Compra, new Guid("00000000-0000-0000-0000-000000000010")).Instancia;
 
             var resultado = Titulo.Criar(
                 TipoDeTitulo.APagar, idParceiro, origem, Valor(100m), DateTime.UtcNow.AddDays(15));
@@ -34,7 +34,7 @@ namespace simple_erp.Testes.Modulos.Financeiro
         [Fact]
         public void Criar_DeveFalhar_QuandoVencimentoForNoPassado()
         {
-            var idParceiro = Id.TentarCriar(202604020002).Instancia;
+            var idParceiro = new Guid("00000000-0000-0000-0000-202604020002");
             var origem = OrigemDoTitulo.TentarCriar(TipoOrigemTitulo.Compra).Instancia;
 
             var resultado = Titulo.Criar(

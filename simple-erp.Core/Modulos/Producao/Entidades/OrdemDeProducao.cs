@@ -1,4 +1,5 @@
 using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Contratos.Dominio;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Producao.Eventos;
 using simple_erp.Core.Modulos.Producao.ObjetosDeValor;
@@ -21,12 +22,12 @@ namespace simple_erp.Core.Modulos.Producao.Entidades
 #pragma warning restore CS8618
 
         private OrdemDeProducao(
-            Id idProdutoFabricado,
-            Id idComposicao,
+            Guid idProdutoFabricado,
+            Guid idComposicao,
             decimal quantidadeAProduzir,
             StatusOrdemDeProducao status,
             IEnumerable<NecessidadeDeMateriaPrima> necessidades,
-            long? id = null,
+            Guid? id = null,
             DateTime? dataCriacaoUtc = null,
             DateTime? dataAtualizacaoUtc = null)
             : base(id, dataCriacaoUtc, dataAtualizacaoUtc)
@@ -38,8 +39,8 @@ namespace simple_erp.Core.Modulos.Producao.Entidades
             _necessidades = necessidades.ToList();
         }
 
-        public Id IdProdutoFabricado { get; private set; }
-        public Id IdComposicao { get; private set; }
+        public Guid IdProdutoFabricado { get; private set; }
+        public Guid IdComposicao { get; private set; }
         public decimal QuantidadeAProduzir { get; private set; }
         public StatusOrdemDeProducao Status { get; private set; }
 
@@ -51,18 +52,18 @@ namespace simple_erp.Core.Modulos.Producao.Entidades
         public bool EstaCancelada => Status == StatusOrdemDeProducao.Cancelada;
 
         public static Resultado<OrdemDeProducao> Criar(
-            Id idProdutoFabricado,
-            Id idComposicao,
+            Guid idProdutoFabricado,
+            Guid idComposicao,
             Quantidade quantidadeAProduzir,
             IEnumerable<NecessidadeDeMateriaPrima> necessidades,
-            long? id = null)
+            Guid? id = null)
         {
             var erros = new List<string>();
 
-            if (idProdutoFabricado is null)
+            if (idProdutoFabricado == Guid.Empty)
                 erros.Add("PRODUTO_FABRICADO_OBRIGATORIO");
 
-            if (idComposicao is null)
+            if (idComposicao == Guid.Empty)
                 erros.Add("COMPOSICAO_OBRIGATORIA");
 
             if (quantidadeAProduzir is null)
@@ -165,12 +166,12 @@ namespace simple_erp.Core.Modulos.Producao.Entidades
         }
 
         public static OrdemDeProducao Reconstituir(
-            Id idProdutoFabricado,
-            Id idComposicao,
+            Guid idProdutoFabricado,
+            Guid idComposicao,
             decimal quantidadeAProduzir,
             StatusOrdemDeProducao status,
             IEnumerable<NecessidadeDeMateriaPrima> necessidades,
-            long id,
+            Guid id,
             DateTime dataCriacaoUtc,
             DateTime dataAtualizacaoUtc)
         {

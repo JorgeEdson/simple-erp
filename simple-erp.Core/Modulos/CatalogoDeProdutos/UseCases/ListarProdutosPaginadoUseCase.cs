@@ -1,7 +1,8 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 {
@@ -27,7 +28,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
        IReadOnlyCollection<ListarProdutosPaginadoItemSaida> Itens);
 
     public sealed record ListarProdutosPaginadoItemSaida(
-        long Id,
+        Guid Id,
         string Codigo,
         string Descricao,
         string UnidadeDeMedida,
@@ -173,7 +174,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 
             var itens = pagina.Itens
                 .Select(produto => new ListarProdutosPaginadoItemSaida(
-                    Id: produto.Id.Valor,
+                    Id: produto.Id,
                     Codigo: produto.Codigo.Valor,
                     Descricao: produto.Descricao.Valor,
                     UnidadeDeMedida: produto.UnidadeDeMedida.Valor,

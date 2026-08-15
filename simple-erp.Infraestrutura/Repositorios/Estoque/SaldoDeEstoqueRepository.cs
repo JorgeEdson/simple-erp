@@ -52,7 +52,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Estoque
         }
 
         public async Task<Resultado<SaldoDeEstoque?>> ObterPorProdutoAsync(
-            Id idProduto, CancellationToken cancellationToken = default)
+            Guid idProduto, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -69,7 +69,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Estoque
         }
 
         public async Task<Resultado<bool>> ExistePorProdutoAsync(
-            Id idProduto, CancellationToken cancellationToken = default)
+            Guid idProduto, CancellationToken cancellationToken = default)
         {
             try
             {

@@ -5,14 +5,14 @@ namespace simple_erp.Core.Modulos.Producao.Eventos
 {
     public sealed class OrdemDeProducaoConfirmada : EventoDeDominio
     {
-        public OrdemDeProducaoConfirmada(Id idOrdemDeProducao, Id idProdutoFabricado)
+        public OrdemDeProducaoConfirmada(Guid idOrdemDeProducao, Guid idProdutoFabricado)
             : base(idOrdemDeProducao)
         {
             IdOrdemDeProducao = idOrdemDeProducao;
             IdProdutoFabricado = idProdutoFabricado;
         }
 
-        public Id IdOrdemDeProducao { get; }
-        public Id IdProdutoFabricado { get; }
+        public Guid IdOrdemDeProducao { get; }
+        public Guid IdProdutoFabricado { get; }
     }
 }

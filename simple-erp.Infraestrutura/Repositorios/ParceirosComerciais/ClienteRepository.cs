@@ -1,5 +1,5 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Especificacoes;
+using simple_erp.Core.Compartilhado.Contratos.Dominio;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
 using simple_erp.Core.Modulos.ParceirosComerciais.Interfaces.Repositorios;
@@ -26,7 +26,7 @@ namespace simple_erp.Infraestrutura.Repositorios.ParceirosComerciais
             AtualizarInternoAsync(cliente, cancellationToken);
 
         public Task<Resultado<Cliente>> ObterPorIdAsync(
-            Id id, CancellationToken cancellationToken = default) =>
+            Guid id, CancellationToken cancellationToken = default) =>
             ObterPorIdInternoAsync(id, cancellationToken);
 
         public Task<Resultado<Cliente?>> ObterPorDocumentoAsync(
@@ -34,7 +34,7 @@ namespace simple_erp.Infraestrutura.Repositorios.ParceirosComerciais
             ObterPorDocumentoInternoAsync(documento, cancellationToken);
 
         public Task<Resultado<bool>> ExistePorIdAsync(
-            Id id, CancellationToken cancellationToken = default) =>
+            Guid id, CancellationToken cancellationToken = default) =>
             ExistePorIdInternoAsync(id, cancellationToken);
 
         public Task<Resultado<bool>> ExisteAsync(

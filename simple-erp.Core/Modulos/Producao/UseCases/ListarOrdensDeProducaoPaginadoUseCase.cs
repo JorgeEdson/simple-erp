@@ -1,7 +1,8 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Modulos.Producao.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Core.Modulos.Producao.UseCases
 {
@@ -13,7 +14,7 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
     public sealed record ListarOrdensDeProducaoPaginadoEntrada(
         int NumeroPagina,
         int TamanhoPagina,
-        long? IdProdutoFabricado = null,
+        Guid? IdProdutoFabricado = null,
         StatusOrdemDeProducao? Status = null,
         DateTime? DataInicio = null,
         DateTime? DataFim = null) : IRequisicao<ListarOrdensDeProducaoPaginadoSaida>;
@@ -26,15 +27,15 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
         IReadOnlyCollection<ListarOrdensDeProducaoItemSaida> Itens);
 
     public sealed record ListarOrdensDeProducaoItemSaida(
-        long Id,
-        long IdProdutoFabricado,
+        Guid Id,
+        Guid IdProdutoFabricado,
         decimal QuantidadeAProduzir,
         string Status,
         int QuantidadeNecessidades,
         DateTime DataCriacaoUtc);
 
     public sealed record ListarOrdensDeProducaoFiltros(
-        long? IdProdutoFabricado = null,
+        Guid? IdProdutoFabricado = null,
         StatusOrdemDeProducao? Status = null,
         DateTime? DataInicio = null,
         DateTime? DataFim = null);
@@ -143,8 +144,8 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
 
             var itens = pagina.Itens
                 .Select(ordem => new ListarOrdensDeProducaoItemSaida(
-                    Id: ordem.Id.Valor,
-                    IdProdutoFabricado: ordem.IdProdutoFabricado.Valor,
+                    Id: ordem.Id,
+                    IdProdutoFabricado: ordem.IdProdutoFabricado,
                     QuantidadeAProduzir: ordem.QuantidadeAProduzir,
                     Status: ordem.Status.ToString(),
                     QuantidadeNecessidades: ordem.Necessidades.Count,

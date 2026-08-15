@@ -61,7 +61,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Suprimentos
         }
 
         public async Task<Resultado<PedidoDeCompra>> ObterPorIdAsync(
-            Id id, CancellationToken cancellationToken = default)
+            Guid id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -80,7 +80,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Suprimentos
         }
 
         public async Task<Resultado<bool>> ExistePorIdAsync(
-            Id id, CancellationToken cancellationToken = default)
+            Guid id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -113,7 +113,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Suprimentos
 
                 var itens = await consulta
                     .AsNoTracking()
-                    // Mais recentes primeiro; Id como desempate estável.
+                    // Mais recentes primeiro; Guid como desempate estável.
                     .OrderByDescending(p => p.DataCriacaoUtc)
                     .ThenByDescending(p => p.Id)
                     .Skip((pagina - 1) * tamanho)
@@ -140,7 +140,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Suprimentos
             // garantem os casts com DBNull.
             const string sql = $"""
                 SELECT * FROM {TabelaComSchema}
-                WHERE (@id_fornecedor::bigint IS NULL OR id_fornecedor = @id_fornecedor)
+                WHERE (@id_fornecedor::uuid IS NULL OR id_fornecedor = @id_fornecedor)
                   AND (@status::int IS NULL OR status = @status)
                   AND (@data_inicio::timestamptz IS NULL OR data_criacao_utc >= @data_inicio)
                   AND (@data_fim::timestamptz IS NULL OR data_criacao_utc <= @data_fim)
@@ -148,7 +148,7 @@ namespace simple_erp.Infraestrutura.Repositorios.Suprimentos
 
             return _contexto.Set<PedidoDeCompra>().FromSqlRaw(
                 sql,
-                CriarParametro("id_fornecedor", NpgsqlDbType.Bigint, filtro?.IdFornecedor),
+                CriarParametro("id_fornecedor", NpgsqlDbType.Uuid, filtro?.IdFornecedor),
                 CriarParametro("status", NpgsqlDbType.Integer, (int?)filtro?.Status),
                 CriarParametro("data_inicio", NpgsqlDbType.TimestampTz, NormalizarUtc(filtro?.DataInicio)),
                 CriarParametro("data_fim", NpgsqlDbType.TimestampTz, NormalizarUtc(filtro?.DataFim)));

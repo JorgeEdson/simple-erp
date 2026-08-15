@@ -1,7 +1,8 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 {
@@ -9,10 +10,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
     {
     }
 
-    public record InativarProdutoEntrada(long Id) : IRequisicao<InativarProdutoSaida>;
+    public record InativarProdutoEntrada(Guid Id) : IRequisicao<InativarProdutoSaida>;
 
     public record InativarProdutoSaida(
-       long Id,
+       Guid Id,
        bool Ativo
     );
 
@@ -46,24 +47,21 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoId = Id.TentarCriar(dados.Id);
-
-            if (resultadoId.EhFalha)
+            if (dados.Id == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
 
                 _logService.RegistrarLogWarning(new RegistroDeLog(
-                    Mensagem: "Falha na validação do identificador para inativação de produto.",
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ProdutoId"] = dados.Id,
-                        ["Erros"] = resultadoId.Erros?.ToArray(),
+                        ["Id"] = dados.Id,
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
 
-                return Resultado<InativarProdutoSaida>.Falha(resultadoId.Erros!);
+                return Resultado<InativarProdutoSaida>.Falha("ID_INVALIDO");
             }
 
             #endregion
@@ -73,7 +71,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
             var stopwatchObterProduto = Stopwatch.StartNew();
 
             var resultadoProduto = await _unitOfWork.ProdutosRepository.ObterPorIdAsync(
-                resultadoId.Instancia,
+                dados.Id,
                 cancellationToken);
 
             stopwatchObterProduto.Stop();
@@ -86,7 +84,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                     Mensagem: "Falha ao obter produto por id para inativação.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ProdutoId"] = resultadoId.Instancia.Valor,
+                        ["ProdutoId"] = dados.Id,
                         ["Erros"] = resultadoProduto.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -104,7 +102,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                     Mensagem: "Tentativa de inativação de produto não encontrado.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ProdutoId"] = resultadoId.Instancia.Valor,
+                        ["ProdutoId"] = dados.Id,
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
 
@@ -139,7 +137,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                         Mensagem: "Falha ao inativar agregado Produto.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["ProdutoId"] = produto.Id.Valor,
+                            ["ProdutoId"] = produto.Id,
                             ["Erros"] = resultadoInativacao.Erros?.ToArray(),
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                         }));
@@ -177,7 +175,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                     Mensagem: "Falha ao atualizar produto no repositório durante inativação.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ProdutoId"] = produto.Id.Valor,
+                        ["ProdutoId"] = produto.Id,
                         ["Erros"] = resultadoAtualizar.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -207,7 +205,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                     Mensagem: "Falha ao persistir inativação de produto.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ProdutoId"] = produto.Id.Valor,
+                        ["ProdutoId"] = produto.Id,
                         ["Erros"] = resultadoSave.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -225,14 +223,14 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                 Mensagem: "Produto inativado com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["ProdutoId"] = produto.Id.Valor,
+                    ["ProdutoId"] = produto.Id,
                     ["Ativo"] = produto.Ativo,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));
 
             return Resultado<InativarProdutoSaida>.Sucesso(
                 new InativarProdutoSaida(
-                    Id: produto.Id.Valor,
+                    Id: produto.Id,
                     Ativo: produto.Ativo));
 
             #endregion

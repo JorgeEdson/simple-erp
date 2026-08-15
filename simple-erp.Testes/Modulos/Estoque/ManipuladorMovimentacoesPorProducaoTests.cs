@@ -1,22 +1,22 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Estoque.Handlers;
 using simple_erp.Core.Modulos.Estoque.ObjetosDeValor;
 using simple_erp.Core.Modulos.Estoque.UseCases;
 using simple_erp.Core.Modulos.Producao.Eventos;
 using System.Collections.Generic;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.Estoque
 {
     public sealed class ManipuladorMovimentacoesPorProducaoTests
     {
-        private const long IdOrdem = 202604020400;
-        private const long IdProdutoFabricado = 202604020050;
-        private const long IdInsumoA = 202604020010;
-        private const long IdInsumoB = 202604020011;
+        private static readonly Guid IdOrdem = new Guid("00000000-0000-0000-0000-202604020400");
+        private static readonly Guid IdProdutoFabricado = new Guid("00000000-0000-0000-0000-202604020050");
+        private static readonly Guid IdInsumoA = new Guid("00000000-0000-0000-0000-202604020010");
+        private static readonly Guid IdInsumoB = new Guid("00000000-0000-0000-0000-202604020011");
 
         private readonly IRegistrarMovimentacaoDeEstoqueUseCase _registrar =
             Substitute.For<IRegistrarMovimentacaoDeEstoqueUseCase>();
@@ -30,8 +30,8 @@ namespace simple_erp.Testes.Modulos.Estoque
 
         private static OrdemDeProducaoConcluida EventoComDoisInsumos() =>
             new(
-                Id.TentarCriar(IdOrdem).Instancia,
-                Id.TentarCriar(IdProdutoFabricado).Instancia,
+                IdOrdem,
+                IdProdutoFabricado,
                 quantidadeProduzida: 5m,
                 insumosConsumidos: new List<InsumoConsumido>
                 {
@@ -43,7 +43,7 @@ namespace simple_erp.Testes.Modulos.Estoque
             _registrar
                 .ExecutarAsync(Arg.Any<RegistrarMovimentacaoDeEstoqueEntrada>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<RegistrarMovimentacaoDeEstoqueSaida>.Sucesso(
-                    new RegistrarMovimentacaoDeEstoqueSaida(1, 1, "EntradaPorProducao", "Entrada", 1m, 1m)));
+                    new RegistrarMovimentacaoDeEstoqueSaida(new Guid("00000000-0000-0000-0000-000000000001"), new Guid("00000000-0000-0000-0000-000000000001"), "EntradaPorProducao", "Entrada", 1m, 1m)));
 
         [Fact]
         public async Task ManipularAsync_DeveGerarSaidasDosInsumosEEntradaDoAcabado_ComOrigemNaOrdem()

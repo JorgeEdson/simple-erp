@@ -7,7 +7,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.Eventos
     public sealed class ProdutoCadastrado : EventoDeDominio
     {
         public ProdutoCadastrado(
-            Id idProduto,
+            Guid idProduto,
             CodigoProduto codigo,
             DescricaoProduto descricao)
             : base(idProduto)
@@ -17,7 +17,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.Eventos
             Descricao = descricao;
         }
 
-        public Id IdProduto { get; }
+        public Guid IdProduto { get; }
         public CodigoProduto Codigo { get; }
         public DescricaoProduto Descricao { get; }
     }

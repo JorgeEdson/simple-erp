@@ -1,7 +1,8 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Core.Modulos.Suprimentos.UseCases
 {
@@ -10,17 +11,17 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
     {
     }
 
-    public record ObterPedidoDeCompraPorIdEntrada(long Id) : IRequisicao<ObterPedidoDeCompraPorIdSaida>;
+    public record ObterPedidoDeCompraPorIdEntrada(Guid Id) : IRequisicao<ObterPedidoDeCompraPorIdSaida>;
 
     public record ObterPedidoDeCompraPorIdItemSaida(
-        long IdProduto,
+        Guid IdProduto,
         decimal Quantidade,
         decimal CustoUnitario,
         decimal Subtotal);
 
     public record ObterPedidoDeCompraPorIdSaida(
-        long Id,
-        long IdFornecedor,
+        Guid Id,
+        Guid IdFornecedor,
         string Status,
         decimal ValorTotal,
         IReadOnlyCollection<ObterPedidoDeCompraPorIdItemSaida> Itens);
@@ -55,24 +56,21 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoId = Id.TentarCriar(dados.Id);
-
-            if (resultadoId.EhFalha)
+            if (dados.Id == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
 
                 _logService.RegistrarLogWarning(new RegistroDeLog(
-                    Mensagem: "Falha na validação do identificador para consulta de pedido de compra.",
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["PedidoDeCompraId"] = dados.Id,
-                        ["Erros"] = resultadoId.Erros?.ToArray(),
+                        ["Id"] = dados.Id,
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
 
-                return Resultado<ObterPedidoDeCompraPorIdSaida>.Falha(resultadoId.Erros!);
+                return Resultado<ObterPedidoDeCompraPorIdSaida>.Falha("ID_INVALIDO");
             }
 
             #endregion
@@ -82,7 +80,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
             var stopwatchObter = Stopwatch.StartNew();
 
             var resultadoPedido = await _unitOfWork.PedidosDeCompraRepository.ObterPorIdAsync(
-                resultadoId.Instancia,
+                dados.Id,
                 cancellationToken);
 
             stopwatchObter.Stop();
@@ -149,7 +147,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
                 Mensagem: "Consulta de pedido de compra por id concluída com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["PedidoDeCompraId"] = pedido.Id.Valor,
+                    ["PedidoDeCompraId"] = pedido.Id,
                     ["Status"] = pedido.Status.ToString(),
                     ["QuantidadeItens"] = itens.Count,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -157,8 +155,8 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
 
             return Resultado<ObterPedidoDeCompraPorIdSaida>.Sucesso(
                 new ObterPedidoDeCompraPorIdSaida(
-                    Id: pedido.Id.Valor,
-                    IdFornecedor: pedido.IdFornecedor.Valor,
+                    Id: pedido.Id,
+                    IdFornecedor: pedido.IdFornecedor,
                     Status: pedido.Status.ToString(),
                     ValorTotal: pedido.ValorTotal.Valor,
                     Itens: itens));

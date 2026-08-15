@@ -10,10 +10,10 @@ namespace simple_erp.Testes.Modulos.Suprimentos
 {
     public sealed class PedidoDeCompraTests
     {
-        private static ItemDePedidoDeCompra CriarItem(long idProduto, decimal quantidade, decimal custo)
+        private static ItemDePedidoDeCompra CriarItem(Guid idProduto, decimal quantidade, decimal custo)
         {
             var item = ItemDePedidoDeCompra.TentarCriar(
-                Id.TentarCriar(idProduto).Instancia,
+                idProduto,
                 Quantidade.TentarCriar(quantidade).Instancia,
                 Dinheiro.TentarCriar(custo).Instancia);
 
@@ -23,7 +23,7 @@ namespace simple_erp.Testes.Modulos.Suprimentos
         [Fact]
         public void Criar_DeveIniciarEmEdicaoEEmitirEvento_QuandoFornecedorValido()
         {
-            var idFornecedor = Id.TentarCriar(202604020002).Instancia;
+            var idFornecedor = new Guid("00000000-0000-0000-0000-202604020002");
 
             var resultado = PedidoDeCompra.Criar(idFornecedor);
 
@@ -38,12 +38,12 @@ namespace simple_erp.Testes.Modulos.Suprimentos
         [Fact]
         public void Criar_DeveFalhar_QuandoHouverProdutoDuplicadoNosItensIniciais()
         {
-            var idFornecedor = Id.TentarCriar(202604020002).Instancia;
+            var idFornecedor = new Guid("00000000-0000-0000-0000-202604020002");
 
             var itens = new[]
             {
-                CriarItem(202604020001, 5m, 2.00m),
-                CriarItem(202604020001, 3m, 4.00m)
+                CriarItem(new Guid("00000000-0000-0000-0000-202604020001"), 5m, 2.00m),
+                CriarItem(new Guid("00000000-0000-0000-0000-202604020001"), 3m, 4.00m)
             };
 
             var resultado = PedidoDeCompra.Criar(idFornecedor, itens);
@@ -57,8 +57,8 @@ namespace simple_erp.Testes.Modulos.Suprimentos
         {
             var pedido = PedidoDeCompraBuilder.Novo()
                 .SemItens()
-                .ComItem(202604020001, 10m, 5.00m)   // 50,00
-                .ComItem(202604020010, 3m, 2.50m)     // 7,50
+                .ComItem(new Guid("00000000-0000-0000-0000-202604020001"), 10m, 5.00m)   // 50,00
+                .ComItem(new Guid("00000000-0000-0000-0000-202604020010"), 3m, 2.50m)     // 7,50
                 .Criar();
 
             pedido.ValorTotal.Valor.Should().Be(57.50m);
@@ -69,10 +69,10 @@ namespace simple_erp.Testes.Modulos.Suprimentos
         {
             var pedido = PedidoDeCompraBuilder.Novo()
                 .SemItens()
-                .ComItem(202604020001, 10m, 5.00m)
+                .ComItem(new Guid("00000000-0000-0000-0000-202604020001"), 10m, 5.00m)
                 .Criar();
 
-            var itemDuplicado = CriarItem(202604020001, 1m, 1.00m);
+            var itemDuplicado = CriarItem(new Guid("00000000-0000-0000-0000-202604020001"), 1m, 1.00m);
 
             var resultado = pedido.AdicionarItem(itemDuplicado);
 
@@ -86,7 +86,7 @@ namespace simple_erp.Testes.Modulos.Suprimentos
         {
             var pedido = PedidoDeCompraBuilder.Novo().Aprovado().Criar();
 
-            var item = CriarItem(202604020099, 1m, 1.00m);
+            var item = CriarItem(new Guid("00000000-0000-0000-0000-202604020099"), 1m, 1.00m);
 
             var resultado = pedido.AdicionarItem(item);
 
@@ -99,10 +99,10 @@ namespace simple_erp.Testes.Modulos.Suprimentos
         {
             var pedido = PedidoDeCompraBuilder.Novo()
                 .SemItens()
-                .ComItem(202604020001, 10m, 5.00m)
+                .ComItem(new Guid("00000000-0000-0000-0000-202604020001"), 10m, 5.00m)
                 .Criar();
 
-            var resultado = pedido.RemoverItem(999);
+            var resultado = pedido.RemoverItem(new Guid("00000000-0000-0000-0000-000000000999"));
 
             resultado.EhFalha.Should().BeTrue();
             resultado.Erros.Should().Contain("ITEM_NAO_ENCONTRADO");
@@ -111,7 +111,7 @@ namespace simple_erp.Testes.Modulos.Suprimentos
         [Fact]
         public void Aprovar_DeveFalhar_QuandoNaoHouverItens()
         {
-            var idFornecedor = Id.TentarCriar(202604020002).Instancia;
+            var idFornecedor = new Guid("00000000-0000-0000-0000-202604020002");
             var pedido = PedidoDeCompra.Criar(idFornecedor).Instancia;
 
             var resultado = pedido.Aprovar();
@@ -150,7 +150,7 @@ namespace simple_erp.Testes.Modulos.Suprimentos
         {
             var pedido = PedidoDeCompraBuilder.Novo()
                 .SemItens()
-                .ComItem(202604020001, 10m, 5.00m)
+                .ComItem(new Guid("00000000-0000-0000-0000-202604020001"), 10m, 5.00m)
                 .Aprovado()
                 .Criar();
 
@@ -164,7 +164,7 @@ namespace simple_erp.Testes.Modulos.Suprimentos
                 .Should().ContainSingle().Subject;
 
             evento.ValorTotal.Should().Be(50.00m);
-            evento.Itens.Should().ContainSingle(i => i.IdProduto == 202604020001 && i.Quantidade == 10m);
+            evento.Itens.Should().ContainSingle(i => i.IdProduto == new Guid("00000000-0000-0000-0000-202604020001") && i.Quantidade == 10m);
         }
 
         [Fact]

@@ -1,7 +1,7 @@
 using simple_erp.Core.Compartilhado.Base;
 using System.Collections.Generic;
 
-namespace simple_erp.Core.Compartilhado.Interfaces
+namespace simple_erp.Core.Compartilhado.Contratos.EventosDeDominio
 {
     /// <summary>
     /// Entrega os eventos de domínio produzidos por um agregado aos seus handlers.

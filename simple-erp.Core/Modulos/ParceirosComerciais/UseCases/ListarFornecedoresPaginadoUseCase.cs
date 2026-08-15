@@ -1,6 +1,7 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 {
@@ -27,7 +28,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
         IReadOnlyCollection<ListarFornecedoresPaginadoItemSaida> Itens);
 
     public sealed record ListarFornecedoresPaginadoItemSaida(
-        long Id,
+        Guid Id,
         string Nome,
         string Documento,
         string Email,
@@ -163,7 +164,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
             var itens = pagina.Itens
                 .Select(fornecedor => new ListarFornecedoresPaginadoItemSaida(
-                    Id: fornecedor.Id.Valor,
+                    Id: fornecedor.Id,
                     Nome: fornecedor.Nome.Valor,
                     Documento: fornecedor.Documento.Valor,
                     Email: fornecedor.Email.Valor,

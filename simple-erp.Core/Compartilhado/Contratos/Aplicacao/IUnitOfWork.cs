@@ -1,4 +1,4 @@
-﻿using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Base;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.Estoque.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.Financeiro.Interfaces.Repositorios;
@@ -8,7 +8,7 @@ using simple_erp.Core.Modulos.Producao.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.Suprimentos.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.Vendas.Interfaces.Repositorios;
 
-namespace simple_erp.Core.Compartilhado.Interfaces
+namespace simple_erp.Core.Compartilhado.Contratos.Aplicacao
 {
     public interface IUnitOfWork
     {

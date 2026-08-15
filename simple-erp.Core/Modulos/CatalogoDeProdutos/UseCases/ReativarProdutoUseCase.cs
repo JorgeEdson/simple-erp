@@ -1,7 +1,8 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 {
@@ -9,10 +10,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
     {
     }
 
-    public sealed record ReativarProdutoEntrada(long Id) : IRequisicao<ReativarProdutoSaida>;
+    public sealed record ReativarProdutoEntrada(Guid Id) : IRequisicao<ReativarProdutoSaida>;
 
     public sealed record ReativarProdutoSaida(
-       long Id,
+       Guid Id,
        bool Ativo);
 
     public sealed class ReativarProdutoUseCase : IReativarProdutoUseCase
@@ -45,24 +46,21 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoId = Id.TentarCriar(dados.Id);
-
-            if (resultadoId.EhFalha)
+            if (dados.Id == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
 
                 _logService.RegistrarLogWarning(new RegistroDeLog(
-                    Mensagem: "Falha na validação do identificador para reativação de produto.",
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ProdutoId"] = dados.Id,
-                        ["Erros"] = resultadoId.Erros?.ToArray(),
+                        ["Id"] = dados.Id,
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
 
-                return Resultado<ReativarProdutoSaida>.Falha(resultadoId.Erros!);
+                return Resultado<ReativarProdutoSaida>.Falha("ID_INVALIDO");
             }
 
             #endregion
@@ -72,7 +70,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
             var stopwatchObterProduto = Stopwatch.StartNew();
 
             var resultadoProduto = await _unitOfWork.ProdutosRepository.ObterPorIdAsync(
-                resultadoId.Instancia,
+                dados.Id,
                 cancellationToken);
 
             stopwatchObterProduto.Stop();
@@ -93,7 +91,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                     Mensagem: "Falha ao obter produto por id para reativação.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ProdutoId"] = resultadoId.Instancia.Valor,
+                        ["ProdutoId"] = dados.Id,
                         ["Erros"] = resultadoProduto.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -111,7 +109,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                     Mensagem: "Tentativa de reativação de produto não encontrado.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ProdutoId"] = resultadoId.Instancia.Valor,
+                        ["ProdutoId"] = dados.Id,
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
 
@@ -146,7 +144,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                         Mensagem: "Falha ao reativar agregado Produto.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["ProdutoId"] = produto.Id.Valor,
+                            ["ProdutoId"] = produto.Id,
                             ["Erros"] = resultadoAtivacao.Erros?.ToArray(),
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                         }));
@@ -184,7 +182,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                     Mensagem: "Falha ao atualizar produto no repositório durante reativação.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ProdutoId"] = produto.Id.Valor,
+                        ["ProdutoId"] = produto.Id,
                         ["Erros"] = resultadoAtualizar.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -214,7 +212,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                     Mensagem: "Falha ao persistir reativação de produto.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ProdutoId"] = produto.Id.Valor,
+                        ["ProdutoId"] = produto.Id,
                         ["Erros"] = resultadoSave.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -232,14 +230,14 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                 Mensagem: "Produto reativado com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["ProdutoId"] = produto.Id.Valor,
+                    ["ProdutoId"] = produto.Id,
                     ["Ativo"] = produto.Ativo,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));
 
             return Resultado<ReativarProdutoSaida>.Sucesso(
                 new ReativarProdutoSaida(
-                    Id: produto.Id.Valor,
+                    Id: produto.Id,
                     Ativo: produto.Ativo));
 
             #endregion

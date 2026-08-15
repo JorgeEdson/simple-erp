@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Especificacoes;
+using simple_erp.Core.Compartilhado.Contratos.Dominio;
+using simple_erp.Core.Compartilhado.Contratos.Dominio.Especificacoes;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
 using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
@@ -51,7 +52,7 @@ namespace simple_erp.Infraestrutura.Repositorios.ParceirosComerciais
             }
         }
 
-        protected async Task<Resultado<TParceiro>> ObterPorIdInternoAsync(Id id, CancellationToken cancellationToken)
+        protected async Task<Resultado<TParceiro>> ObterPorIdInternoAsync(Guid id, CancellationToken cancellationToken)
         {
             try
             {
@@ -84,7 +85,7 @@ namespace simple_erp.Infraestrutura.Repositorios.ParceirosComerciais
             }
         }
 
-        protected async Task<Resultado<bool>> ExistePorIdInternoAsync(Id id, CancellationToken cancellationToken)
+        protected async Task<Resultado<bool>> ExistePorIdInternoAsync(Guid id, CancellationToken cancellationToken)
         {
             try
             {

@@ -1,7 +1,8 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
 
 namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 {
@@ -10,10 +11,10 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
     {
     }
 
-    public record ReativarFornecedorEntrada(long Id) : IRequisicao<ReativarFornecedorSaida>;
+    public record ReativarFornecedorEntrada(Guid Id) : IRequisicao<ReativarFornecedorSaida>;
 
     public record ReativarFornecedorSaida(
-        long Id,
+        Guid Id,
         bool Ativo
     );
 
@@ -47,24 +48,21 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoId = Id.TentarCriar(dados.Id);
-
-            if (resultadoId.EhFalha)
+            if (dados.Id == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
 
                 _logService.RegistrarLogWarning(new RegistroDeLog(
-                    Mensagem: "Falha na validação do identificador para reativação de fornecedor.",
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["FornecedorId"] = dados.Id,
-                        ["Erros"] = resultadoId.Erros?.ToArray(),
+                        ["Id"] = dados.Id,
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
 
-                return Resultado<ReativarFornecedorSaida>.Falha(resultadoId.Erros!);
+                return Resultado<ReativarFornecedorSaida>.Falha("ID_INVALIDO");
             }
 
             #endregion
@@ -74,7 +72,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
             var stopwatchObterFornecedor = Stopwatch.StartNew();
 
             var resultadoFornecedor = await _unitOfWork.FornecedoresRepository.ObterPorIdAsync(
-                resultadoId.Instancia,
+                dados.Id,
                 cancellationToken);
 
             stopwatchObterFornecedor.Stop();
@@ -95,7 +93,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Mensagem: "Falha ao obter fornecedor por id para reativação.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["FornecedorId"] = resultadoId.Instancia.Valor,
+                        ["FornecedorId"] = dados.Id,
                         ["Erros"] = resultadoFornecedor.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -113,7 +111,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Mensagem: "Tentativa de reativação de fornecedor não encontrado.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["FornecedorId"] = resultadoId.Instancia.Valor,
+                        ["FornecedorId"] = dados.Id,
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
 
@@ -148,7 +146,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                         Mensagem: "Falha ao reativar agregado Fornecedor.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["FornecedorId"] = fornecedor.Id.Valor,
+                            ["FornecedorId"] = fornecedor.Id,
                             ["Erros"] = resultadoAtivacao.Erros?.ToArray(),
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                         }));
@@ -186,7 +184,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Mensagem: "Falha ao atualizar fornecedor no repositório durante reativação.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["FornecedorId"] = fornecedor.Id.Valor,
+                        ["FornecedorId"] = fornecedor.Id,
                         ["Erros"] = resultadoAtualizar.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -216,7 +214,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                     Mensagem: "Falha ao persistir reativação de fornecedor.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["FornecedorId"] = fornecedor.Id.Valor,
+                        ["FornecedorId"] = fornecedor.Id,
                         ["Erros"] = resultadoSave.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -234,14 +232,14 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.UseCases
                 Mensagem: "Fornecedor reativado com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["FornecedorId"] = fornecedor.Id.Valor,
+                    ["FornecedorId"] = fornecedor.Id,
                     ["Ativo"] = fornecedor.Ativo,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));
 
             return Resultado<ReativarFornecedorSaida>.Sucesso(
                 new ReativarFornecedorSaida(
-                    Id: fornecedor.Id.Valor,
+                    Id: fornecedor.Id,
                     Ativo: fornecedor.Ativo));
 
             #endregion

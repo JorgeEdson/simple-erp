@@ -24,8 +24,8 @@ namespace simple_erp.Infraestrutura.Migrations
 
             modelBuilder.Entity("simple_erp.Core.Modulos.CatalogoDeProdutos.Entidades.Produto", b =>
                 {
-                    b.Property<long>("Id")
-                        .HasColumnType("bigint")
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
                         .HasColumnName("id");
 
                     b.Property<bool>("Ativo")
@@ -74,8 +74,8 @@ namespace simple_erp.Infraestrutura.Migrations
 
             modelBuilder.Entity("simple_erp.Core.Modulos.Estoque.Entidades.MovimentacaoDeEstoque", b =>
                 {
-                    b.Property<long>("Id")
-                        .HasColumnType("bigint")
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
                         .HasColumnName("id");
 
                     b.Property<DateTime>("DataAtualizacaoUtc")
@@ -90,8 +90,8 @@ namespace simple_erp.Infraestrutura.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("data_movimentacao_utc");
 
-                    b.Property<long>("IdProduto")
-                        .HasColumnType("bigint")
+                    b.Property<Guid>("IdProduto")
+                        .HasColumnType("uuid")
                         .HasColumnName("id_produto");
 
                     b.Property<string>("Origem")
@@ -126,8 +126,8 @@ namespace simple_erp.Infraestrutura.Migrations
 
             modelBuilder.Entity("simple_erp.Core.Modulos.Estoque.Entidades.SaldoDeEstoque", b =>
                 {
-                    b.Property<long>("Id")
-                        .HasColumnType("bigint")
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
                         .HasColumnName("id");
 
                     b.Property<DateTime>("DataAtualizacaoUtc")
@@ -138,8 +138,8 @@ namespace simple_erp.Infraestrutura.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("data_criacao_utc");
 
-                    b.Property<long>("IdProduto")
-                        .HasColumnType("bigint")
+                    b.Property<Guid>("IdProduto")
+                        .HasColumnType("uuid")
                         .HasColumnName("id_produto");
 
                     b.Property<decimal>("QuantidadeAtual")
@@ -158,8 +158,8 @@ namespace simple_erp.Infraestrutura.Migrations
 
             modelBuilder.Entity("simple_erp.Core.Modulos.Financeiro.Entidades.Titulo", b =>
                 {
-                    b.Property<long>("Id")
-                        .HasColumnType("bigint")
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
                         .HasColumnName("id");
 
                     b.Property<DateTime>("DataAtualizacaoUtc")
@@ -174,8 +174,8 @@ namespace simple_erp.Infraestrutura.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("data_vencimento_utc");
 
-                    b.Property<long>("IdParceiro")
-                        .HasColumnType("bigint")
+                    b.Property<Guid>("IdParceiro")
+                        .HasColumnType("uuid")
                         .HasColumnName("id_parceiro");
 
                     b.Property<string>("Origem")
@@ -211,8 +211,8 @@ namespace simple_erp.Infraestrutura.Migrations
 
             modelBuilder.Entity("simple_erp.Core.Modulos.ParceirosComerciais.Entidades.Cliente", b =>
                 {
-                    b.Property<long>("Id")
-                        .HasColumnType("bigint")
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
                         .HasColumnName("id");
 
                     b.Property<bool>("Ativo")
@@ -262,8 +262,8 @@ namespace simple_erp.Infraestrutura.Migrations
 
             modelBuilder.Entity("simple_erp.Core.Modulos.ParceirosComerciais.Entidades.Fornecedor", b =>
                 {
-                    b.Property<long>("Id")
-                        .HasColumnType("bigint")
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
                         .HasColumnName("id");
 
                     b.Property<bool>("Ativo")
@@ -313,8 +313,8 @@ namespace simple_erp.Infraestrutura.Migrations
 
             modelBuilder.Entity("simple_erp.Core.Modulos.Producao.Composicao.Entidades.ComposicaoDeProduto", b =>
                 {
-                    b.Property<long>("Id")
-                        .HasColumnType("bigint")
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
                         .HasColumnName("id");
 
                     b.Property<bool>("Ativa")
@@ -329,8 +329,8 @@ namespace simple_erp.Infraestrutura.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("data_criacao_utc");
 
-                    b.Property<long>("IdProdutoFabricado")
-                        .HasColumnType("bigint")
+                    b.Property<Guid>("IdProdutoFabricado")
+                        .HasColumnType("uuid")
                         .HasColumnName("id_produto_fabricado");
 
                     b.Property<int>("Versao")
@@ -354,8 +354,8 @@ namespace simple_erp.Infraestrutura.Migrations
 
             modelBuilder.Entity("simple_erp.Core.Modulos.Producao.Entidades.OrdemDeProducao", b =>
                 {
-                    b.Property<long>("Id")
-                        .HasColumnType("bigint")
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
                         .HasColumnName("id");
 
                     b.Property<DateTime>("DataAtualizacaoUtc")
@@ -366,12 +366,12 @@ namespace simple_erp.Infraestrutura.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("data_criacao_utc");
 
-                    b.Property<long>("IdComposicao")
-                        .HasColumnType("bigint")
+                    b.Property<Guid>("IdComposicao")
+                        .HasColumnType("uuid")
                         .HasColumnName("id_composicao");
 
-                    b.Property<long>("IdProdutoFabricado")
-                        .HasColumnType("bigint")
+                    b.Property<Guid>("IdProdutoFabricado")
+                        .HasColumnType("uuid")
                         .HasColumnName("id_produto_fabricado");
 
                     b.Property<decimal>("QuantidadeAProduzir")
@@ -398,8 +398,8 @@ namespace simple_erp.Infraestrutura.Migrations
 
             modelBuilder.Entity("simple_erp.Core.Modulos.Suprimentos.Entidades.PedidoDeCompra", b =>
                 {
-                    b.Property<long>("Id")
-                        .HasColumnType("bigint")
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
                         .HasColumnName("id");
 
                     b.Property<DateTime>("DataAtualizacaoUtc")
@@ -410,8 +410,8 @@ namespace simple_erp.Infraestrutura.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("data_criacao_utc");
 
-                    b.Property<long>("IdFornecedor")
-                        .HasColumnType("bigint")
+                    b.Property<Guid>("IdFornecedor")
+                        .HasColumnType("uuid")
                         .HasColumnName("id_fornecedor");
 
                     b.Property<int>("Status")
@@ -434,8 +434,8 @@ namespace simple_erp.Infraestrutura.Migrations
 
             modelBuilder.Entity("simple_erp.Core.Modulos.Vendas.Entidades.PedidoDeVenda", b =>
                 {
-                    b.Property<long>("Id")
-                        .HasColumnType("bigint")
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
                         .HasColumnName("id");
 
                     b.Property<DateTime>("DataAtualizacaoUtc")
@@ -450,8 +450,8 @@ namespace simple_erp.Infraestrutura.Migrations
                         .HasColumnType("numeric(18,2)")
                         .HasColumnName("desconto_do_pedido");
 
-                    b.Property<long>("IdCliente")
-                        .HasColumnType("bigint")
+                    b.Property<Guid>("IdCliente")
+                        .HasColumnType("uuid")
                         .HasColumnName("id_cliente");
 
                     b.Property<string>("MotivoCancelamento")
@@ -487,12 +487,10 @@ namespace simple_erp.Infraestrutura.Migrations
 
             modelBuilder.Entity("simple_erp.Infraestrutura.Persistencia.Outbox.EventoNoOutbox", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
+                        .HasColumnType("uuid")
                         .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<string>("Conteudo")
                         .IsRequired()
@@ -503,12 +501,12 @@ namespace simple_erp.Infraestrutura.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("criado_em_utc");
 
-                    b.Property<long>("IdAgregadoOrigem")
-                        .HasColumnType("bigint")
+                    b.Property<Guid>("IdAgregadoOrigem")
+                        .HasColumnType("uuid")
                         .HasColumnName("id_agregado_origem");
 
-                    b.Property<long>("IdEvento")
-                        .HasColumnType("bigint")
+                    b.Property<Guid>("IdEvento")
+                        .HasColumnType("uuid")
                         .HasColumnName("id_evento");
 
                     b.Property<string>("NomeDoEvento")

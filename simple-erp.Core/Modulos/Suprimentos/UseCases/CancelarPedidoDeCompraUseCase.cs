@@ -1,7 +1,7 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
-using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Core.Modulos.Suprimentos.UseCases
 {
@@ -10,10 +10,10 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
     {
     }
 
-    public record CancelarPedidoDeCompraEntrada(long Id) : IRequisicao<CancelarPedidoDeCompraSaida>;
+    public record CancelarPedidoDeCompraEntrada(Guid Id) : IRequisicao<CancelarPedidoDeCompraSaida>;
 
     public record CancelarPedidoDeCompraSaida(
-        long Id,
+        Guid Id,
         string Status);
 
     public sealed class CancelarPedidoDeCompraUseCase : ICancelarPedidoDeCompraUseCase
@@ -46,24 +46,21 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoId = Id.TentarCriar(dados.Id);
-
-            if (resultadoId.EhFalha)
+            if (dados.Id == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
 
                 _logService.RegistrarLogWarning(new RegistroDeLog(
-                    Mensagem: "Falha na validação do identificador para cancelamento de pedido de compra.",
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["PedidoDeCompraId"] = dados.Id,
-                        ["Erros"] = resultadoId.Erros?.ToArray(),
+                        ["Id"] = dados.Id,
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
 
-                return Resultado<CancelarPedidoDeCompraSaida>.Falha(resultadoId.Erros!);
+                return Resultado<CancelarPedidoDeCompraSaida>.Falha("ID_INVALIDO");
             }
 
             #endregion
@@ -73,7 +70,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
             var stopwatchObter = Stopwatch.StartNew();
 
             var resultadoPedido = await _unitOfWork.PedidosDeCompraRepository.ObterPorIdAsync(
-                resultadoId.Instancia,
+                dados.Id,
                 cancellationToken);
 
             stopwatchObter.Stop();
@@ -134,7 +131,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
                         Mensagem: "Falha ao cancelar agregado PedidoDeCompra.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["PedidoDeCompraId"] = pedido.Id.Valor,
+                            ["PedidoDeCompraId"] = pedido.Id,
                             ["Status"] = pedido.Status.ToString(),
                             ["Erros"] = resultadoCancelamento.Erros?.ToArray(),
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -173,7 +170,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
                     Mensagem: "Falha ao atualizar pedido de compra no repositório durante cancelamento.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["PedidoDeCompraId"] = pedido.Id.Valor,
+                        ["PedidoDeCompraId"] = pedido.Id,
                         ["Erros"] = resultadoAtualizar.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -203,7 +200,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
                     Mensagem: "Falha ao persistir cancelamento de pedido de compra.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["PedidoDeCompraId"] = pedido.Id.Valor,
+                        ["PedidoDeCompraId"] = pedido.Id,
                         ["Erros"] = resultadoSave.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -221,14 +218,14 @@ namespace simple_erp.Core.Modulos.Suprimentos.UseCases
                 Mensagem: "Pedido de compra cancelado com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["PedidoDeCompraId"] = pedido.Id.Valor,
+                    ["PedidoDeCompraId"] = pedido.Id,
                     ["Status"] = pedido.Status.ToString(),
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));
 
             return Resultado<CancelarPedidoDeCompraSaida>.Sucesso(
                 new CancelarPedidoDeCompraSaida(
-                    Id: pedido.Id.Valor,
+                    Id: pedido.Id,
                     Status: pedido.Status.ToString()));
 
             #endregion

@@ -1,6 +1,6 @@
 using simple_erp.Core.Compartilhado.Base;
 
-namespace simple_erp.Core.Compartilhado.Interfaces
+namespace simple_erp.Core.Compartilhado.Contratos.EventosDeDominio
 {
     /// <summary>
     /// Contrato de um assinante (handler) de um evento de domínio. Um mesmo evento

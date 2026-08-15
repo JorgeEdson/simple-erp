@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using simple_erp.Api.Comum;
 using simple_erp.Api.Modelos.Producao;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.EventosDeDominio;
 using simple_erp.Core.Modulos.Producao.Composicao.UseCases;
 
 namespace simple_erp.Api.Controllers
@@ -31,12 +31,12 @@ namespace simple_erp.Api.Controllers
         /// não há <c>Location</c> honesto para apontar. A versão criada vem no corpo e
         /// aparece na listagem de versões do produto.
         /// </remarks>
-        [HttpPost("api/produtos/{idProdutoFabricado:long}/composicoes")]
+        [HttpPost("api/produtos/{idProdutoFabricado:guid}/composicoes")]
         [ProducesResponseType(typeof(DefinirComposicaoDeProdutoSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Definir(
-            long idProdutoFabricado,
+            Guid idProdutoFabricado,
             [FromBody] DefinirComposicaoDeProdutoRequest requisicao,
             CancellationToken cancellationToken)
         {
@@ -54,11 +54,11 @@ namespace simple_erp.Api.Controllers
             return Responder(resultado);
         }
 
-        [HttpGet("api/produtos/{idProdutoFabricado:long}/composicoes")]
+        [HttpGet("api/produtos/{idProdutoFabricado:guid}/composicoes")]
         [ProducesResponseType(typeof(ListarVersoesDeComposicaoPaginadoSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> ListarVersoes(
-            long idProdutoFabricado,
+            Guid idProdutoFabricado,
             CancellationToken cancellationToken,
             [FromQuery] int numeroPagina = 1,
             [FromQuery] int tamanhoPagina = 10,
@@ -80,11 +80,11 @@ namespace simple_erp.Api.Controllers
         /// válida sobre o produto, não ausência do recurso — mesmo critério do saldo
         /// de estoque.
         /// </remarks>
-        [HttpGet("api/produtos/{idProdutoFabricado:long}/composicoes/ativa")]
+        [HttpGet("api/produtos/{idProdutoFabricado:guid}/composicoes/ativa")]
         [ProducesResponseType(typeof(ObterComposicaoAtivaDeProdutoSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> ObterAtiva(
-            long idProdutoFabricado,
+            Guid idProdutoFabricado,
             CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
@@ -98,22 +98,22 @@ namespace simple_erp.Api.Controllers
         /// <c>ComposicaoDeProdutoAtivada</c>. Como o despacho é pelo outbox, pode haver
         /// uma janela em que a leitura ainda enxergue a versão antiga como ativa.
         /// </remarks>
-        [HttpPost("api/composicoes/{id:long}/ativar")]
+        [HttpPost("api/composicoes/{id:guid}/ativar")]
         [ProducesResponseType(typeof(AtivarComposicaoDeProdutoSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Ativar(long id, CancellationToken cancellationToken)
+        public async Task<IActionResult> Ativar(Guid id, CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
                 new AtivarComposicaoDeProdutoEntrada(id), cancellationToken);
             return Responder(resultado);
         }
 
-        [HttpPost("api/composicoes/{id:long}/inativar")]
+        [HttpPost("api/composicoes/{id:guid}/inativar")]
         [ProducesResponseType(typeof(InativarComposicaoDeProdutoSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Inativar(long id, CancellationToken cancellationToken)
+        public async Task<IActionResult> Inativar(Guid id, CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
                 new InativarComposicaoDeProdutoEntrada(id), cancellationToken);

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using simple_erp.Api.Comum;
 using simple_erp.Api.Modelos.ParceirosComerciais;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.EventosDeDominio;
 using simple_erp.Core.Modulos.ParceirosComerciais.UseCases;
 
 namespace simple_erp.Api.Controllers
@@ -44,10 +44,10 @@ namespace simple_erp.Api.Controllers
         // Nome de rota único na aplicação (usado pelo CreatedAtRoute do POST).
         private const string RotaObterPorId = "ObterClientePorId";
 
-        [HttpGet("{id:long}", Name = RotaObterPorId)]
+        [HttpGet("{id:guid}", Name = RotaObterPorId)]
         [ProducesResponseType(typeof(ObterClientePorIdSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> ObterPorId(long id, CancellationToken cancellationToken)
+        public async Task<IActionResult> ObterPorId(Guid id, CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
                 new ObterClientePorIdEntrada(id), cancellationToken);
@@ -74,12 +74,12 @@ namespace simple_erp.Api.Controllers
             return Responder(resultado);
         }
 
-        [HttpPut("{id:long}")]
+        [HttpPut("{id:guid}")]
         [ProducesResponseType(typeof(EditarClienteSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Editar(
-            long id,
+            Guid id,
             [FromBody] ParceiroRequest requisicao,
             CancellationToken cancellationToken)
         {
@@ -101,20 +101,20 @@ namespace simple_erp.Api.Controllers
             return Responder(resultado);
         }
 
-        [HttpPost("{id:long}/inativar")]
+        [HttpPost("{id:guid}/inativar")]
         [ProducesResponseType(typeof(InativarClienteSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Inativar(long id, CancellationToken cancellationToken)
+        public async Task<IActionResult> Inativar(Guid id, CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
                 new InativarClienteEntrada(id), cancellationToken);
             return Responder(resultado);
         }
 
-        [HttpPost("{id:long}/reativar")]
+        [HttpPost("{id:guid}/reativar")]
         [ProducesResponseType(typeof(ReativarClienteSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Reativar(long id, CancellationToken cancellationToken)
+        public async Task<IActionResult> Reativar(Guid id, CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
                 new ReativarClienteEntrada(id), cancellationToken);

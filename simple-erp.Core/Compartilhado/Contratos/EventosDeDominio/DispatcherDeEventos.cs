@@ -1,10 +1,8 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
-namespace simple_erp.Core.Compartilhado.Eventos
+
+namespace simple_erp.Core.Compartilhado.Contratos.EventosDeDominio
 {  
     public sealed class DispatcherDeEventos : IDispatcherDeEventos
     {
@@ -43,7 +41,7 @@ namespace simple_erp.Core.Compartilhado.Eventos
                         Propriedades: new Dictionary<string, object?>
                         {
                             ["Evento"] = tipoEvento.Name,
-                            ["IdEvento"] = evento.IdEvento.Valor
+                            ["IdEvento"] = evento.IdEvento
                         }));
                     continue;
                 }

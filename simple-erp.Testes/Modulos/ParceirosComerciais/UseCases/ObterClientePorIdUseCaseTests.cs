@@ -1,12 +1,13 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
 using simple_erp.Core.Modulos.ParceirosComerciais.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.ParceirosComerciais.UseCases;
 using simple_erp.Testes.Compartilhado.Builders;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 {
@@ -36,7 +37,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoIdForInvalido()
         {
             // Arrange
-            var entrada = new ObterClientePorIdEntrada(0);
+            var entrada = new ObterClientePorIdEntrada(Guid.Empty);
 
             // Act
             var resultado = await _useCase.ExecutarAsync(entrada);
@@ -47,17 +48,17 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 
             await _clientesRepository
                 .DidNotReceive()
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>());
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
         }
 
         [Fact]
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoOcorrerErroAoObterClientePorId()
         {
             // Arrange
-            var entrada = new ObterClientePorIdEntrada(123456);
+            var entrada = new ObterClientePorIdEntrada(new Guid("00000000-0000-0000-0000-000000123456"));
 
             _clientesRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Cliente>.Falha("ERRO_AO_OBTER_CLIENTE"));
 
             // Act
@@ -70,7 +71,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
             await _clientesRepository
                 .Received(1)
                 .ObterPorIdAsync(
-                    Arg.Is<Id>(id => id.Valor == entrada.Id),
+                    Arg.Is<Guid>(id => id == entrada.Id),
                     Arg.Any<CancellationToken>());
         }
 
@@ -78,10 +79,10 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoClienteNaoForEncontrado()
         {
             // Arrange
-            var entrada = new ObterClientePorIdEntrada(123456);
+            var entrada = new ObterClientePorIdEntrada(new Guid("00000000-0000-0000-0000-000000123456"));
 
             _clientesRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Cliente>.Falha("CLIENTE_NAO_ENCONTRADO"));
 
             // Act
@@ -94,7 +95,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
             await _clientesRepository
                 .Received(1)
                 .ObterPorIdAsync(
-                    Arg.Is<Id>(id => id.Valor == entrada.Id),
+                    Arg.Is<Guid>(id => id == entrada.Id),
                     Arg.Any<CancellationToken>());
         }
 
@@ -103,13 +104,13 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
         {
             // Arrange
             var cliente = ClienteBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .Criar();
 
-            var entrada = new ObterClientePorIdEntrada(cliente.Id.Valor);
+            var entrada = new ObterClientePorIdEntrada(cliente.Id);
 
             _clientesRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Cliente>.Sucesso(cliente));
 
             // Act
@@ -117,7 +118,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 
             // Assert
             resultado.EhSucesso.Should().BeTrue();
-            resultado.Instancia.Id.Should().Be(cliente.Id.Valor);
+            resultado.Instancia.Id.Should().Be(cliente.Id);
             resultado.Instancia.Nome.Should().Be(cliente.Nome.Valor);
             resultado.Instancia.Documento.Should().Be(cliente.Documento.Valor);
             resultado.Instancia.Email.Should().Be(cliente.Email.Valor);
@@ -138,7 +139,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
             await _clientesRepository
                 .Received(1)
                 .ObterPorIdAsync(
-                    Arg.Is<Id>(id => id.Valor == cliente.Id.Valor),
+                    Arg.Is<Guid>(id => id == cliente.Id),
                     Arg.Any<CancellationToken>());
         }
     }

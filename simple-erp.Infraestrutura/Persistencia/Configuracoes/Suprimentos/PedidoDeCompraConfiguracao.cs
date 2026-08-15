@@ -22,9 +22,6 @@ namespace simple_erp.Infraestrutura.Persistencia.Configuracoes.Suprimentos
 
             builder
                 .Property(pedido => pedido.IdFornecedor)
-                .HasConversion(
-                    ConversoresDeObjetosDeValor.IdParaLong,
-                    ConversoresDeObjetosDeValor.ComparadorDeId)
                 .HasColumnName("id_fornecedor")
                 .IsRequired();
 

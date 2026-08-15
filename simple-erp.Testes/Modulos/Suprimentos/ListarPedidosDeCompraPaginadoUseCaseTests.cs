@@ -1,13 +1,14 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Modulos.Suprimentos.Entidades;
 using simple_erp.Core.Modulos.Suprimentos.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.Suprimentos.ObjetosDeValor;
 using simple_erp.Core.Modulos.Suprimentos.UseCases;
 using simple_erp.Testes.Compartilhado.Builders;
 using System.Collections.Generic;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.Suprimentos
 {

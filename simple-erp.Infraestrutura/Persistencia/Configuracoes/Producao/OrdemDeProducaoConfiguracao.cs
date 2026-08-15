@@ -22,17 +22,11 @@ namespace simple_erp.Infraestrutura.Persistencia.Configuracoes.Producao
 
             builder
                 .Property(ordem => ordem.IdProdutoFabricado)
-                .HasConversion(
-                    ConversoresDeObjetosDeValor.IdParaLong,
-                    ConversoresDeObjetosDeValor.ComparadorDeId)
                 .HasColumnName("id_produto_fabricado")
                 .IsRequired();
 
             builder
                 .Property(ordem => ordem.IdComposicao)
-                .HasConversion(
-                    ConversoresDeObjetosDeValor.IdParaLong,
-                    ConversoresDeObjetosDeValor.ComparadorDeId)
                 .HasColumnName("id_composicao")
                 .IsRequired();
 

@@ -1,4 +1,4 @@
-﻿using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Base;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
 using System;
@@ -9,7 +9,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.Eventos
 {
     public sealed class FornecedorCadastrado : EventoDeDominio
     {
-        public FornecedorCadastrado(Id idFornecedor, Documento documento, Nome nome)
+        public FornecedorCadastrado(Guid idFornecedor, Documento documento, Nome nome)
             : base(idFornecedor)
         {
             IdFornecedor = idFornecedor;
@@ -17,7 +17,7 @@ namespace simple_erp.Core.Modulos.ParceirosComerciais.Eventos
             Nome = nome;
         }
 
-        public Id IdFornecedor { get; }
+        public Guid IdFornecedor { get; }
         public Documento Documento { get; }
         public Nome Nome { get; }
     }

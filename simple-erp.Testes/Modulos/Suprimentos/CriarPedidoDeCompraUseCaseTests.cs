@@ -1,7 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.ParceirosComerciais.Interfaces.Repositorios;
@@ -9,6 +8,8 @@ using simple_erp.Core.Modulos.Suprimentos.Entidades;
 using simple_erp.Core.Modulos.Suprimentos.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.Suprimentos.UseCases;
 using System.Collections.Generic;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.Suprimentos
 {
@@ -40,10 +41,10 @@ namespace simple_erp.Testes.Modulos.Suprimentos
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoItemPossuirQuantidadeInvalida()
         {
             var entrada = new CriarPedidoDeCompraEntrada(
-                IdFornecedor: 202604020002,
+                IdFornecedor: new Guid("00000000-0000-0000-0000-202604020002"),
                 Itens: new List<ItemPedidoDeCompraEntrada>
                 {
-                    new(202604020001, 0m, 5.00m)
+                    new(new Guid("00000000-0000-0000-0000-202604020001"), 0m, 5.00m)
                 });
 
             var resultado = await _useCase.ExecutarAsync(entrada);
@@ -53,7 +54,7 @@ namespace simple_erp.Testes.Modulos.Suprimentos
 
             await _fornecedoresRepository
                 .DidNotReceive()
-                .ExistePorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>());
+                .ExistePorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
 
             await _pedidosRepository
                 .DidNotReceive()
@@ -66,7 +67,7 @@ namespace simple_erp.Testes.Modulos.Suprimentos
             var entrada = CriarEntradaValida();
 
             _fornecedoresRepository
-                .ExistePorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ExistePorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(false));
 
             var resultado = await _useCase.ExecutarAsync(entrada);
@@ -85,11 +86,11 @@ namespace simple_erp.Testes.Modulos.Suprimentos
             var entrada = CriarEntradaValida();
 
             _fornecedoresRepository
-                .ExistePorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ExistePorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(true));
 
             _produtosRepository
-                .ExistePorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ExistePorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(false));
 
             var resultado = await _useCase.ExecutarAsync(entrada);
@@ -147,7 +148,7 @@ namespace simple_erp.Testes.Modulos.Suprimentos
                 .Received(1)
                 .AdicionarAsync(
                     Arg.Is<PedidoDeCompra>(p =>
-                        p.IdFornecedor.Valor == entrada.IdFornecedor &&
+                        p.IdFornecedor == entrada.IdFornecedor &&
                         p.EstaEmEdicao &&
                         p.Itens.Count == 1),
                     Arg.Any<CancellationToken>());
@@ -160,21 +161,21 @@ namespace simple_erp.Testes.Modulos.Suprimentos
         private void ConfigurarExistencias()
         {
             _fornecedoresRepository
-                .ExistePorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ExistePorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(true));
 
             _produtosRepository
-                .ExistePorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ExistePorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(true));
         }
 
         private static CriarPedidoDeCompraEntrada CriarEntradaValida()
         {
             return new CriarPedidoDeCompraEntrada(
-                IdFornecedor: 202604020002,
+                IdFornecedor: new Guid("00000000-0000-0000-0000-202604020002"),
                 Itens: new List<ItemPedidoDeCompraEntrada>
                 {
-                    new(202604020001, 10m, 5.00m)
+                    new(new Guid("00000000-0000-0000-0000-202604020001"), 10m, 5.00m)
                 });
         }
     }

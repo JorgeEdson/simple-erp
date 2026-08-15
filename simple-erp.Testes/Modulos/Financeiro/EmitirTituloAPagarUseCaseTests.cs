@@ -1,13 +1,14 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Financeiro.Entidades;
 using simple_erp.Core.Modulos.Financeiro.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.Financeiro.UseCases;
 using simple_erp.Core.Modulos.ParceirosComerciais.Interfaces.Repositorios;
 using System;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.Financeiro
 {
@@ -33,12 +34,12 @@ namespace simple_erp.Testes.Modulos.Financeiro
         }
 
         private static EmitirTituloAPagarEntrada EntradaValida() =>
-            new(202604020002, 100.00m, DateTime.UtcNow.AddDays(30), 202604020003);
+            new(new Guid("00000000-0000-0000-0000-202604020002"), 100.00m, DateTime.UtcNow.AddDays(30), new Guid("00000000-0000-0000-0000-202604020003"));
 
         [Fact]
         public async Task ExecutarAsync_DeveRetornarFalha_QuandoFornecedorNaoExistir()
         {
-            _fornecedoresRepository.ExistePorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+            _fornecedoresRepository.ExistePorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(false));
 
             var resultado = await _useCase.ExecutarAsync(EntradaValida());
@@ -54,7 +55,7 @@ namespace simple_erp.Testes.Modulos.Financeiro
         [Fact]
         public async Task ExecutarAsync_DeveEmitirTituloAPagar_QuandoDadosForemValidos()
         {
-            _fornecedoresRepository.ExistePorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+            _fornecedoresRepository.ExistePorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(true));
             _titulosRepository.AdicionarAsync(Arg.Any<Titulo>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(true));

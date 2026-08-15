@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using simple_erp.Api.Comum;
 using simple_erp.Api.Modelos.Suprimentos;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.EventosDeDominio;
 using simple_erp.Core.Modulos.Suprimentos.ObjetosDeValor;
 using simple_erp.Core.Modulos.Suprimentos.UseCases;
 
@@ -52,11 +52,11 @@ namespace simple_erp.Api.Controllers
         // Nome de rota único na aplicação (usado pelo CreatedAtRoute do POST).
         private const string RotaObterPorId = "ObterPedidoDeCompraPorId";
 
-        [HttpGet("{id:long}", Name = RotaObterPorId)]
+        [HttpGet("{id:guid}", Name = RotaObterPorId)]
         [ProducesResponseType(typeof(ObterPedidoDeCompraPorIdSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> ObterPorId(long id, CancellationToken cancellationToken)
+        public async Task<IActionResult> ObterPorId(Guid id, CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
                 new ObterPedidoDeCompraPorIdEntrada(id), cancellationToken);
@@ -70,7 +70,7 @@ namespace simple_erp.Api.Controllers
             CancellationToken cancellationToken,
             [FromQuery] int numeroPagina = 1,
             [FromQuery] int tamanhoPagina = 10,
-            [FromQuery] long? idFornecedor = null,
+            [FromQuery] Guid? idFornecedor = null,
             [FromQuery] string? status = null,
             [FromQuery] DateTime? dataInicio = null,
             [FromQuery] DateTime? dataFim = null)
@@ -91,12 +91,12 @@ namespace simple_erp.Api.Controllers
             return Responder(resultado);
         }
 
-        [HttpPost("{id:long}/itens")]
+        [HttpPost("{id:guid}/itens")]
         [ProducesResponseType(typeof(AdicionarItemAoPedidoDeCompraSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> AdicionarItem(
-            long id,
+            Guid id,
             [FromBody] AdicionarItemAoPedidoDeCompraRequest requisicao,
             CancellationToken cancellationToken)
         {
@@ -114,13 +114,13 @@ namespace simple_erp.Api.Controllers
         /// O item é endereçado pelo produto, não por um id próprio: o domínio trata o
         /// produto como chave do item dentro do pedido (<c>RemoverItem(idProduto)</c>).
         /// </remarks>
-        [HttpDelete("{id:long}/itens/{idProduto:long}")]
+        [HttpDelete("{id:guid}/itens/{idProduto:guid}")]
         [ProducesResponseType(typeof(RemoverItemDoPedidoDeCompraSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> RemoverItem(
-            long id,
-            long idProduto,
+            Guid id,
+            Guid idProduto,
             CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
@@ -128,11 +128,11 @@ namespace simple_erp.Api.Controllers
             return Responder(resultado);
         }
 
-        [HttpPost("{id:long}/aprovar")]
+        [HttpPost("{id:guid}/aprovar")]
         [ProducesResponseType(typeof(AprovarPedidoDeCompraSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Aprovar(long id, CancellationToken cancellationToken)
+        public async Task<IActionResult> Aprovar(Guid id, CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
                 new AprovarPedidoDeCompraEntrada(id), cancellationToken);
@@ -145,22 +145,22 @@ namespace simple_erp.Api.Controllers
         /// estoque e título a pagar. Esses efeitos são assíncronos (outbox), então um
         /// 200 aqui confirma o pedido concluído, não os efeitos já aplicados.
         /// </remarks>
-        [HttpPost("{id:long}/efetivar")]
+        [HttpPost("{id:guid}/efetivar")]
         [ProducesResponseType(typeof(EfetivarPedidoDeCompraSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Efetivar(long id, CancellationToken cancellationToken)
+        public async Task<IActionResult> Efetivar(Guid id, CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
                 new EfetivarPedidoDeCompraEntrada(id), cancellationToken);
             return Responder(resultado);
         }
 
-        [HttpPost("{id:long}/cancelar")]
+        [HttpPost("{id:guid}/cancelar")]
         [ProducesResponseType(typeof(CancelarPedidoDeCompraSaida), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespostaDeErro), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Cancelar(long id, CancellationToken cancellationToken)
+        public async Task<IActionResult> Cancelar(Guid id, CancellationToken cancellationToken)
         {
             var resultado = await _dispatcher.EnviarAsync(
                 new CancelarPedidoDeCompraEntrada(id), cancellationToken);

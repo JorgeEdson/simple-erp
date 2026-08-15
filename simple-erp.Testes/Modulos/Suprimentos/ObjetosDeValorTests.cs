@@ -49,13 +49,13 @@ namespace simple_erp.Testes.Modulos.Suprimentos
         public void ItemDePedidoDeCompra_DeveCalcularSubtotal()
         {
             var item = ItemDePedidoDeCompra.TentarCriar(
-                Id.TentarCriar(202604020001).Instancia,
+                new Guid("00000000-0000-0000-0000-202604020001"),
                 Quantidade.TentarCriar(4m).Instancia,
                 Dinheiro.TentarCriar(2.50m).Instancia);
 
             item.EhSucesso.Should().BeTrue();
             item.Instancia.Subtotal.Should().Be(10.00m);
-            item.Instancia.IdProduto.Should().Be(202604020001);
+            item.Instancia.IdProduto.Should().Be(new Guid("00000000-0000-0000-0000-202604020001"));
         }
     }
 }

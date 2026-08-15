@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Infraestrutura.Persistencia.Conversores;
 
 namespace simple_erp.Infraestrutura.Persistencia.Configuracoes
 {  
@@ -11,11 +10,10 @@ namespace simple_erp.Infraestrutura.Persistencia.Configuracoes
         {
             builder.HasKey(entidade => entidade.Id);
 
+            // O Guid é criado pela aplicação, no construtor da entidade. ValueGeneratedNever
+            // impede o EF de tratar a chave como gerada pelo banco.
             builder
                 .Property(entidade => entidade.Id)
-                .HasConversion(
-                    ConversoresDeObjetosDeValor.IdParaLong,
-                    ConversoresDeObjetosDeValor.ComparadorDeId)
                 .ValueGeneratedNever();
 
             builder

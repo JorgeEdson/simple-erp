@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace simple_erp.Core.Compartilhado.Interfaces
+namespace simple_erp.Core.Compartilhado.Contratos.EventosDeDominio
 {
     /// <summary>
     /// Resolve os handlers registrados para um tipo de evento. A implementação usada

@@ -1,24 +1,15 @@
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 
 namespace simple_erp.Infraestrutura.Persistencia.Conversores
-{   
+{
+    /// <summary>
+    /// Conversores dos Value Objects compartilhados. O identificador não aparece aqui:
+    /// desde que passou a ser <see cref="Guid"/>, o EF Core o mapeia nativamente para
+    /// <c>uuid</c> sem conversor nem comparador.
+    /// </summary>
     public static class ConversoresDeObjetosDeValor
     {
-       
-        public static readonly ValueConverter<Id, long> IdParaLong =
-            new(
-                id => id.Valor,
-                valor => Id.TentarCriar(valor).Instancia!);
-
-      
-        public static readonly ValueComparer<Id> ComparadorDeId =
-            new(
-                (a, b) => (a == null && b == null) || (a != null && b != null && a.Valor == b.Valor),
-                id => id.Valor.GetHashCode(),
-                id => Id.TentarCriar(id.Valor).Instancia!);
-
         public static readonly ValueConverter<Nome, string> NomeParaString =
             new(
                 nome => nome.Valor,

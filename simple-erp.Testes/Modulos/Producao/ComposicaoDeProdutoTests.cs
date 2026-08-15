@@ -11,17 +11,17 @@ namespace simple_erp.Testes.Modulos.Producao
 {
     public sealed class ComposicaoDeProdutoTests
     {
-        private static ItemDeComposicao Item(long idInsumo, decimal quantidade) =>
+        private static ItemDeComposicao Item(Guid idInsumo, decimal quantidade) =>
             ItemDeComposicao.TentarCriar(
-                Id.TentarCriar(idInsumo).Instancia,
+                idInsumo,
                 Quantidade.TentarCriar(quantidade).Instancia).Instancia;
 
         [Fact]
         public void Criar_DeveNascerInativaEEmitirEvento()
         {
-            var idProduto = Id.TentarCriar(202604020001).Instancia;
+            var idProduto = new Guid("00000000-0000-0000-0000-202604020001");
 
-            var resultado = ComposicaoDeProduto.Criar(idProduto, 1, new[] { Item(202604020010, 2m) });
+            var resultado = ComposicaoDeProduto.Criar(idProduto, 1, new[] { Item(new Guid("00000000-0000-0000-0000-202604020010"), 2m) });
 
             resultado.EhSucesso.Should().BeTrue();
             resultado.Instancia.Ativa.Should().BeFalse();
@@ -32,7 +32,7 @@ namespace simple_erp.Testes.Modulos.Producao
         [Fact]
         public void Criar_DeveFalhar_QuandoNaoHouverItens()
         {
-            var idProduto = Id.TentarCriar(202604020001).Instancia;
+            var idProduto = new Guid("00000000-0000-0000-0000-202604020001");
 
             var resultado = ComposicaoDeProduto.Criar(idProduto, 1, System.Array.Empty<ItemDeComposicao>());
 
@@ -43,12 +43,12 @@ namespace simple_erp.Testes.Modulos.Producao
         [Fact]
         public void Criar_DeveFalhar_QuandoHouverInsumoRepetido()
         {
-            var idProduto = Id.TentarCriar(202604020001).Instancia;
+            var idProduto = new Guid("00000000-0000-0000-0000-202604020001");
 
             var resultado = ComposicaoDeProduto.Criar(idProduto, 1, new[]
             {
-                Item(202604020010, 2m),
-                Item(202604020010, 5m)
+                Item(new Guid("00000000-0000-0000-0000-202604020010"), 2m),
+                Item(new Guid("00000000-0000-0000-0000-202604020010"), 5m)
             });
 
             resultado.EhFalha.Should().BeTrue();
@@ -83,16 +83,16 @@ namespace simple_erp.Testes.Modulos.Producao
         {
             var composicao = ComposicaoDeProdutoBuilder.Novo()
                 .SemItens()
-                .ComItem(202604020010, 2m)
-                .ComItem(202604020011, 3m)
+                .ComItem(new Guid("00000000-0000-0000-0000-202604020010"), 2m)
+                .ComItem(new Guid("00000000-0000-0000-0000-202604020011"), 3m)
                 .Ativa()
                 .Criar();
 
             var resultado = composicao.CalcularNecessidades(Quantidade.TentarCriar(5m).Instancia);
 
             resultado.EhSucesso.Should().BeTrue();
-            resultado.Instancia.Should().ContainSingle(n => n.IdInsumo == 202604020010 && n.QuantidadeTotal == 10m);
-            resultado.Instancia.Should().ContainSingle(n => n.IdInsumo == 202604020011 && n.QuantidadeTotal == 15m);
+            resultado.Instancia.Should().ContainSingle(n => n.IdInsumo == new Guid("00000000-0000-0000-0000-202604020010") && n.QuantidadeTotal == 10m);
+            resultado.Instancia.Should().ContainSingle(n => n.IdInsumo == new Guid("00000000-0000-0000-0000-202604020011") && n.QuantidadeTotal == 15m);
         }
     }
 }

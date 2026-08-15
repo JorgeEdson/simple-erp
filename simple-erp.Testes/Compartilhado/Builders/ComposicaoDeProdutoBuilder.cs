@@ -10,26 +10,26 @@ namespace simple_erp.Testes.Compartilhado.Builders
 {
     public sealed class ComposicaoDeProdutoBuilder
     {
-        private long? _id = 202604020300;
-        private long _idProdutoFabricado = 202604020001;
+        private Guid? _id = new Guid("00000000-0000-0000-0000-202604020300");
+        private Guid _idProdutoFabricado = new Guid("00000000-0000-0000-0000-202604020001");
         private int _versao = 1;
         private bool _ativa = false;
 
-        private readonly List<(long IdInsumo, decimal Quantidade)> _itens = new()
+        private readonly List<(Guid IdInsumo, decimal Quantidade)> _itens = new()
         {
-            (202604020010, 2m),
-            (202604020011, 3m)
+            (new Guid("00000000-0000-0000-0000-202604020010"), 2m),
+            (new Guid("00000000-0000-0000-0000-202604020011"), 3m)
         };
 
         public static ComposicaoDeProdutoBuilder Novo() => new();
 
-        public ComposicaoDeProdutoBuilder ComId(long id)
+        public ComposicaoDeProdutoBuilder ComId(Guid id)
         {
             _id = id;
             return this;
         }
 
-        public ComposicaoDeProdutoBuilder ComIdProdutoFabricado(long id)
+        public ComposicaoDeProdutoBuilder ComIdProdutoFabricado(Guid id)
         {
             _idProdutoFabricado = id;
             return this;
@@ -53,7 +53,7 @@ namespace simple_erp.Testes.Compartilhado.Builders
             return this;
         }
 
-        public ComposicaoDeProdutoBuilder ComItem(long idInsumo, decimal quantidadePorUnidade)
+        public ComposicaoDeProdutoBuilder ComItem(Guid idInsumo, decimal quantidadePorUnidade)
         {
             _itens.Add((idInsumo, quantidadePorUnidade));
             return this;
@@ -61,11 +61,11 @@ namespace simple_erp.Testes.Compartilhado.Builders
 
         public ComposicaoDeProduto Criar()
         {
-            var idProduto = Id.TentarCriar(_idProdutoFabricado).Instancia;
+            var idProduto = _idProdutoFabricado;
 
             var itens = _itens
                 .Select(item => ItemDeComposicao.TentarCriar(
-                    Id.TentarCriar(item.IdInsumo).Instancia,
+                    item.IdInsumo,
                     Quantidade.TentarCriar(item.Quantidade).Instancia).Instancia)
                 .ToList();
 

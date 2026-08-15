@@ -62,7 +62,7 @@ namespace simple_erp.Infraestrutura.Persistencia.Conversores
 
             return propriedades
                 .Select(p => NecessidadeDeMateriaPrima.TentarCriar(
-                    Id.TentarCriar(p.IdInsumo).Instancia!,
+                    p.IdInsumo,
                     Quantidade.TentarCriar(p.QuantidadeNecessaria).Instancia!,
                     null).Instancia!)
                 .ToList();
@@ -81,7 +81,7 @@ namespace simple_erp.Infraestrutura.Persistencia.Conversores
 
             return propriedades
                 .Select(p => ItemDeComposicao.TentarCriar(
-                    Id.TentarCriar(p.IdInsumo).Instancia!,
+                    p.IdInsumo,
                     Quantidade.TentarCriar(p.QuantidadePorUnidade).Instancia!,
                     null).Instancia!)
                 .ToList();

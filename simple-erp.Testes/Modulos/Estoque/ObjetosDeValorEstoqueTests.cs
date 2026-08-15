@@ -31,7 +31,7 @@ namespace simple_erp.Testes.Modulos.Estoque
         [Fact]
         public void OrigemDaMovimentacao_DeveFalhar_QuandoReferenciaForInvalida()
         {
-            var resultado = OrigemDaMovimentacao.TentarCriar(TipoOrigemMovimentacao.Compra, idReferencia: 0);
+            var resultado = OrigemDaMovimentacao.TentarCriar(TipoOrigemMovimentacao.Compra, idReferencia: Guid.Empty);
 
             resultado.EhFalha.Should().BeTrue();
             resultado.Erros.Should().Contain("ORIGEM_REFERENCIA_INVALIDA");

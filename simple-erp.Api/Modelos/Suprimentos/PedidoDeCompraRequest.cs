@@ -6,7 +6,7 @@ namespace simple_erp.Api.Modelos.Suprimentos
     /// permitiria um pedido com total inconsistente com seus itens.
     /// </summary>
     public sealed record ItemDePedidoDeCompraRequest(
-        long IdProduto,
+        Guid IdProduto,
         decimal Quantidade,
         decimal CustoUnitario);
 
@@ -15,7 +15,7 @@ namespace simple_erp.Api.Modelos.Suprimentos
     /// cliente porque é o agregado que governa as transições.
     /// </summary>
     public sealed record CriarPedidoDeCompraRequest(
-        long IdFornecedor,
+        Guid IdFornecedor,
         IReadOnlyCollection<ItemDePedidoDeCompraRequest>? Itens);
 
     /// <summary>
@@ -23,7 +23,7 @@ namespace simple_erp.Api.Modelos.Suprimentos
     /// rota, então só os dados do item entram aqui.
     /// </summary>
     public sealed record AdicionarItemAoPedidoDeCompraRequest(
-        long IdProduto,
+        Guid IdProduto,
         decimal Quantidade,
         decimal CustoUnitario);
 }

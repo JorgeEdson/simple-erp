@@ -1,4 +1,5 @@
 using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Contratos.Dominio;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Vendas.Eventos;
 using simple_erp.Core.Modulos.Vendas.ObjetosDeValor;
@@ -25,12 +26,12 @@ namespace simple_erp.Core.Modulos.Vendas.Entidades
 
         private PedidoDeVenda(
             int numero,
-            Id idCliente,
+            Guid idCliente,
             StatusPedidoDeVenda status,
             decimal descontoDoPedido,
             string? motivoCancelamento,
             IEnumerable<ItemDePedidoDeVenda> itens,
-            long? id = null,
+            Guid? id = null,
             DateTime? dataCriacaoUtc = null,
             DateTime? dataAtualizacaoUtc = null)
             : base(id, dataCriacaoUtc, dataAtualizacaoUtc)
@@ -44,7 +45,7 @@ namespace simple_erp.Core.Modulos.Vendas.Entidades
         }
 
         public int Numero { get; private set; }
-        public Id IdCliente { get; private set; }
+        public Guid IdCliente { get; private set; }
         public StatusPedidoDeVenda Status { get; private set; }
         public decimal DescontoDoPedido { get; private set; }
         public string? MotivoCancelamento { get; private set; }
@@ -72,15 +73,15 @@ namespace simple_erp.Core.Modulos.Vendas.Entidades
 
         public static Resultado<PedidoDeVenda> Criar(
             int numero,
-            Id idCliente,
+            Guid idCliente,
             IEnumerable<ItemDePedidoDeVenda>? itens = null,
             Dinheiro? descontoDoPedido = null,
-            long? id = null)
+            Guid? id = null)
         {
             if (numero <= 0)
                 return Resultado<PedidoDeVenda>.Falha("NUMERO_PEDIDO_INVALIDO");
 
-            if (idCliente is null)
+            if (idCliente == Guid.Empty)
                 return Resultado<PedidoDeVenda>.Falha("CLIENTE_OBRIGATORIO");
 
             var listaItens = itens?.ToList() ?? new List<ItemDePedidoDeVenda>();
@@ -133,7 +134,7 @@ namespace simple_erp.Core.Modulos.Vendas.Entidades
             return Resultado<bool>.Sucesso(true);
         }
 
-        public Resultado<bool> RemoverItem(long idProduto)
+        public Resultado<bool> RemoverItem(Guid idProduto)
         {
             if (!EstaEmEdicao)
                 return Resultado<bool>.Falha("PEDIDO_DE_VENDA_NAO_EDITAVEL");
@@ -246,12 +247,12 @@ namespace simple_erp.Core.Modulos.Vendas.Entidades
 
         public static PedidoDeVenda Reconstituir(
             int numero,
-            Id idCliente,
+            Guid idCliente,
             StatusPedidoDeVenda status,
             decimal descontoDoPedido,
             string? motivoCancelamento,
             IEnumerable<ItemDePedidoDeVenda> itens,
-            long id,
+            Guid id,
             DateTime dataCriacaoUtc,
             DateTime dataAtualizacaoUtc)
         {

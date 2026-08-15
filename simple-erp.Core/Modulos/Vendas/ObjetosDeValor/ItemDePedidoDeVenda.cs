@@ -20,7 +20,7 @@ namespace simple_erp.Core.Modulos.Vendas.ObjetosDeValor
         }
 
         public static Resultado<ItemDePedidoDeVenda> TentarCriar(
-            Id idProduto,
+            Guid idProduto,
             Quantidade quantidade,
             Dinheiro precoUnitario,
             Dinheiro desconto,
@@ -28,7 +28,7 @@ namespace simple_erp.Core.Modulos.Vendas.ObjetosDeValor
         {
             var erros = new List<string>();
 
-            if (idProduto is null)
+            if (idProduto == Guid.Empty)
                 erros.Add("PRODUTO_OBRIGATORIO");
 
             if (quantidade is null)
@@ -49,7 +49,7 @@ namespace simple_erp.Core.Modulos.Vendas.ObjetosDeValor
                 return Resultado<ItemDePedidoDeVenda>.Falha("DESCONTO_ITEM_INVALIDO");
 
             var propriedades = new PropriedadesItemDePedidoDeVenda(
-                IdProduto: idProduto!.Valor,
+                IdProduto: idProduto,
                 Quantidade: quantidade.Valor,
                 PrecoUnitario: precoUnitario.Valor,
                 Desconto: desconto.Valor);
@@ -58,7 +58,7 @@ namespace simple_erp.Core.Modulos.Vendas.ObjetosDeValor
                 new ItemDePedidoDeVenda(propriedades, configuracao));
         }
 
-        public long IdProduto => Valor.IdProduto;
+        public Guid IdProduto => Valor.IdProduto;
         public decimal Quantidade => Valor.Quantidade;
         public decimal PrecoUnitario => Valor.PrecoUnitario;
         public decimal Desconto => Valor.Desconto;
@@ -66,7 +66,7 @@ namespace simple_erp.Core.Modulos.Vendas.ObjetosDeValor
         public decimal ValorBruto => Valor.Quantidade * Valor.PrecoUnitario;
         public decimal Subtotal => ValorBruto - Valor.Desconto;
 
-        public bool RefereProduto(long idProduto) => Valor.IdProduto == idProduto;
+        public bool RefereProduto(Guid idProduto) => Valor.IdProduto == idProduto;
 
         public override string ToString()
         {
@@ -75,7 +75,7 @@ namespace simple_erp.Core.Modulos.Vendas.ObjetosDeValor
     }
 
     public record PropriedadesItemDePedidoDeVenda(
-        long IdProduto,
+        Guid IdProduto,
         decimal Quantidade,
         decimal PrecoUnitario,
         decimal Desconto);

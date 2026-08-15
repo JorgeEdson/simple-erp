@@ -43,7 +43,7 @@ namespace simple_erp.Infraestrutura.Persistencia.Conversores
 
             return propriedades
                 .Select(p => ItemDePedidoDeVenda.TentarCriar(
-                    Id.TentarCriar(p.IdProduto).Instancia!,
+                    p.IdProduto,
                     Quantidade.TentarCriar(p.Quantidade).Instancia!,
                     Dinheiro.TentarCriar(p.PrecoUnitario).Instancia!,
                     Dinheiro.TentarCriar(p.Desconto).Instancia!,

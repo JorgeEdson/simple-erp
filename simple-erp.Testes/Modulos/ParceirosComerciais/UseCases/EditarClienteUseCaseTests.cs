@@ -1,14 +1,15 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Especificacoes;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.Entidades;
 using simple_erp.Core.Modulos.ParceirosComerciais.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.ParceirosComerciais.ObjetosDeValor;
 using simple_erp.Core.Modulos.ParceirosComerciais.UseCases;
 using simple_erp.Testes.Compartilhado.Builders;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Dominio;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 {
@@ -33,7 +34,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
         {
             // Arrange
             var entrada = new EditarClienteEntrada(
-                Id: 0,
+                Id: Guid.Empty,
                 Documento: "123",
                 Nome: "",
                 Email: "email-invalido",
@@ -55,7 +56,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 
             await _clientesRepository
                 .DidNotReceive()
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>());
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
 
             await _clientesRepository
                 .DidNotReceive()
@@ -79,7 +80,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
             var entrada = CriarEntradaValida();
 
             _clientesRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Cliente?>.Falha("ERRO_AO_OBTER_CLIENTE"));
 
             // Act
@@ -105,7 +106,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
             var entrada = CriarEntradaValida();
 
             _clientesRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Cliente>.Falha("CLIENTE_NAO_ENCONTRADO"));
 
             // Act
@@ -129,16 +130,16 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
         {
             // Arrange
             var cliente = ClienteBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .ComDocumento("12345678909")
                 .Criar();
 
             var entrada = CriarEntradaValida(
-                id: cliente.Id.Valor,
+                id: cliente.Id,
                 documento: "98765432100");
 
             _clientesRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Cliente?>.Sucesso(cliente));
 
             _clientesRepository
@@ -170,16 +171,16 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
         {
             // Arrange
             var cliente = ClienteBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .ComDocumento("12345678909")
                 .Criar();
 
             var entrada = CriarEntradaValida(
-                id: cliente.Id.Valor,
+                id: cliente.Id,
                 documento: "98765432100");
 
             _clientesRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Cliente?>.Sucesso(cliente));
 
             _clientesRepository
@@ -215,18 +216,18 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
         {
             // Arrange
             var cliente = ClienteBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .ComDocumento("12345678909")
                 .Criar();
 
             var entrada = CriarEntradaValida(
-                id: cliente.Id.Valor,
+                id: cliente.Id,
                 documento: cliente.Documento.Valor,
                 nome: "Cliente Editado",
                 email: "editado@teste.com");
 
             _clientesRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Cliente?>.Sucesso(cliente));
 
             _clientesRepository
@@ -255,7 +256,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
                 .Received(1)
                 .AtualizarAsync(
                     Arg.Is<Cliente>(c =>
-                        c.Id.Valor == cliente.Id.Valor &&
+                        c.Id == cliente.Id &&
                         c.Nome.Valor == entrada.Nome &&
                         c.Email.Valor == entrada.Email &&
                         c.Documento.Valor == entrada.Documento),
@@ -271,13 +272,13 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
         {
             // Arrange
             var cliente = ClienteBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .Criar();
 
-            var entrada = CriarEntradaValida(id: cliente.Id.Valor);
+            var entrada = CriarEntradaValida(id: cliente.Id);
 
             _clientesRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Cliente?>.Sucesso(cliente));
 
             _clientesRepository
@@ -307,13 +308,13 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
         {
             // Arrange
             var cliente = ClienteBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .Criar();
 
-            var entrada = CriarEntradaValida(id: cliente.Id.Valor);
+            var entrada = CriarEntradaValida(id: cliente.Id);
 
             _clientesRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Cliente?>.Sucesso(cliente));
 
             _clientesRepository
@@ -351,18 +352,18 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
         {
             // Arrange
             var cliente = ClienteBuilder.Novo()
-                .ComId(123456)
+                .ComId(new Guid("00000000-0000-0000-0000-000000123456"))
                 .ComDocumento("12345678909")
                 .Criar();
 
             var entrada = CriarEntradaValida(
-                id: cliente.Id.Valor,
+                id: cliente.Id,
                 documento: "98765432100",
                 nome: "Cliente Atualizado",
                 email: "cliente.atualizado@teste.com");
 
             _clientesRepository
-                .ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Cliente?>.Sucesso(cliente));
 
             _clientesRepository
@@ -384,7 +385,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
 
             // Assert
             resultado.EhSucesso.Should().BeTrue();
-            resultado.Instancia.Id.Should().Be(cliente.Id.Valor);
+            resultado.Instancia.Id.Should().Be(cliente.Id);
             resultado.Instancia.Nome.Should().Be("Cliente Atualizado");
             resultado.Instancia.Email.Should().Be("cliente.atualizado@teste.com");
             resultado.Instancia.Ativo.Should().BeTrue();
@@ -399,7 +400,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
                 .Received(1)
                 .AtualizarAsync(
                     Arg.Is<Cliente>(c =>
-                        c.Id.Valor == cliente.Id.Valor &&
+                        c.Id == cliente.Id &&
                         c.Documento.Valor == entrada.Documento &&
                         c.Nome.Valor == entrada.Nome &&
                         c.Email.Valor == entrada.Email &&
@@ -419,7 +420,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
         }
 
         private static EditarClienteEntrada CriarEntradaValida(
-            long id = 123456,
+            Guid? id = null,
             string documento = "98765432100",
             string nome = "Cliente Editado",
             string email = "cliente.editado@teste.com")
@@ -427,7 +428,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.UseCases
             var endereco = EnderecoBuilder.Novo().Criar();
 
             return new EditarClienteEntrada(
-                Id: id,
+                Id: id ?? new Guid("00000000-0000-0000-0000-000000123456"),
                 Documento: documento,
                 Nome: nome,
                 Email: email,

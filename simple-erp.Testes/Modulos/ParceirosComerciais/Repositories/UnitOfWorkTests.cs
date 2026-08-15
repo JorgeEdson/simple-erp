@@ -49,7 +49,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
                 var uow = CriarUnitOfWork(contexto);
 
                 await uow.ClientesRepository.AdicionarAsync(
-                    ClienteBuilder.Novo().ComId(202607210200).ComDocumento(CpfA).Criar());
+                    ClienteBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210200")).ComDocumento(CpfA).Criar());
 
                 var resultado = await uow.SaveChangesAsync();
 
@@ -59,7 +59,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
 
             await using var contextoLeitura = _fixture.CriarContexto();
             var existe = await CriarUnitOfWork(contextoLeitura).ClientesRepository
-                .ExistePorIdAsync(Id.TentarCriar(202607210200).Instancia);
+                .ExistePorIdAsync(new Guid("00000000-0000-0000-0000-202607210200"));
 
             existe.Instancia.Should().BeTrue();
         }
@@ -71,11 +71,11 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
             var uow = CriarUnitOfWork(contexto);
 
             await uow.ClientesRepository.AdicionarAsync(
-                ClienteBuilder.Novo().ComId(202607210210).ComDocumento(CpfA).Criar());
+                ClienteBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210210")).ComDocumento(CpfA).Criar());
             (await uow.SaveChangesAsync()).EhSucesso.Should().BeTrue();
 
             await uow.ClientesRepository.AdicionarAsync(
-                ClienteBuilder.Novo().ComId(202607210211).ComDocumento(CpfA).Criar());
+                ClienteBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210211")).ComDocumento(CpfA).Criar());
 
             var resultado = await uow.SaveChangesAsync();
 
@@ -95,7 +95,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
                 (await uow.BeginTransactionAsync()).EhSucesso.Should().BeTrue();
 
                 await uow.ClientesRepository.AdicionarAsync(
-                    ClienteBuilder.Novo().ComId(202607210220).ComDocumento(CpfA).Criar());
+                    ClienteBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607210220")).ComDocumento(CpfA).Criar());
                 await uow.SaveChangesAsync();
 
                 (await uow.RollbackTransactionAsync()).EhSucesso.Should().BeTrue();
@@ -103,7 +103,7 @@ namespace simple_erp.Testes.Modulos.ParceirosComerciais.Repositories
 
             await using var contextoLeitura = _fixture.CriarContexto();
             var existe = await CriarUnitOfWork(contextoLeitura).ClientesRepository
-                .ExistePorIdAsync(Id.TentarCriar(202607210220).Instancia);
+                .ExistePorIdAsync(new Guid("00000000-0000-0000-0000-202607210220"));
 
             existe.Instancia.Should().BeFalse("o rollback deve descartar o insert");
         }

@@ -1,10 +1,9 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
-using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Estoque.Servicos;
-using simple_erp.Core.Modulos.Vendas.Entidades;
 using System.Diagnostics;
 using System.Linq;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Core.Modulos.Vendas.UseCases
 {
@@ -13,10 +12,10 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
     {
     }
 
-    public record AprovarPedidoDeVendaEntrada(long Id) : IRequisicao<AprovarPedidoDeVendaSaida>;
+    public record AprovarPedidoDeVendaEntrada(Guid Id) : IRequisicao<AprovarPedidoDeVendaSaida>;
 
     public record AprovarPedidoDeVendaSaida(
-        long Id,
+        Guid Id,
         string Status,
         decimal ValorTotal);
 
@@ -53,14 +52,21 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoId = Id.TentarCriar(dados.Id);
-
-            if (resultadoId.EhFalha)
+            if (dados.Id == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
-                return Resultado<AprovarPedidoDeVendaSaida>.Falha(resultadoId.Erros!);
+
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["Id"] = dados.Id,
+                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                    }));
+
+                return Resultado<AprovarPedidoDeVendaSaida>.Falha("ID_INVALIDO");
             }
 
             #endregion
@@ -68,7 +74,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
             #region Recuperação do agregado
 
             var resultadoPedido = await _unitOfWork.PedidosDeVendaRepository
-                .ObterPorIdAsync(resultadoId.Instancia, cancellationToken);
+                .ObterPorIdAsync(dados.Id, cancellationToken);
 
             if (resultadoPedido.EhFalha)
             {
@@ -100,7 +106,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
                 stopwatchUseCase.Stop();
                 return Resultado<AprovarPedidoDeVendaSaida>.Sucesso(
                     new AprovarPedidoDeVendaSaida(
-                        Id: pedido.Id.Valor,
+                        Id: pedido.Id,
                         Status: pedido.Status.ToString(),
                         ValorTotal: pedido.ValorTotal.Valor));
             }
@@ -137,7 +143,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
                     Mensagem: "Aprovação bloqueada por falha ao checar disponibilidade de estoque.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["PedidoDeVendaId"] = pedido.Id.Valor,
+                        ["PedidoDeVendaId"] = pedido.Id,
                         ["Erros"] = verificacao.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -157,7 +163,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
                     Mensagem: "Aprovação bloqueada por indisponibilidade de estoque.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["PedidoDeVendaId"] = pedido.Id.Valor,
+                        ["PedidoDeVendaId"] = pedido.Id,
                         ["Erros"] = errosFinal.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -229,7 +235,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
                 Mensagem: "Pedido de venda aprovado com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["PedidoDeVendaId"] = pedido.Id.Valor,
+                    ["PedidoDeVendaId"] = pedido.Id,
                     ["Status"] = pedido.Status.ToString(),
                     ["ValorTotal"] = pedido.ValorTotal.Valor,
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -237,7 +243,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
 
             return Resultado<AprovarPedidoDeVendaSaida>.Sucesso(
                 new AprovarPedidoDeVendaSaida(
-                    Id: pedido.Id.Valor,
+                    Id: pedido.Id,
                     Status: pedido.Status.ToString(),
                     ValorTotal: pedido.ValorTotal.Valor));
 

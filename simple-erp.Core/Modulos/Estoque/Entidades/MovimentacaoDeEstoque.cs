@@ -1,4 +1,5 @@
 using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Contratos.Dominio;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Estoque.ObjetosDeValor;
 using System;
@@ -8,22 +9,19 @@ namespace simple_erp.Core.Modulos.Estoque.Entidades
 { 
     public sealed class MovimentacaoDeEstoque : Entidade<MovimentacaoDeEstoque>, IAggregateRoot
     {
-#pragma warning disable CS8618 // Construtor de materialização do EF Core: as propriedades são preenchidas pelo provider.
-        /// <summary>Construtor de materialização do EF Core.</summary>
         private MovimentacaoDeEstoque()
         {
         }
-#pragma warning restore CS8618
 
         private MovimentacaoDeEstoque(
-            Id idProduto,
+            Guid idProduto,
             TipoDeMovimentacao tipo,
             SentidoDaMovimentacao sentido,
             decimal quantidade,
             decimal saldoResultante,
             OrigemDaMovimentacao origem,
             DateTime dataMovimentacaoUtc,
-            long? id = null,
+            Guid? id = null,
             DateTime? dataCriacaoUtc = null,
             DateTime? dataAtualizacaoUtc = null)
             : base(id, dataCriacaoUtc, dataAtualizacaoUtc)
@@ -37,7 +35,7 @@ namespace simple_erp.Core.Modulos.Estoque.Entidades
             DataMovimentacaoUtc = dataMovimentacaoUtc;
         }
 
-        public Id IdProduto { get; private set; }
+        public Guid IdProduto { get; private set; }
         public TipoDeMovimentacao Tipo { get; private set; }
         public SentidoDaMovimentacao Sentido { get; private set; }
         public decimal Quantidade { get; private set; }
@@ -49,16 +47,16 @@ namespace simple_erp.Core.Modulos.Estoque.Entidades
         public bool EhSaida => Sentido == SentidoDaMovimentacao.Saida;
 
         public static Resultado<MovimentacaoDeEstoque> Criar(
-            Id idProduto,
+            Guid idProduto,
             TipoDeMovimentacao tipo,
             Quantidade quantidade,
             decimal saldoResultante,
             OrigemDaMovimentacao origem,
-            long? id = null)
+            Guid? id = null)
         {
             var erros = new List<string>();
 
-            if (idProduto is null)
+            if (idProduto == Guid.Empty)
                 erros.Add("PRODUTO_OBRIGATORIO");
 
             if (quantidade is null)
@@ -84,14 +82,14 @@ namespace simple_erp.Core.Modulos.Estoque.Entidades
         }
 
         public static MovimentacaoDeEstoque Reconstituir(
-            Id idProduto,
+            Guid idProduto,
             TipoDeMovimentacao tipo,
             SentidoDaMovimentacao sentido,
             decimal quantidade,
             decimal saldoResultante,
             OrigemDaMovimentacao origem,
             DateTime dataMovimentacaoUtc,
-            long id,
+            Guid id,
             DateTime dataCriacaoUtc,
             DateTime dataAtualizacaoUtc)
         {

@@ -1,7 +1,7 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
-using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 {
@@ -10,10 +10,10 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
     {
     }
 
-    public sealed record ClassificarProdutoComoFabricadoEntrada(long Id) : IRequisicao<ClassificarProdutoComoFabricadoSaida>;
+    public sealed record ClassificarProdutoComoFabricadoEntrada(Guid Id) : IRequisicao<ClassificarProdutoComoFabricadoSaida>;
 
     public sealed record ClassificarProdutoComoFabricadoSaida(
-        long Id,
+        Guid Id,
         string Classificacao,
         bool Ativo);
 
@@ -47,24 +47,21 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoId = Id.TentarCriar(dados.Id);
-
-            if (resultadoId.EhFalha)
+            if (dados.Id == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
 
                 _logService.RegistrarLogWarning(new RegistroDeLog(
-                    Mensagem: "Falha na validação do identificador para classificação de produto como Fabricado.",
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ProdutoId"] = dados.Id,
-                        ["Erros"] = resultadoId.Erros?.ToArray(),
+                        ["Id"] = dados.Id,
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
 
-                return Resultado<ClassificarProdutoComoFabricadoSaida>.Falha(resultadoId.Erros!);
+                return Resultado<ClassificarProdutoComoFabricadoSaida>.Falha("ID_INVALIDO");
             }
 
             #endregion
@@ -74,7 +71,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
             var stopwatchObterProduto = Stopwatch.StartNew();
 
             var resultadoProduto = await _unitOfWork.ProdutosRepository.ObterPorIdAsync(
-                resultadoId.Instancia,
+                dados.Id,
                 cancellationToken);
 
             stopwatchObterProduto.Stop();
@@ -87,7 +84,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                     Mensagem: "Falha ao obter produto por id para classificação como Fabricado.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ProdutoId"] = resultadoId.Instancia.Valor,
+                        ["ProdutoId"] = dados.Id,
                         ["Erros"] = resultadoProduto.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -105,7 +102,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                     Mensagem: "Tentativa de classificação como Fabricado de produto não encontrado.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ProdutoId"] = resultadoId.Instancia.Valor,
+                        ["ProdutoId"] = dados.Id,
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
 
@@ -140,7 +137,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                         Mensagem: "Falha ao classificar agregado Produto como Fabricado.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["ProdutoId"] = produto.Id.Valor,
+                            ["ProdutoId"] = produto.Id,
                             ["Erros"] = resultadoClassificacao.Erros?.ToArray(),
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                         }));
@@ -178,7 +175,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                     Mensagem: "Falha ao atualizar produto no repositório durante classificação como Fabricado.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ProdutoId"] = produto.Id.Valor,
+                        ["ProdutoId"] = produto.Id,
                         ["Erros"] = resultadoAtualizar.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -208,7 +205,7 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                     Mensagem: "Falha ao persistir classificação de produto como Fabricado.",
                     Propriedades: new Dictionary<string, object?>
                     {
-                        ["ProdutoId"] = produto.Id.Valor,
+                        ["ProdutoId"] = produto.Id,
                         ["Erros"] = resultadoSave.Erros?.ToArray(),
                         ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                     }));
@@ -226,14 +223,14 @@ namespace simple_erp.Core.Modulos.CatalogoDeProdutos.UseCases
                 Mensagem: "Produto classificado como Fabricado com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["ProdutoId"] = produto.Id.Valor,
+                    ["ProdutoId"] = produto.Id,
                     ["Classificacao"] = produto.Classificacao.ToString(),
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));
 
             return Resultado<ClassificarProdutoComoFabricadoSaida>.Sucesso(
                 new ClassificarProdutoComoFabricadoSaida(
-                    Id: produto.Id.Valor,
+                    Id: produto.Id,
                     Classificacao: produto.Classificacao.ToString(),
                     Ativo: produto.Ativo));
 

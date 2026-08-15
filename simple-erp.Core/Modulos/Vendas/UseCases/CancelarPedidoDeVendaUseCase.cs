@@ -1,8 +1,8 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
-using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Vendas.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Core.Modulos.Vendas.UseCases
 {
@@ -11,10 +11,10 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
     {
     }
 
-    public record CancelarPedidoDeVendaEntrada(long Id, string Motivo) : IRequisicao<CancelarPedidoDeVendaSaida>;
+    public record CancelarPedidoDeVendaEntrada(Guid Id, string Motivo) : IRequisicao<CancelarPedidoDeVendaSaida>;
 
     public record CancelarPedidoDeVendaSaida(
-        long Id,
+        Guid Id,
         string Status,
         string Motivo);
 
@@ -48,12 +48,30 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
 
             #endregion
 
+            #region Validação do identificador
+
+            if (dados.Id == Guid.Empty)
+            {
+                stopwatchUseCase.Stop();
+
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["Id"] = dados.Id,
+                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                    }));
+
+                return Resultado<CancelarPedidoDeVendaSaida>.Falha("ID_INVALIDO");
+            }
+
+            #endregion
+
             #region Validação da entrada
 
-            var resultadoId = Id.TentarCriar(dados.Id);
             var resultadoMotivo = MotivoCancelamento.TentarCriar(dados.Motivo);
 
-            var validacao = Resultado.Combinar(resultadoId, resultadoMotivo);
+            var validacao = Resultado.Combinar(resultadoMotivo);
 
             if (validacao.EhFalha)
             {
@@ -73,7 +91,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
             #region Recuperação do agregado
 
             var resultadoPedido = await _unitOfWork.PedidosDeVendaRepository
-                .ObterPorIdAsync(resultadoId.Instancia, cancellationToken);
+                .ObterPorIdAsync(dados.Id, cancellationToken);
 
             if (resultadoPedido.EhFalha)
             {
@@ -104,7 +122,7 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
                         Mensagem: "Falha ao cancelar o agregado PedidoDeVenda.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["PedidoDeVendaId"] = pedido.Id.Valor,
+                            ["PedidoDeVendaId"] = pedido.Id,
                             ["Status"] = pedido.Status.ToString(),
                             ["Erros"] = resultadoCancelamento.Erros?.ToArray(),
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -145,14 +163,14 @@ namespace simple_erp.Core.Modulos.Vendas.UseCases
                 Mensagem: "Pedido de venda cancelado com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["PedidoDeVendaId"] = pedido.Id.Valor,
+                    ["PedidoDeVendaId"] = pedido.Id,
                     ["Status"] = pedido.Status.ToString(),
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));
 
             return Resultado<CancelarPedidoDeVendaSaida>.Sucesso(
                 new CancelarPedidoDeVendaSaida(
-                    Id: pedido.Id.Valor,
+                    Id: pedido.Id,
                     Status: pedido.Status.ToString(),
                     Motivo: pedido.MotivoCancelamento ?? dados.Motivo));
 

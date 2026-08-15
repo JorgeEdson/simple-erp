@@ -1,4 +1,5 @@
 using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Contratos.Dominio;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Suprimentos.Eventos;
 using simple_erp.Core.Modulos.Suprimentos.ObjetosDeValor;
@@ -20,10 +21,10 @@ namespace simple_erp.Core.Modulos.Suprimentos.Entidades
 #pragma warning restore CS8618
 
         private PedidoDeCompra(
-            Id idFornecedor,
+            Guid idFornecedor,
             StatusPedidoDeCompra status,
             IEnumerable<ItemDePedidoDeCompra>? itens = null,
-            long? id = null,
+            Guid? id = null,
             DateTime? dataCriacaoUtc = null,
             DateTime? dataAtualizacaoUtc = null)
             : base(id, dataCriacaoUtc, dataAtualizacaoUtc)
@@ -33,7 +34,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.Entidades
             _itens = itens?.ToList() ?? new List<ItemDePedidoDeCompra>();
         }
 
-        public Id IdFornecedor { get; private set; }
+        public Guid IdFornecedor { get; private set; }
         public StatusPedidoDeCompra Status { get; private set; }
 
         public IReadOnlyCollection<ItemDePedidoDeCompra> Itens => _itens.AsReadOnly();
@@ -55,11 +56,11 @@ namespace simple_erp.Core.Modulos.Suprimentos.Entidades
         }
 
         public static Resultado<PedidoDeCompra> Criar(
-            Id idFornecedor,
+            Guid idFornecedor,
             IEnumerable<ItemDePedidoDeCompra>? itens = null,
-            long? id = null)
+            Guid? id = null)
         {
-            if (idFornecedor is null)
+            if (idFornecedor == Guid.Empty)
                 return Resultado<PedidoDeCompra>.Falha("FORNECEDOR_OBRIGATORIO");
 
             var listaItens = itens?.ToList() ?? new List<ItemDePedidoDeCompra>();
@@ -103,7 +104,7 @@ namespace simple_erp.Core.Modulos.Suprimentos.Entidades
             return Resultado<bool>.Sucesso(true);
         }
 
-        public Resultado<bool> RemoverItem(long idProduto)
+        public Resultado<bool> RemoverItem(Guid idProduto)
         {
             if (!EstaEmEdicao)
                 return Resultado<bool>.Falha("PEDIDO_DE_COMPRA_NAO_EDITAVEL");
@@ -188,10 +189,10 @@ namespace simple_erp.Core.Modulos.Suprimentos.Entidades
         }
 
         public static PedidoDeCompra Reconstituir(
-            Id idFornecedor,
+            Guid idFornecedor,
             StatusPedidoDeCompra status,
             IEnumerable<ItemDePedidoDeCompra> itens,
-            long id,
+            Guid id,
             DateTime dataCriacaoUtc,
             DateTime dataAtualizacaoUtc)
         {

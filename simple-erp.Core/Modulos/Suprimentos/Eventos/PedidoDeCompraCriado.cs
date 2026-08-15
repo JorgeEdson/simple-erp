@@ -5,14 +5,14 @@ namespace simple_erp.Core.Modulos.Suprimentos.Eventos
 {
     public sealed class PedidoDeCompraCriado : EventoDeDominio
     {
-        public PedidoDeCompraCriado(Id idPedidoDeCompra, Id idFornecedor)
+        public PedidoDeCompraCriado(Guid idPedidoDeCompra, Guid idFornecedor)
             : base(idPedidoDeCompra)
         {
             IdPedidoDeCompra = idPedidoDeCompra;
             IdFornecedor = idFornecedor;
         }
 
-        public Id IdPedidoDeCompra { get; }
-        public Id IdFornecedor { get; }
+        public Guid IdPedidoDeCompra { get; }
+        public Guid IdFornecedor { get; }
     }
 }

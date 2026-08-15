@@ -12,13 +12,13 @@ namespace simple_erp.Testes.Compartilhado.Builders
     /// </summary>
     public sealed class SaldoDeEstoqueBuilder
     {
-        private long? _id = 202604020100;
-        private long _idProduto = 202604020001;
+        private Guid? _id = new Guid("00000000-0000-0000-0000-202604020100");
+        private Guid _idProduto = new Guid("00000000-0000-0000-0000-202604020001");
         private decimal _saldoInicial = 0m;
 
         public static SaldoDeEstoqueBuilder Novo() => new();
 
-        public SaldoDeEstoqueBuilder ComId(long id)
+        public SaldoDeEstoqueBuilder ComId(Guid id)
         {
             _id = id;
             return this;
@@ -30,7 +30,7 @@ namespace simple_erp.Testes.Compartilhado.Builders
             return this;
         }
 
-        public SaldoDeEstoqueBuilder ComIdProduto(long idProduto)
+        public SaldoDeEstoqueBuilder ComIdProduto(Guid idProduto)
         {
             _idProduto = idProduto;
             return this;
@@ -44,13 +44,8 @@ namespace simple_erp.Testes.Compartilhado.Builders
 
         public SaldoDeEstoque Criar()
         {
-            var resultadoIdProduto = Id.TentarCriar(_idProduto);
 
-            if (resultadoIdProduto.EhFalha)
-                throw new InvalidOperationException(
-                    $"Id de produto inválido no builder: {string.Join(", ", resultadoIdProduto.Erros!)}");
-
-            var resultadoSaldo = SaldoDeEstoque.Criar(resultadoIdProduto.Instancia, _id);
+            var resultadoSaldo = SaldoDeEstoque.Criar(_idProduto, _id);
 
             if (resultadoSaldo.EhFalha)
                 throw new InvalidOperationException(

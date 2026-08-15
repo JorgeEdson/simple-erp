@@ -1,12 +1,8 @@
+using simple_erp.Core.Compartilhado.Contratos.Dominio;
 using System.Linq.Expressions;
 
-namespace simple_erp.Core.Compartilhado.Especificacoes
-{
-    /// <summary>
-    /// Reescreve os parâmetros de duas expressões para um parâmetro único, de modo que os
-    /// corpos possam ser combinados (E/OU) em uma só lambda que o EF Core consegue traduzir.
-    /// Evita <c>Expression.Invoke</c>, que nem sempre é traduzível para SQL.
-    /// </summary>
+namespace simple_erp.Core.Compartilhado.Contratos.Dominio.Especificacoes
+{  
     internal static class CombinadorDeExpressoes
     {
         public static Expression<Func<T, bool>> Combinar<T>(

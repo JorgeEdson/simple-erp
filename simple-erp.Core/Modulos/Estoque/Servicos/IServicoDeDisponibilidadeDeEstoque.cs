@@ -1,5 +1,5 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
+using simple_erp.Core.Compartilhado.Contratos.Dominio;
 
 namespace simple_erp.Core.Modulos.Estoque.Servicos
 {
@@ -9,14 +9,14 @@ namespace simple_erp.Core.Modulos.Estoque.Servicos
     /// (Produção, Vendas, etc.) para que o serviço de estoque não dependa deles.
     /// </summary>
     public sealed record RequisicaoDeDisponibilidade(
-        long IdProduto,
+        Guid IdProduto,
         decimal QuantidadeRequerida);
 
     /// <summary>
     /// Fato apurado para um produto cujo saldo não cobre a quantidade requerida.
     /// </summary>
     public sealed record InsuficienciaDeEstoque(
-        long IdProduto,
+        Guid IdProduto,
         decimal QuantidadeRequerida,
         decimal QuantidadeDisponivel);
 

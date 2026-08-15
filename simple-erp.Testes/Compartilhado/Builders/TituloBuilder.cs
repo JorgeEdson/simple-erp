@@ -7,18 +7,18 @@ namespace simple_erp.Testes.Compartilhado.Builders
 {
     public sealed class TituloBuilder
     {
-        private long? _id = 202604020600;
+        private Guid? _id = new Guid("00000000-0000-0000-0000-202604020600");
         private TipoDeTitulo _tipo = TipoDeTitulo.APagar;
-        private long _idParceiro = 202604020002;
+        private Guid _idParceiro = new Guid("00000000-0000-0000-0000-202604020002");
         private TipoOrigemTitulo _origemTipo = TipoOrigemTitulo.Compra;
-        private long? _origemIdReferencia = 202604020003;
+        private Guid? _origemIdReferencia = new Guid("00000000-0000-0000-0000-202604020003");
         private decimal _valorOriginal = 100.00m;
         private DateTime _dataVencimento = DateTime.UtcNow.AddDays(30);
         private decimal _baixaInicial = 0m;
 
         public static TituloBuilder Novo() => new();
 
-        public TituloBuilder ComId(long id)
+        public TituloBuilder ComId(Guid id)
         {
             _id = id;
             return this;
@@ -38,7 +38,7 @@ namespace simple_erp.Testes.Compartilhado.Builders
             return this;
         }
 
-        public TituloBuilder ComIdParceiro(long idParceiro)
+        public TituloBuilder ComIdParceiro(Guid idParceiro)
         {
             _idParceiro = idParceiro;
             return this;
@@ -64,7 +64,7 @@ namespace simple_erp.Testes.Compartilhado.Builders
 
         public Titulo Criar()
         {
-            var idParceiro = Id.TentarCriar(_idParceiro).Instancia;
+            var idParceiro = _idParceiro;
             var origem = OrigemDoTitulo.TentarCriar(_origemTipo, _origemIdReferencia).Instancia;
             var valorOriginal = Dinheiro.TentarCriar(_valorOriginal).Instancia;
 

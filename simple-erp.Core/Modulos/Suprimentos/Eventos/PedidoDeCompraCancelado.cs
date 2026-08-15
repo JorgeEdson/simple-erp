@@ -5,12 +5,12 @@ namespace simple_erp.Core.Modulos.Suprimentos.Eventos
 {
     public sealed class PedidoDeCompraCancelado : EventoDeDominio
     {
-        public PedidoDeCompraCancelado(Id idPedidoDeCompra)
+        public PedidoDeCompraCancelado(Guid idPedidoDeCompra)
             : base(idPedidoDeCompra)
         {
             IdPedidoDeCompra = idPedidoDeCompra;
         }
 
-        public Id IdPedidoDeCompra { get; }
+        public Guid IdPedidoDeCompra { get; }
     }
 }

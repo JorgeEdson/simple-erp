@@ -11,7 +11,7 @@ namespace simple_erp.Testes.Modulos.Producao.Repositories
     public sealed class ComposicaoDeProdutoRepositoryTests
         : IClassFixture<PostgresProducaoFixture>, IAsyncLifetime
     {
-        private const long IdProdutoFabricado = 202607210050;
+        private static readonly Guid IdProdutoFabricado = new Guid("00000000-0000-0000-0000-202607210050");
 
         private readonly PostgresProducaoFixture _fixture;
 
@@ -23,7 +23,7 @@ namespace simple_erp.Testes.Modulos.Producao.Repositories
         public Task InitializeAsync() => _fixture.LimparAsync();
         public Task DisposeAsync() => Task.CompletedTask;
 
-        private static Id IdDe(long valor) => Id.TentarCriar(valor).Instancia;
+        private static Guid IdDe(Guid valor) => valor;
 
         private async Task SalvarAsync(params ComposicaoDeProduto[] composicoes)
         {
@@ -40,26 +40,26 @@ namespace simple_erp.Testes.Modulos.Producao.Repositories
         public async Task AdicionarEObterPorId_DevePersistirOsItensDaReceitaEmJsonb()
         {
             var composicao = ComposicaoDeProdutoBuilder.Novo()
-                .ComId(202607211000)
+                .ComId(new Guid("00000000-0000-0000-0000-202607211000"))
                 .ComIdProdutoFabricado(IdProdutoFabricado)
                 .ComVersao(1)
                 .SemItens()
-                .ComItem(202607210010, 2m)
-                .ComItem(202607210011, 3.5m)
+                .ComItem(new Guid("00000000-0000-0000-0000-202607210010"), 2m)
+                .ComItem(new Guid("00000000-0000-0000-0000-202607210011"), 3.5m)
                 .Criar();
 
             await SalvarAsync(composicao);
 
             await using var contexto = _fixture.CriarContexto();
             var recuperada = (await new ComposicaoDeProdutoRepository(contexto)
-                .ObterPorIdAsync(IdDe(202607211000))).Instancia;
+                .ObterPorIdAsync(IdDe(new Guid("00000000-0000-0000-0000-202607211000")))).Instancia;
 
             recuperada.Should().NotBeNull();
-            recuperada!.IdProdutoFabricado.Valor.Should().Be(IdProdutoFabricado);
+            recuperada!.IdProdutoFabricado.Should().Be(IdProdutoFabricado);
             recuperada.Versao.Should().Be(1);
             recuperada.Ativa.Should().BeFalse();
             recuperada.Itens.Should().HaveCount(2);
-            recuperada.Itens.Single(i => i.IdInsumo == 202607210011)
+            recuperada.Itens.Single(i => i.IdInsumo == new Guid("00000000-0000-0000-0000-202607210011"))
                 .QuantidadePorUnidade.Should().Be(3.5m);
         }
 
@@ -67,10 +67,10 @@ namespace simple_erp.Testes.Modulos.Producao.Repositories
         public async Task ExisteEObterAtivaPorProduto_DeveEncontrarSomenteAVersaoAtiva()
         {
             await SalvarAsync(
-                ComposicaoDeProdutoBuilder.Novo().ComId(202607211010).ComIdProdutoFabricado(IdProdutoFabricado)
-                    .ComVersao(1).SemItens().ComItem(202607210010, 1m).Criar(),
-                ComposicaoDeProdutoBuilder.Novo().ComId(202607211011).ComIdProdutoFabricado(IdProdutoFabricado)
-                    .ComVersao(2).SemItens().ComItem(202607210010, 1m).Ativa().Criar());
+                ComposicaoDeProdutoBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607211010")).ComIdProdutoFabricado(IdProdutoFabricado)
+                    .ComVersao(1).SemItens().ComItem(new Guid("00000000-0000-0000-0000-202607210010"), 1m).Criar(),
+                ComposicaoDeProdutoBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607211011")).ComIdProdutoFabricado(IdProdutoFabricado)
+                    .ComVersao(2).SemItens().ComItem(new Guid("00000000-0000-0000-0000-202607210010"), 1m).Ativa().Criar());
 
             await using var contexto = _fixture.CriarContexto();
             var repositorio = new ComposicaoDeProdutoRepository(contexto);
@@ -91,10 +91,10 @@ namespace simple_erp.Testes.Modulos.Producao.Repositories
                 .Should().Be(1, "sem versões, a primeira é 1");
 
             await SalvarAsync(
-                ComposicaoDeProdutoBuilder.Novo().ComId(202607211020).ComIdProdutoFabricado(IdProdutoFabricado)
-                    .ComVersao(1).SemItens().ComItem(202607210010, 1m).Criar(),
-                ComposicaoDeProdutoBuilder.Novo().ComId(202607211021).ComIdProdutoFabricado(IdProdutoFabricado)
-                    .ComVersao(2).SemItens().ComItem(202607210010, 1m).Criar());
+                ComposicaoDeProdutoBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607211020")).ComIdProdutoFabricado(IdProdutoFabricado)
+                    .ComVersao(1).SemItens().ComItem(new Guid("00000000-0000-0000-0000-202607210010"), 1m).Criar(),
+                ComposicaoDeProdutoBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607211021")).ComIdProdutoFabricado(IdProdutoFabricado)
+                    .ComVersao(2).SemItens().ComItem(new Guid("00000000-0000-0000-0000-202607210010"), 1m).Criar());
 
             await using var contexto = _fixture.CriarContexto();
             var repositorio = new ComposicaoDeProdutoRepository(contexto);
@@ -110,11 +110,11 @@ namespace simple_erp.Testes.Modulos.Producao.Repositories
             var repositorio = new ComposicaoDeProdutoRepository(contexto);
 
             await repositorio.AdicionarAsync(
-                ComposicaoDeProdutoBuilder.Novo().ComId(202607211030).ComIdProdutoFabricado(IdProdutoFabricado)
-                    .ComVersao(1).SemItens().ComItem(202607210010, 1m).Criar());
+                ComposicaoDeProdutoBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607211030")).ComIdProdutoFabricado(IdProdutoFabricado)
+                    .ComVersao(1).SemItens().ComItem(new Guid("00000000-0000-0000-0000-202607210010"), 1m).Criar());
             await repositorio.AdicionarAsync(
-                ComposicaoDeProdutoBuilder.Novo().ComId(202607211031).ComIdProdutoFabricado(IdProdutoFabricado)
-                    .ComVersao(1).SemItens().ComItem(202607210010, 1m).Criar());
+                ComposicaoDeProdutoBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607211031")).ComIdProdutoFabricado(IdProdutoFabricado)
+                    .ComVersao(1).SemItens().ComItem(new Guid("00000000-0000-0000-0000-202607210010"), 1m).Criar());
 
             var acao = async () => await contexto.SaveChangesAsync();
 
@@ -125,12 +125,12 @@ namespace simple_erp.Testes.Modulos.Producao.Repositories
         public async Task ListarPorProdutoPaginadoAsync_DeveFiltrarPorProdutoEApenasAtivas()
         {
             await SalvarAsync(
-                ComposicaoDeProdutoBuilder.Novo().ComId(202607211040).ComIdProdutoFabricado(IdProdutoFabricado)
-                    .ComVersao(1).SemItens().ComItem(202607210010, 1m).Criar(),
-                ComposicaoDeProdutoBuilder.Novo().ComId(202607211041).ComIdProdutoFabricado(IdProdutoFabricado)
-                    .ComVersao(2).SemItens().ComItem(202607210010, 1m).Ativa().Criar(),
-                ComposicaoDeProdutoBuilder.Novo().ComId(202607211042).ComIdProdutoFabricado(202607219999)
-                    .ComVersao(1).SemItens().ComItem(202607210010, 1m).Criar());
+                ComposicaoDeProdutoBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607211040")).ComIdProdutoFabricado(IdProdutoFabricado)
+                    .ComVersao(1).SemItens().ComItem(new Guid("00000000-0000-0000-0000-202607210010"), 1m).Criar(),
+                ComposicaoDeProdutoBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607211041")).ComIdProdutoFabricado(IdProdutoFabricado)
+                    .ComVersao(2).SemItens().ComItem(new Guid("00000000-0000-0000-0000-202607210010"), 1m).Ativa().Criar(),
+                ComposicaoDeProdutoBuilder.Novo().ComId(new Guid("00000000-0000-0000-0000-202607211042")).ComIdProdutoFabricado(new Guid("00000000-0000-0000-0000-202607219999"))
+                    .ComVersao(1).SemItens().ComItem(new Guid("00000000-0000-0000-0000-202607210010"), 1m).Criar());
 
             await using var contexto = _fixture.CriarContexto();
             var repositorio = new ComposicaoDeProdutoRepository(contexto);

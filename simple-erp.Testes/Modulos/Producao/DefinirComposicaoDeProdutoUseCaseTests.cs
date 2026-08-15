@@ -1,7 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Entidades;
 using simple_erp.Core.Modulos.CatalogoDeProdutos.Interfaces.Repositorios;
@@ -10,13 +9,15 @@ using simple_erp.Core.Modulos.Producao.Composicao.Interfaces.Repositorios;
 using simple_erp.Core.Modulos.Producao.Composicao.UseCases;
 using simple_erp.Testes.Compartilhado.Builders;
 using System.Collections.Generic;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.Producao
 {
     public sealed class DefinirComposicaoDeProdutoUseCaseTests
     {
-        private const long IdFabricado = 202604020001;
-        private const long IdInsumo = 202604020010;
+        private static readonly Guid IdFabricado = new Guid("00000000-0000-0000-0000-202604020001");
+        private static readonly Guid IdInsumo = new Guid("00000000-0000-0000-0000-202604020010");
 
         private readonly IUnitOfWork _unitOfWork;
         private readonly IComposicaoDeProdutoRepository _composicoesRepository;
@@ -40,9 +41,9 @@ namespace simple_erp.Testes.Modulos.Producao
         private static DefinirComposicaoDeProdutoEntrada EntradaValida() =>
             new(IdFabricado, new List<ItemDeComposicaoEntrada> { new(IdInsumo, 2m) });
 
-        private void RetornarProduto(long id, Produto produto) =>
+        private void RetornarProduto(Guid id, Produto produto) =>
             _produtosRepository
-                .ObterPorIdAsync(Arg.Is<Id>(i => i.Valor == id), Arg.Any<CancellationToken>())
+                .ObterPorIdAsync(Arg.Is<Guid>(i => i == id), Arg.Any<CancellationToken>())
                 .Returns(Resultado<Produto>.Sucesso(produto));
 
         [Fact]
@@ -79,7 +80,7 @@ namespace simple_erp.Testes.Modulos.Producao
             RetornarProduto(IdInsumo, ProdutoBuilder.Novo().ComId(IdInsumo).ComCodigo("MP-1").ComoMateriaPrima().Criar());
 
             _composicoesRepository
-                .ObterProximaVersaoPorProdutoAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+                .ObterProximaVersaoPorProdutoAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<int>.Sucesso(1));
             _composicoesRepository
                 .AdicionarAsync(Arg.Any<ComposicaoDeProduto>(), Arg.Any<CancellationToken>())

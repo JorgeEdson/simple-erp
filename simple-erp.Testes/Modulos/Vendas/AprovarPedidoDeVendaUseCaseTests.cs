@@ -1,7 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Estoque.Entidades;
 using simple_erp.Core.Modulos.Estoque.Interfaces.Repositorios;
@@ -13,13 +12,15 @@ using simple_erp.Core.Modulos.Vendas.UseCases;
 using simple_erp.Testes.Compartilhado.Builders;
 using System.Collections.Generic;
 using System.Linq;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Testes.Modulos.Vendas
 {
     public sealed class AprovarPedidoDeVendaUseCaseTests
     {
-        private const long IdPedido = 202604020500;
-        private const long IdProduto = 202604020001; // builder: quantidade 2
+        private static readonly Guid IdPedido = new Guid("00000000-0000-0000-0000-202604020500");
+        private static readonly Guid IdProduto = new Guid("00000000-0000-0000-0000-202604020001"); // builder: quantidade 2
 
         private readonly IUnitOfWork _unitOfWork;
         private readonly IPedidoDeVendaRepository _pedidosRepository;
@@ -48,7 +49,7 @@ namespace simple_erp.Testes.Modulos.Vendas
         private PedidoDeVenda RetornarPedidoEmEdicao()
         {
             var pedido = PedidoDeVendaBuilder.Novo().ComId(IdPedido).EmEdicao().Criar();
-            _pedidosRepository.ObterPorIdAsync(Arg.Any<Id>(), Arg.Any<CancellationToken>())
+            _pedidosRepository.ObterPorIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
                 .Returns(Resultado<PedidoDeVenda?>.Sucesso(pedido));
 
             return pedido;
@@ -56,9 +57,9 @@ namespace simple_erp.Testes.Modulos.Vendas
 
         private void ConfigurarSaldo(decimal saldo)
         {
-            _saldosRepository.ExistePorProdutoAsync(Arg.Is<Id>(i => i.Valor == IdProduto), Arg.Any<CancellationToken>())
+            _saldosRepository.ExistePorProdutoAsync(Arg.Is<Guid>(i => i == IdProduto), Arg.Any<CancellationToken>())
                 .Returns(Resultado<bool>.Sucesso(true));
-            _saldosRepository.ObterPorProdutoAsync(Arg.Is<Id>(i => i.Valor == IdProduto), Arg.Any<CancellationToken>())
+            _saldosRepository.ObterPorProdutoAsync(Arg.Is<Guid>(i => i == IdProduto), Arg.Any<CancellationToken>())
                 .Returns(Resultado<SaldoDeEstoque?>.Sucesso(
                     SaldoDeEstoqueBuilder.Novo().ComIdProduto(IdProduto).ComSaldoInicial(saldo).Criar()));
         }
@@ -111,7 +112,7 @@ namespace simple_erp.Testes.Modulos.Vendas
             pedido.EventosDeDominio
                 .OfType<PedidoDeVendaAprovado>()
                 .Should().ContainSingle(evento =>
-                    evento.IdPedidoDeVenda.Valor == IdPedido && evento.Itens.Count > 0);
+                    evento.IdPedidoDeVenda == IdPedido && evento.Itens.Count > 0);
         }
 
         [Fact]

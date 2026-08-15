@@ -27,9 +27,6 @@ namespace simple_erp.Infraestrutura.Persistencia.Configuracoes.Vendas
 
             builder
                 .Property(pedido => pedido.IdCliente)
-                .HasConversion(
-                    ConversoresDeObjetosDeValor.IdParaLong,
-                    ConversoresDeObjetosDeValor.ComparadorDeId)
                 .HasColumnName("id_cliente")
                 .IsRequired();
 

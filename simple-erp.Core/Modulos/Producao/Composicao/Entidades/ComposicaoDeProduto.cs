@@ -1,4 +1,5 @@
 using simple_erp.Core.Compartilhado.Base;
+using simple_erp.Core.Compartilhado.Contratos.Dominio;
 using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using simple_erp.Core.Modulos.Producao.Composicao.Eventos;
 using simple_erp.Core.Modulos.Producao.Composicao.ObjetosDeValor;
@@ -22,11 +23,11 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.Entidades
 
 
         private ComposicaoDeProduto(
-            Id idProdutoFabricado,
+            Guid idProdutoFabricado,
             int versao,
             bool ativa,
             IEnumerable<ItemDeComposicao> itens,
-            long? id = null,
+            Guid? id = null,
             DateTime? dataCriacaoUtc = null,
             DateTime? dataAtualizacaoUtc = null)
             : base(id, dataCriacaoUtc, dataAtualizacaoUtc)
@@ -37,19 +38,19 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.Entidades
             _itens = itens.ToList();
         }
 
-        public Id IdProdutoFabricado { get; private set; }
+        public Guid IdProdutoFabricado { get; private set; }
         public int Versao { get; private set; }
         public bool Ativa { get; private set; }
 
         public IReadOnlyCollection<ItemDeComposicao> Itens => _itens.AsReadOnly();
 
         public static Resultado<ComposicaoDeProduto> Criar(
-            Id idProdutoFabricado,
+            Guid idProdutoFabricado,
             int versao,
             IEnumerable<ItemDeComposicao> itens,
-            long? id = null)
+            Guid? id = null)
         {
-            if (idProdutoFabricado is null)
+            if (idProdutoFabricado == Guid.Empty)
                 return Resultado<ComposicaoDeProduto>.Falha("PRODUTO_FABRICADO_OBRIGATORIO");
 
             if (versao <= 0)
@@ -135,11 +136,11 @@ namespace simple_erp.Core.Modulos.Producao.Composicao.Entidades
         }
 
         public static ComposicaoDeProduto Reconstituir(
-            Id idProdutoFabricado,
+            Guid idProdutoFabricado,
             int versao,
             bool ativa,
             IEnumerable<ItemDeComposicao> itens,
-            long id,
+            Guid id,
             DateTime dataCriacaoUtc,
             DateTime dataAtualizacaoUtc)
         {

@@ -18,9 +18,6 @@ namespace simple_erp.Infraestrutura.Persistencia.Configuracoes.Estoque
 
             builder
                 .Property(saldo => saldo.IdProduto)
-                .HasConversion(
-                    ConversoresDeObjetosDeValor.IdParaLong,
-                    ConversoresDeObjetosDeValor.ComparadorDeId)
                 .HasColumnName("id_produto")
                 .IsRequired();
 

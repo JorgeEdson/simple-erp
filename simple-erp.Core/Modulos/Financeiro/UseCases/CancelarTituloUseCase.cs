@@ -1,7 +1,7 @@
 using simple_erp.Core.Compartilhado.Base;
-using simple_erp.Core.Compartilhado.Interfaces;
-using simple_erp.Core.Compartilhado.ObjetosDeValor;
 using System.Diagnostics;
+using simple_erp.Core.Compartilhado.Contratos.Aplicacao;
+using simple_erp.Core.Compartilhado.Contratos.Observabilidade;
 
 namespace simple_erp.Core.Modulos.Financeiro.UseCases
 {
@@ -10,10 +10,10 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
     {
     }
 
-    public record CancelarTituloEntrada(long Id) : IRequisicao<CancelarTituloSaida>;
+    public record CancelarTituloEntrada(Guid Id) : IRequisicao<CancelarTituloSaida>;
 
     public record CancelarTituloSaida(
-        long Id,
+        Guid Id,
         string Status);
 
     public sealed class CancelarTituloUseCase : ICancelarTituloUseCase
@@ -46,14 +46,21 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
 
             #endregion
 
-            #region Validação da entrada
+            #region Validação do identificador
 
-            var resultadoId = Id.TentarCriar(dados.Id);
-
-            if (resultadoId.EhFalha)
+            if (dados.Id == Guid.Empty)
             {
                 stopwatchUseCase.Stop();
-                return Resultado<CancelarTituloSaida>.Falha(resultadoId.Erros!);
+
+                _logService.RegistrarLogWarning(new RegistroDeLog(
+                    Mensagem: "Identificador não informado na entrada do caso de uso.",
+                    Propriedades: new Dictionary<string, object?>
+                    {
+                        ["Id"] = dados.Id,
+                        ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
+                    }));
+
+                return Resultado<CancelarTituloSaida>.Falha("ID_INVALIDO");
             }
 
             #endregion
@@ -61,7 +68,7 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
             #region Recuperação do agregado
 
             var resultadoTitulo = await _unitOfWork.TitulosRepository
-                .ObterPorIdAsync(resultadoId.Instancia, cancellationToken);
+                .ObterPorIdAsync(dados.Id, cancellationToken);
 
             if (resultadoTitulo.EhFalha)
             {
@@ -99,7 +106,7 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
                         Mensagem: "Falha ao cancelar o agregado Titulo.",
                         Propriedades: new Dictionary<string, object?>
                         {
-                            ["TituloId"] = titulo.Id.Valor,
+                            ["TituloId"] = titulo.Id,
                             ["Status"] = titulo.Status.ToString(),
                             ["Erros"] = resultadoCancelamento.Erros?.ToArray(),
                             ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
@@ -140,14 +147,14 @@ namespace simple_erp.Core.Modulos.Financeiro.UseCases
                 Mensagem: "Título cancelado com sucesso.",
                 Propriedades: new Dictionary<string, object?>
                 {
-                    ["TituloId"] = titulo.Id.Valor,
+                    ["TituloId"] = titulo.Id,
                     ["Status"] = titulo.Status.ToString(),
                     ["DuracaoMs"] = stopwatchUseCase.ElapsedMilliseconds
                 }));
 
             return Resultado<CancelarTituloSaida>.Sucesso(
                 new CancelarTituloSaida(
-                    Id: titulo.Id.Valor,
+                    Id: titulo.Id,
                     Status: titulo.Status.ToString()));
 
             #endregion

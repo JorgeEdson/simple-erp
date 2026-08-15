@@ -7,9 +7,9 @@ namespace simple_erp.Core.Modulos.Financeiro.Eventos
     public sealed class TituloEmitido : EventoDeDominio
     {
         public TituloEmitido(
-            Id idTitulo,
+            Guid idTitulo,
             TipoDeTitulo tipo,
-            Id idParceiro,
+            Guid idParceiro,
             decimal valorOriginal)
             : base(idTitulo)
         {
@@ -19,9 +19,9 @@ namespace simple_erp.Core.Modulos.Financeiro.Eventos
             ValorOriginal = valorOriginal;
         }
 
-        public Id IdTitulo { get; }
+        public Guid IdTitulo { get; }
         public TipoDeTitulo Tipo { get; }
-        public Id IdParceiro { get; }
+        public Guid IdParceiro { get; }
         public decimal ValorOriginal { get; }
     }
 }

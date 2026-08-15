@@ -11,8 +11,8 @@ namespace simple_erp.Testes.Modulos.Estoque.Repositories
     public sealed class MovimentacaoDeEstoqueRepositoryTests
         : IClassFixture<PostgresEstoqueFixture>, IAsyncLifetime
     {
-        private const long IdProdutoA = 202607210001;
-        private const long IdProdutoB = 202607210002;
+        private static readonly Guid IdProdutoA = new Guid("00000000-0000-0000-0000-202607210001");
+        private static readonly Guid IdProdutoB = new Guid("00000000-0000-0000-0000-202607210002");
 
         private readonly PostgresEstoqueFixture _fixture;
 
@@ -29,18 +29,18 @@ namespace simple_erp.Testes.Modulos.Estoque.Repositories
         /// exercitar os filtros de origem e de intervalo de datas do extrato.
         /// </summary>
         private static MovimentacaoDeEstoque Movimentacao(
-            long id,
-            long idProduto,
+            Guid id,
+            Guid idProduto,
             TipoDeMovimentacao tipo,
             decimal quantidade,
             TipoOrigemMovimentacao origemTipo,
-            long? origemIdReferencia,
+            Guid? origemIdReferencia,
             DateTime dataUtc)
         {
             var origem = OrigemDaMovimentacao.TentarCriar(origemTipo, origemIdReferencia).Instancia;
 
             return MovimentacaoDeEstoque.Reconstituir(
-                Id.TentarCriar(idProduto).Instancia,
+                idProduto,
                 tipo,
                 TiposDeMovimentacao.Sentido(tipo),
                 quantidade,
@@ -67,8 +67,8 @@ namespace simple_erp.Testes.Modulos.Estoque.Repositories
         public async Task Adicionar_DevePersistirComOrigemEmJsonbRecuperavel()
         {
             await SalvarAsync(Movimentacao(
-                202607210600, IdProdutoA, TipoDeMovimentacao.EntradaPorCompra, 30m,
-                TipoOrigemMovimentacao.Compra, origemIdReferencia: 777,
+                new Guid("00000000-0000-0000-0000-202607210600"), IdProdutoA, TipoDeMovimentacao.EntradaPorCompra, 30m,
+                TipoOrigemMovimentacao.Compra, origemIdReferencia: new Guid("00000000-0000-0000-0000-000000000777"),
                 new DateTime(2026, 7, 1)));
 
             await using var contexto = _fixture.CriarContexto();
@@ -83,19 +83,19 @@ namespace simple_erp.Testes.Modulos.Estoque.Repositories
             mov.Quantidade.Should().Be(30m);
             // A origem (VO composto) volta íntegra do jsonb.
             mov.Origem.Tipo.Should().Be(TipoOrigemMovimentacao.Compra);
-            mov.Origem.IdReferencia.Should().Be(777);
+            mov.Origem.IdReferencia.Should().Be(new Guid("00000000-0000-0000-0000-000000000777"));
         }
 
         [Fact]
         public async Task ListarPaginadoAsync_DeveFiltrarPorProdutoTipoEOrigem()
         {
             await SalvarAsync(
-                Movimentacao(202607210610, IdProdutoA, TipoDeMovimentacao.EntradaPorCompra, 10m,
-                    TipoOrigemMovimentacao.Compra, 1, new DateTime(2026, 7, 1)),
-                Movimentacao(202607210611, IdProdutoA, TipoDeMovimentacao.SaidaPorVenda, 4m,
-                    TipoOrigemMovimentacao.Venda, 2, new DateTime(2026, 7, 2)),
-                Movimentacao(202607210612, IdProdutoB, TipoDeMovimentacao.EntradaPorCompra, 7m,
-                    TipoOrigemMovimentacao.Compra, 3, new DateTime(2026, 7, 3)));
+                Movimentacao(new Guid("00000000-0000-0000-0000-202607210610"), IdProdutoA, TipoDeMovimentacao.EntradaPorCompra, 10m,
+                    TipoOrigemMovimentacao.Compra, new Guid("00000000-0000-0000-0000-000000000001"), new DateTime(2026, 7, 1)),
+                Movimentacao(new Guid("00000000-0000-0000-0000-202607210611"), IdProdutoA, TipoDeMovimentacao.SaidaPorVenda, 4m,
+                    TipoOrigemMovimentacao.Venda, new Guid("00000000-0000-0000-0000-000000000002"), new DateTime(2026, 7, 2)),
+                Movimentacao(new Guid("00000000-0000-0000-0000-202607210612"), IdProdutoB, TipoDeMovimentacao.EntradaPorCompra, 7m,
+                    TipoOrigemMovimentacao.Compra, new Guid("00000000-0000-0000-0000-000000000003"), new DateTime(2026, 7, 3)));
 
             await using var contexto = _fixture.CriarContexto();
             var repositorio = new MovimentacaoDeEstoqueRepository(contexto);
@@ -119,12 +119,12 @@ namespace simple_erp.Testes.Modulos.Estoque.Repositories
         public async Task ListarPaginadoAsync_DeveFiltrarPorIntervaloDeDatas()
         {
             await SalvarAsync(
-                Movimentacao(202607210620, IdProdutoA, TipoDeMovimentacao.EntradaPorCompra, 1m,
-                    TipoOrigemMovimentacao.Compra, 1, new DateTime(2026, 6, 15)),
-                Movimentacao(202607210621, IdProdutoA, TipoDeMovimentacao.EntradaPorCompra, 1m,
-                    TipoOrigemMovimentacao.Compra, 2, new DateTime(2026, 7, 10)),
-                Movimentacao(202607210622, IdProdutoA, TipoDeMovimentacao.EntradaPorCompra, 1m,
-                    TipoOrigemMovimentacao.Compra, 3, new DateTime(2026, 8, 5)));
+                Movimentacao(new Guid("00000000-0000-0000-0000-202607210620"), IdProdutoA, TipoDeMovimentacao.EntradaPorCompra, 1m,
+                    TipoOrigemMovimentacao.Compra, new Guid("00000000-0000-0000-0000-000000000001"), new DateTime(2026, 6, 15)),
+                Movimentacao(new Guid("00000000-0000-0000-0000-202607210621"), IdProdutoA, TipoDeMovimentacao.EntradaPorCompra, 1m,
+                    TipoOrigemMovimentacao.Compra, new Guid("00000000-0000-0000-0000-000000000002"), new DateTime(2026, 7, 10)),
+                Movimentacao(new Guid("00000000-0000-0000-0000-202607210622"), IdProdutoA, TipoDeMovimentacao.EntradaPorCompra, 1m,
+                    TipoOrigemMovimentacao.Compra, new Guid("00000000-0000-0000-0000-000000000003"), new DateTime(2026, 8, 5)));
 
             await using var contexto = _fixture.CriarContexto();
             var repositorio = new MovimentacaoDeEstoqueRepository(contexto);
@@ -142,12 +142,12 @@ namespace simple_erp.Testes.Modulos.Estoque.Repositories
         public async Task ListarPaginadoAsync_DeveOrdenarDoMaisRecenteParaOMaisAntigo()
         {
             await SalvarAsync(
-                Movimentacao(202607210630, IdProdutoA, TipoDeMovimentacao.EntradaPorCompra, 1m,
-                    TipoOrigemMovimentacao.Compra, 1, new DateTime(2026, 7, 1)),
-                Movimentacao(202607210631, IdProdutoA, TipoDeMovimentacao.EntradaPorCompra, 1m,
-                    TipoOrigemMovimentacao.Compra, 2, new DateTime(2026, 7, 20)),
-                Movimentacao(202607210632, IdProdutoA, TipoDeMovimentacao.EntradaPorCompra, 1m,
-                    TipoOrigemMovimentacao.Compra, 3, new DateTime(2026, 7, 10)));
+                Movimentacao(new Guid("00000000-0000-0000-0000-202607210630"), IdProdutoA, TipoDeMovimentacao.EntradaPorCompra, 1m,
+                    TipoOrigemMovimentacao.Compra, new Guid("00000000-0000-0000-0000-000000000001"), new DateTime(2026, 7, 1)),
+                Movimentacao(new Guid("00000000-0000-0000-0000-202607210631"), IdProdutoA, TipoDeMovimentacao.EntradaPorCompra, 1m,
+                    TipoOrigemMovimentacao.Compra, new Guid("00000000-0000-0000-0000-000000000002"), new DateTime(2026, 7, 20)),
+                Movimentacao(new Guid("00000000-0000-0000-0000-202607210632"), IdProdutoA, TipoDeMovimentacao.EntradaPorCompra, 1m,
+                    TipoOrigemMovimentacao.Compra, new Guid("00000000-0000-0000-0000-000000000003"), new DateTime(2026, 7, 10)));
 
             await using var contexto = _fixture.CriarContexto();
             var repositorio = new MovimentacaoDeEstoqueRepository(contexto);
