@@ -157,15 +157,7 @@ namespace simple_erp.Core.Modulos.Producao.UseCases
             }
 
             #endregion
-
-            // Os eventos de domínio produzidos por este agregado NÃO são despachados
-            // aqui. O interceptor de persistência os gravou na caixa de saída dentro da
-            // mesma transação do SaveChanges acima, e o worker que consome o outbox os
-            // entrega aos manipuladores fora desta requisição.
-            //
-            // Duas consequências que valem ser ditas em voz alta: a resposta ao usuário
-            // não espera pelos efeitos em outros contextos delimitados, e nenhum efeito
-            // se perde caso a aplicação caia logo após a confirmação.
+            
 
             #region Finalização
 

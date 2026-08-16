@@ -1,5 +1,4 @@
 using simple_erp.Core.Compartilhado.Contratos.Dominio;
-using simple_erp.Core.Compartilhado.ObjetosDeValor;
 
 namespace simple_erp.Core.Compartilhado.Base
 {

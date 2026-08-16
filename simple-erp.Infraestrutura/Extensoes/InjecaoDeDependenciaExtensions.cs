@@ -23,15 +23,11 @@ namespace simple_erp.Infraestrutura.Extensoes
                     .UseNpgsql(connectionString)
                     .UseSnakeCaseNamingConvention()
                     .AddInterceptors(new CapturaDeEventosParaOutboxInterceptor()));
-
             
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             services.AdicionarRepositorios();
-
-            // Singleton porque não guarda estado por requisição: ele abre o próprio
-            // escopo para cada evento que processa. Registrá-lo como Scoped criaria uma
-            // dependência cativa quando um worker singleton o consumisse.
+            
             services.AddSingleton<IProcessadorDeEventosPendentes, ProcessadorDeEventosPendentes>();
 
             return services;

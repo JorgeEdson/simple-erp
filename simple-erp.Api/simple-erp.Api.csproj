@@ -13,7 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\simple-erp.Core\simple-erp.Core.csproj" />
     <ProjectReference Include="..\simple-erp.Infraestrutura\simple-erp.Infraestrutura.csproj" />
   </ItemGroup>
 
